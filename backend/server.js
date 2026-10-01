@@ -81,15 +81,19 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`\n=================================================`);
-  console.log(`🚀 QMS Backend Server running on port ${PORT}`);
-  console.log(`📡 URL: http://localhost:${PORT}`);
-  console.log(`🔒 Health Check: http://localhost:${PORT}/api/health`);
-  console.log(`👥 Available Dummy Accounts:`);
-  console.log(`   1) Employee:      username: employee      | password: 1234 | role: employee`);
-  console.log(`   2) Process Owner: username: processowner  | password: 1234 | role: owner`);
-  console.log(`   3) QM Group:      username: qmgroup       | password: 1234 | role: qm`);
-  console.log(`   4) QM Head:       username: qmhead        | password: 1234 | role: Head`);
-  console.log(`=================================================\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n=================================================`);
+    console.log(`🚀 QMS Backend Server running on port ${PORT}`);
+    console.log(`📡 URL: http://localhost:${PORT}`);
+    console.log(`🔒 Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`👥 Available Dummy Accounts:`);
+    console.log(`   1) Employee:      username: employee      | password: 1234 | role: employee`);
+    console.log(`   2) Process Owner: username: processowner  | password: 1234 | role: owner`);
+    console.log(`   3) QM Group:      username: qmgroup       | password: 1234 | role: qm`);
+    console.log(`   4) QM Head:       username: qmhead        | password: 1234 | role: Head`);
+    console.log(`=================================================\n`);
+  });
+}
+
+export default app;

@@ -2,15 +2,31 @@
   "name": "qms-workspace",
   "version": "1.0.0",
   "description": "Quality Management System (QMS) - Frontend UI and Backend Authentication API",
+  "type": "module",
+  "workspaces": [
+    "QMS-main",
+    "backend"
+  ],
   "scripts": {
+    "build": "npm --prefix QMS-main install && npm --prefix QMS-main run build && node -e \"const fs=require('fs'); fs.cpSync('QMS-main/dist', 'dist', {recursive:true});\"",
+    "build:frontend": "npm --prefix QMS-main run build",
     "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix QMS-main run dev",
     "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "npm --prefix backend start",
     "start:frontend": "npm --prefix QMS-main run dev",
-    "build:frontend": "npm --prefix QMS-main run build",
     "install:all": "npm --prefix backend install && npm --prefix QMS-main install"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   },
   "keywords": [
     "qms",
@@ -19,8 +35,5 @@
     "vite"
   ],
   "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "concurrently": "^10.0.5"
-  }
+  "license": "ISC"
 }
