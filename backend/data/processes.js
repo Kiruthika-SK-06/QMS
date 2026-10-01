@@ -1,0 +1,87 @@
+// Controlled QMS Processes Database
+export let processesData = [
+  {
+    id: "PROC-001",
+    name: "Employee Onboarding",
+    owner: "Priya Sharma",
+    employees: 12,
+    active: 5,
+    completed: 31,
+    pending: 5,
+    documents: 8,
+    status: "Active",
+    progress: 82,
+    target: "30 Sep 2026",
+    description: "End-to-end recruitment, induction, workstation provisioning, and probation review workflow."
+  },
+  {
+    id: "PROC-002",
+    name: "Training & Development",
+    owner: "Rohan Desai",
+    employees: 24,
+    active: 8,
+    completed: 46,
+    pending: 9,
+    documents: 11,
+    status: "Active",
+    progress: 91,
+    target: "28 Sep 2026",
+    description: "Training needs identification, annual calendar preparation, workshop execution, and efficacy evaluation."
+  },
+  {
+    id: "PROC-003",
+    name: "Knowledge Management",
+    owner: "Meera Shah",
+    employees: 9,
+    active: 2,
+    completed: 18,
+    pending: 2,
+    documents: 5,
+    status: "Active",
+    progress: 68,
+    target: "10 Oct 2026",
+    description: "Centralized repository curation, technical paper archival, IP disclosures, and best practice propagation."
+  },
+  {
+    id: "PROC-004",
+    name: "Course Management",
+    owner: "Course Process Owner",
+    employees: 16,
+    active: 4,
+    completed: 28,
+    pending: 1,
+    documents: 7,
+    status: "Completed",
+    progress: 100,
+    target: "20 Sep 2026",
+    description: "Accredited curriculum design, faculty scheduling, lab setup, and graduation certification management."
+  },
+  {
+    id: "PROC-005",
+    name: "IT Support Management",
+    owner: "Karthik Verma",
+    employees: 18,
+    active: 6,
+    completed: 40,
+    pending: 4,
+    documents: 6,
+    status: "Active",
+    progress: 64,
+    target: "05 Oct 2026",
+    description: "Helpdesk SLA tracking, software licensing compliance, vulnerability patching, and incident management."
+  },
+  {
+    id: "PROC-006",
+    name: "Finance Management",
+    owner: "Meera Shah",
+    employees: 8,
+    active: 3,
+    completed: 22,
+    pending: 3,
+    documents: 5,
+    status: "Pending",
+    progress: 42,
+    target: "15 Oct 2026",
+    description: "Budget allocation, procurement requisition scrutiny, audit reconciliations, and travel expenditure."
+  }
+];
