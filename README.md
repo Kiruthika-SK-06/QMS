@@ -2,6 +2,8 @@
 
 This repository contains the complete QMS application with a React + Vite frontend and a fully integrated Express.js backend with dummy authentication, role-based access, document lifecycle management, task assignments, and process monitoring.
 
+> **Latest Update:** Full backend REST API integration, live dummy datasets, and interactive document & task workflows.
+
 ---
 
 ## 📁 Project Structure
