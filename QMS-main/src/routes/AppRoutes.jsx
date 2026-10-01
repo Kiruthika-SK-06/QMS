@@ -32,7 +32,7 @@ export default function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={currentUser ? <Navigate to="/" replace /> : <LoginPage />}
+        element={<LoginPage />}
       />
 
       <Route path="/" element={<Navigate to={dashboardPath} replace />} />
