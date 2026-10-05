@@ -75,6 +75,66 @@ export const authService = {
   },
 
   /**
+   * Request password reset code
+   * @param {string} identifier - username or email
+   */
+  async forgotPassword(identifier) {
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier })
+      });
+    } catch (networkErr) {
+      throw new Error("Unable to connect to backend server. Make sure the backend is running.");
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error("Unexpected response from server.");
+    }
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to process forgot password request.");
+    }
+
+    return data;
+  },
+
+  /**
+   * Submit verification code and set new password
+   * @param {Object} payload - { identifier, code, newPassword }
+   */
+  async resetPassword({ identifier, code, newPassword }) {
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, code, newPassword })
+      });
+    } catch (networkErr) {
+      throw new Error("Unable to connect to backend server. Make sure the backend is running.");
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error("Unexpected response from server.");
+    }
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to reset password.");
+    }
+
+    return data;
+  },
+
+  /**
    * Sign out
    */
   async logout() {

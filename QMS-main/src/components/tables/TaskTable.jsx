@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { Check, Clock, PlayCircle, FileText } from "lucide-react";
+import { Check, Clock, PlayCircle, FileText, Trash2, Edit } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
 import Modal from "../tasks/Modal";
+import TaskModal from "../tasks/TaskModal";
 import Detail from "../common/Detail";
 import { useApp } from "../../context/AppContext";
 
 export default function TaskTable({ items = [] }) {
-  const { updateTaskStatus } = useApp();
+  const { updateTaskStatus, updateTask, deleteTask, currentUser } = useApp();
   const [selectedTask, setSelectedTask] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
   const [updating, setUpdating] = useState(false);
 
   const handleStatusChange = async (newStatus) => {
@@ -22,6 +24,29 @@ export default function TaskTable({ items = [] }) {
       setUpdating(false);
     }
   };
+
+  const handleDeleteTask = async () => {
+    if (!selectedTask) return;
+    if (window.confirm(`Are you sure you want to delete task "${selectedTask.title}"?`)) {
+      setUpdating(true);
+      try {
+        await deleteTask(selectedTask.id);
+        setSelectedTask(null);
+      } catch (err) {
+        console.error("Error deleting task:", err);
+      } finally {
+        setUpdating(false);
+      }
+    }
+  };
+
+  if (!items || items.length === 0) {
+    return (
+      <div style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
+        <p>No tasks found matching your criteria.</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -51,13 +76,25 @@ export default function TaskTable({ items = [] }) {
                   <StatusBadge status={task.status} />
                 </td>
                 <td>
-                  <button
-                    className="row-action"
-                    onClick={() => setSelectedTask(task)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    Open
-                  </button>
+                  <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                    <button
+                      className="row-action"
+                      onClick={() => setSelectedTask(task)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Open
+                    </button>
+                    {currentUser?.role !== "employee" && (
+                      <button
+                        className="row-action"
+                        onClick={() => setEditingTask(task)}
+                        style={{ cursor: "pointer", color: "#0284c7" }}
+                        title="Edit task"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -125,6 +162,33 @@ export default function TaskTable({ items = [] }) {
               </button>
             )}
 
+            {currentUser?.role !== "employee" && (
+              <>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={updating}
+                  onClick={() => {
+                    const toEdit = selectedTask;
+                    setSelectedTask(null);
+                    setEditingTask(toEdit);
+                  }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#0284c7" }}
+                >
+                  <Edit size={16} /> Edit Task
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={updating}
+                  onClick={handleDeleteTask}
+                  style={{ color: "#ef4444", borderColor: "#fca5a5", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Trash2 size={16} /> Delete
+                </button>
+              </>
+            )}
+
             <button
               type="button"
               className="plain-button"
@@ -134,6 +198,18 @@ export default function TaskTable({ items = [] }) {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <TaskModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSave={async (formData) => {
+            await updateTask(editingTask.id, formData);
+            setEditingTask(null);
+          }}
+        />
       )}
     </>
   );

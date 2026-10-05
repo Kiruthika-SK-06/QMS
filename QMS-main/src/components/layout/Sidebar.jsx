@@ -2,14 +2,13 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { X, ShieldCheck, LogOut } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { initialNotifications } from "../../data/mockData";
 import Logo from "../common/Logo";
 import { navByRole } from "./navigation";
 
 export default function Sidebar({ open, close }) {
   const { currentUser, logout, notifications } = useApp();
-  const groups = navByRole[currentUser.role];
-  const unreadCount = notifications.filter((item) => !item.read).length;
+  const groups = (currentUser?.role && navByRole[currentUser.role]) || navByRole.employee || [];
+  const unreadCount = (notifications || []).filter((item) => !item.read).length;
 
   return (
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>

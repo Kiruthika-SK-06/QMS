@@ -48,6 +48,21 @@ export let documentsData = [
     status: "Under Review",
     submittedBy: "Priya Sharma",
     description: "Structured evaluation template used by training instructors to compile course effectiveness metrics.",
+    content: `1. PARTICIPANT DETAILS:
+- Trainee Name: _____________________
+- Employee ID:  _____________________
+- Department:   _____________________
+- Workshop:     Advanced Computing & Quality Standards
+
+2. EFFECTIVENESS METRICS (1 - Unsatisfactory to 5 - Exceptional):
+[ ] Course materials clarity & relevance
+[ ] Instructor subject matter depth
+[ ] Hands-on laboratory assignments & tooling
+[ ] Practical applicability to day-to-day work
+
+3. RECOMMENDATIONS & ISO 9001 COMPLIANCE:
+- Key domain competencies acquired:
+- Specific areas suggested for continuous syllabus improvement:`,
     versions: [
       { version: "1.0", date: "11 Sep 2026", author: "Priya Sharma", status: "Current", notes: "Initial submission for QM group evaluation" }
     ]
@@ -116,6 +131,20 @@ export let documentsData = [
     status: "Approved",
     submittedBy: "Rahul Kumar",
     description: "Comprehensive questionnaire template used during biannual internal quality audits.",
+    content: `1. QUALITY POLICY & MANAGEMENT COMMITMENT (Clause 5.2):
+[ ] Documented Quality Policy communicated and understood across all labs
+[ ] Quality objectives established at relevant functional levels
+[ ] Resource availability verified for Q3 audit cycles
+
+2. CONTROL OF DOCUMENTED INFORMATION (Clause 7.5):
+[ ] All active templates and SOPs bear authorized approval & version tags
+[ ] Distribution of obsolete formats strictly prevented
+[ ] Access authorization and retention archives confirmed secure
+
+3. RISK & OPPORTUNITY ASSESSMENT (Clause 6.1):
+[ ] Documented risk registry maintained for operational processes
+[ ] Corrective action records verified for previous audit findings
+[ ] Evidence of continual improvement initiatives recorded`,
     versions: [
       { version: "3.1", date: "20 Sep 2026", author: "Anita Rao", status: "Current", notes: "Minor corrections to ISO clause mapping" },
       { version: "3.0", date: "14 Sep 2026", author: "Rahul Kumar", status: "Archived", notes: "Updated annual quality criteria" }

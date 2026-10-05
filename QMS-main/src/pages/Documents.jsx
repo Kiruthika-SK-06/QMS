@@ -1,15 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Filter, Search, Upload, Plus } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 import DocumentTable from "../components/tables/DocumentTable";
 import Modal from "../components/tasks/Modal";
+import TemplateEditModal from "../components/common/TemplateEditModal";
 
 export default function Documents() {
   const { documents, currentUser, createDocument, processes } = useApp();
-  const [query, setQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("search") || "");
   const [type, setType] = useState("All");
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [editingDoc, setEditingDoc] = useState(null);
+
+  useEffect(() => {
+    const urlQuery = searchParams.get("search");
+    if (urlQuery !== null) {
+      setQuery(urlQuery);
+    }
+  }, [searchParams]);
+
   const [uploadForm, setUploadForm] = useState({
     name: "",
     type: "Forms",
@@ -18,7 +30,7 @@ export default function Documents() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filtered = documents.filter(
+  const filtered = (documents || []).filter(
     (document) =>
       (type === "All" || document.type === type) &&
       (document.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -84,8 +96,19 @@ export default function Documents() {
       </div>
 
       <section className="panel">
-        <DocumentTable items={filtered} />
+        <DocumentTable
+          items={filtered}
+          onEdit={currentUser?.role !== "employee" ? (doc) => setEditingDoc(doc) : undefined}
+        />
       </section>
+
+      {editingDoc && (
+        <TemplateEditModal
+          template={editingDoc}
+          onClose={() => setEditingDoc(null)}
+          onSave={() => setEditingDoc(null)}
+        />
+      )}
 
       {showUploadModal && (
         <Modal title="Upload Controlled Document" onClose={() => setShowUploadModal(false)}>

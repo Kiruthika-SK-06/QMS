@@ -1,16 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { BookOpen, Check, ClipboardList, Clock3, FileCheck2, FileText, Users } from "lucide-react";
+import { BookOpen, Check, ClipboardList, Clock3, FileCheck2, FileText, Users, Edit, Download, Layers, Trash2, AlertTriangle } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
 import StatCard from "../common/StatCard";
+import StatusBadge from "../common/StatusBadge";
+import TemplateEditModal from "../common/TemplateEditModal";
+import Modal from "../tasks/Modal";
 import ActivityCard from "./ActivityCard";
 import DocumentTable from "../tables/DocumentTable";
 import ProcessTable from "../tables/ProcessTable";
 
 export default function QMGroupDashboard() {
-  const { tasks, documents, processes, employees } = useApp();
+  const { tasks, documents, processes, employees, downloadDocument, deleteDocument } = useApp();
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [tplToDelete, setTplToDelete] = useState(null);
+  const [deletingTpl, setDeletingTpl] = useState(false);
+
+  const templates = (documents || []).filter((d) => d.type === "Templates");
 
   const processOwnersCount = employees.filter((e) => e.role === "owner").length;
   const pendingReviews = documents.filter(
@@ -81,11 +89,185 @@ export default function QMGroupDashboard() {
 
       <section className="panel">
         <SectionHeader
+          title="Controlled templates & standard formats"
+          action={
+            <NavLink className="text-link" to="/documents?type=Templates">
+              View all in library
+            </NavLink>
+          }
+        />
+        {templates.length === 0 ? (
+          <div style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
+            <p>No standard templates registered yet.</p>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Template</th>
+                  <th>Process</th>
+                  <th>Version</th>
+                  <th>Last updated</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {templates.map((tpl) => (
+                  <tr key={tpl.id}>
+                    <td>
+                      <NavLink className="table-link" to={`/documents/${tpl.id}`}>
+                        <strong>{tpl.name}</strong>
+                        <small>{tpl.id}</small>
+                      </NavLink>
+                    </td>
+                    <td>{tpl.process}</td>
+                    <td>
+                      <b>v{tpl.version}</b>
+                    </td>
+                    <td>{tpl.updated}</td>
+                    <td>
+                      <StatusBadge status={tpl.status} />
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => setEditingTemplate(tpl)}
+                          style={{
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            fontWeight: "600",
+                            color: "#0284c7"
+                          }}
+                        >
+                          <Edit size={14} /> Edit template
+                        </button>
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => downloadDocument(tpl.id)}
+                          style={{
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}
+                        >
+                          <Download size={14} /> View
+                        </button>
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => setTplToDelete(tpl)}
+                          style={{
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            color: "#ef4444"
+                          }}
+                          title={`Delete template ${tpl.name}`}
+                        >
+                          <Trash2 size={14} /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader
           title="Process overview"
           action={<NavLink className="text-link" to="/processes">View all processes</NavLink>}
         />
         <ProcessTable items={processes} />
       </section>
+
+      {editingTemplate && (
+        <TemplateEditModal
+          template={editingTemplate}
+          onClose={() => setEditingTemplate(null)}
+          onSave={() => setEditingTemplate(null)}
+        />
+      )}
+
+      {tplToDelete && (
+        <Modal
+          title="Delete Controlled Template"
+          onClose={() => setTplToDelete(null)}
+        >
+          <div style={{ padding: "6px 0" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "16px" }}>
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "#fee2e2",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#dc2626",
+                  flexShrink: 0
+                }}
+              >
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h4 style={{ margin: "0 0 6px 0", fontSize: "15px", color: "#0f172a" }}>
+                  Confirm Permanent Deletion
+                </h4>
+                <p style={{ margin: 0, fontSize: "14px", color: "#475569", lineHeight: "1.5" }}>
+                  Are you sure you want to delete template <strong>{tplToDelete.name}</strong> ({tplToDelete.id})? This will permanently remove it from the system and log an audit trail entry.
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}
+            >
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setTplToDelete(null)}
+                disabled={deletingTpl}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                style={{ background: "#dc2626", borderColor: "#dc2626" }}
+                disabled={deletingTpl}
+                onClick={async () => {
+                  setDeletingTpl(true);
+                  try {
+                    await deleteDocument(tplToDelete.id);
+                    setTplToDelete(null);
+                  } catch (err) {
+                    alert(err.message || "Failed to delete template");
+                  } finally {
+                    setDeletingTpl(false);
+                  }
+                }}
+              >
+                {deletingTpl ? "Deleting..." : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }

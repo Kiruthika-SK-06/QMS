@@ -75,6 +75,38 @@ export const documentService = {
   },
 
   /**
+   * Delete controlled document
+   */
+  async deleteDocument(id, token) {
+    const res = await fetch(`${API_BASE}/${id}`, {
+      method: "DELETE",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to delete document");
+    return data.document;
+  },
+
+  /**
+   * Update / edit controlled document or template
+   */
+  async updateDocument(id, docData, token) {
+    const res = await fetch(`${API_BASE}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(docData)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to update document");
+    return data.document;
+  },
+
+  /**
    * Download controlled document text extract
    */
   downloadDocument(id) {

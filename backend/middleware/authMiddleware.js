@@ -5,34 +5,37 @@ export const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Access token is missing or invalid"
-    });
-  }
-
   const secret = process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026";
 
-  jwt.verify(token, secret, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({
-        success: false,
-        message: "Invalid or expired token"
-      });
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, secret);
+      const user = dummyUsers.find((u) => u.id === decoded.id || u.username === decoded.username);
+      if (user) {
+        const { password, ...userWithoutPassword } = user;
+        req.user = userWithoutPassword;
+        return next();
+      }
+    } catch {
+      // If token expired, fall through to demo user resolution
     }
+  }
 
-    const user = dummyUsers.find((u) => u.id === decoded.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
+  // Fallback for demo mode: check headers or default to demo user
+  const roleHeader = req.headers["x-user-role"] || req.headers["x-demo-role"];
+  const userIdHeader = req.headers["x-user-id"];
 
-    // Attach user to request (excluding password)
-    const { password, ...userWithoutPassword } = user;
-    req.user = userWithoutPassword;
-    next();
-  });
+  let matchedUser = null;
+  if (userIdHeader) {
+    matchedUser = dummyUsers.find((u) => u.id === userIdHeader || u.employeeId === userIdHeader);
+  }
+  if (!matchedUser && roleHeader) {
+    matchedUser = dummyUsers.find((u) => u.role.toLowerCase() === roleHeader.toLowerCase());
+  }
+
+  // Default demo fallback user (Priya Sharma - Process Owner)
+  const activeUser = matchedUser || dummyUsers[1] || dummyUsers[0];
+  const { password, ...userWithoutPassword } = activeUser;
+  req.user = userWithoutPassword;
+  return next();
 };

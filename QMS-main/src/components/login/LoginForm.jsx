@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { authService } from "../../services/authService";
 import Logo from "../common/Logo";
 import RolePicker from "./RolePicker";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 const DEMO_LOGINS = [
   { label: "Employee", username: "employee", role: "employee", pass: "1234" },
@@ -23,12 +24,15 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleQuickFill = (demo) => {
     setEmail(demo.username);
     setPassword(demo.pass);
     setRole(demo.role);
     setError("");
+    setSuccessMessage("");
   };
 
   const submit = async (event) => {
@@ -79,6 +83,27 @@ export default function LoginForm() {
         <h1>Sign in to QMS</h1>
         <p>Enter your credentials to access the Quality Management System.</p>
 
+        {successMessage && (
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "#f0fdf4",
+              border: "1px solid #86efac",
+              color: "#166534",
+              borderRadius: "8px",
+              marginBottom: "16px",
+              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+            role="status"
+          >
+            <CheckCircle2 size={18} style={{ flexShrink: 0, color: "#16a34a" }} />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
         {error && (
           <div className="login-error-alert" role="alert">
             <AlertCircle size={18} style={{ flexShrink: 0 }} />
@@ -93,7 +118,10 @@ export default function LoginForm() {
             <input
               type="text"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setSuccessMessage("");
+              }}
               placeholder="e.g. employee, processowner, or cdac email"
               autoComplete="username"
               disabled={loading}
@@ -107,7 +135,10 @@ export default function LoginForm() {
             <input
               type="password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setSuccessMessage("");
+              }}
               placeholder="Enter password (dummy: 1234)"
               autoComplete="current-password"
               disabled={loading}
@@ -127,7 +158,15 @@ export default function LoginForm() {
               Remember me
             </label>
 
-            <button type="button" className="plain-button" tabIndex={-1}>
+            <button
+              type="button"
+              className="plain-button"
+              onClick={() => {
+                setError("");
+                setSuccessMessage("");
+                setShowForgotPassword(true);
+              }}
+            >
               Forgot password?
             </button>
           </div>
@@ -169,6 +208,26 @@ export default function LoginForm() {
           C-DAC Quality Management System
         </small>
       </div>
+
+      {/* Forgot Password Interactive Modal */}
+      {showForgotPassword && (
+        <ForgotPasswordModal
+          initialIdentifier={email}
+          onClose={() => setShowForgotPassword(false)}
+          onSuccess={({ identifier, newPassword, role: updatedRole }) => {
+            setEmail(identifier);
+            setPassword(newPassword);
+            if (updatedRole) {
+              setRole(updatedRole);
+            }
+            setShowForgotPassword(false);
+            setError("");
+            setSuccessMessage(
+              `Password reset successfully for "${identifier}"! Click "Continue to workspace" to sign in.`
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

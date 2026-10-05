@@ -84,6 +84,7 @@ Base URL: `http://localhost:5000/api` (proxied automatically via `/api` in Vite)
 | `POST` | `/api/documents/:id/versions` | Create next revision version (archives earlier versions) | Yes (`Bearer <token>`) |
 | `PATCH`| `/api/documents/:id/status` | Update document review status & comments (Approved, Changes Requested) | Yes (`Bearer <token>`) |
 | `GET` | `/api/documents/:id/download` | Download controlled document text extract | No |
+| `DELETE`| `/api/documents/:id` | Remove a document from controlled library | Yes (`Bearer <token>`) |
 
 ### Task Management (`/api/tasks`)
 | Method | Endpoint | Description | Auth Required |
@@ -98,6 +99,7 @@ Base URL: `http://localhost:5000/api` (proxied automatically via `/api` in Vite)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/processes` | List all processes with dynamic metrics | No |
+| `POST` | `/api/processes` | Create a new organizational process | Yes (`Bearer <token>`) |
 | `GET` | `/api/processes/head-overview` | Executive progress %, status breakdown & milestones timeline | No |
 
 ### Notifications & Audit Trail
@@ -108,4 +110,5 @@ Base URL: `http://localhost:5000/api` (proxied automatically via `/api` in Vite)
 | `POST` | `/api/notifications/read-all` | Mark all notifications as read | No |
 | `GET` | `/api/activities` | Chronological audit trail across workflows | No |
 | `GET` | `/api/employees` | Organization employee directory with mapped processes | No |
+| `POST` | `/api/employees` | Register new employee in organization directory | Yes (`Bearer <token>`) |
 | `GET` | `/api/health` | System health check | No |

@@ -5,7 +5,9 @@ import {
   createDocument,
   createNewVersion,
   updateDocumentStatus,
-  downloadDocument
+  downloadDocument,
+  deleteDocument,
+  updateDocument
 } from "../controllers/documentController.js";
 import { authenticateToken } from "../middleware/authMiddleware.js";
 
@@ -20,5 +22,8 @@ router.get("/:id/download", downloadDocument);
 router.post("/", authenticateToken, createDocument);
 router.post("/:id/versions", authenticateToken, createNewVersion);
 router.patch("/:id/status", authenticateToken, updateDocumentStatus);
+router.put("/:id", authenticateToken, updateDocument);
+router.patch("/:id", authenticateToken, updateDocument);
+router.delete("/:id", authenticateToken, deleteDocument);
 
 export default router;

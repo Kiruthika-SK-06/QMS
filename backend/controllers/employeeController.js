@@ -44,3 +44,31 @@ export const getEmployeeById = (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// POST /api/employees
+export const createEmployee = (req, res) => {
+  try {
+    const { name, email, process, designation, department } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: "Name and email are required" });
+    }
+    const newEmp = {
+      id: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: name.trim(),
+      email: email.trim(),
+      process: process || "Employee Onboarding",
+      role: "employee",
+      assigned: 0,
+      completed: 0,
+      pending: 0,
+      status: "Active",
+      designation: designation || "Project Engineer",
+      department: department || "Operations"
+    };
+    employeesData.push(newEmp);
+    res.status(201).json({ success: true, employee: newEmp });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

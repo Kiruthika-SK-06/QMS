@@ -175,6 +175,52 @@ export const updateTaskStatus = (req, res) => {
   }
 };
 
+// PUT or PATCH /api/tasks/:id (Edit task details)
+export const updateTask = (req, res) => {
+  try {
+    const taskIndex = tasksData.findIndex((t) => t.id === req.params.id);
+    if (taskIndex === -1) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    const { title, description, employee, process, document, due, priority, status } = req.body;
+    const task = tasksData[taskIndex];
+    const actorName = req.user?.name || "Process Owner";
+
+    const updatedTask = {
+      ...task,
+      title: title !== undefined ? title.trim() : task.title,
+      description: description !== undefined ? description : task.description,
+      employee: employee !== undefined ? employee.trim() : task.employee,
+      process: process !== undefined ? process : task.process,
+      document: document !== undefined ? document : task.document,
+      due: due !== undefined ? due : task.due,
+      priority: priority !== undefined ? priority : task.priority,
+      status: status !== undefined ? status : task.status
+    };
+
+    tasksData[taskIndex] = updatedTask;
+
+    // Audit log
+    activitiesData.unshift({
+      id: `ACT-${Date.now()}`,
+      text: `Task updated: ${updatedTask.title} (${updatedTask.id})`,
+      actor: actorName,
+      time: "Just now",
+      tone: "blue",
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      message: "Task updated successfully",
+      task: updatedTask
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // DELETE /api/tasks/:id
 export const deleteTask = (req, res) => {
   try {
@@ -188,3 +234,4 @@ export const deleteTask = (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+

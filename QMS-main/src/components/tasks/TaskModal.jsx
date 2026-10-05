@@ -1,29 +1,29 @@
 import React, { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import Modal from "./Modal";
 import { useApp } from "../../context/AppContext";
 
-export default function TaskModal({ onClose, onSave }) {
+export default function TaskModal({ task, onClose, onSave }) {
   const { documents, employees, processes } = useApp();
 
   const defaultEmployee = employees[0]?.name || "Arun Kumar";
   const defaultProcess = processes[0]?.name || "Employee Onboarding";
 
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    employee: defaultEmployee,
-    process: defaultProcess,
-    document: "",
-    due: "30 Sep 2026",
-    status: "Pending",
-    priority: "Medium"
+    title: task?.title || "",
+    description: task?.description || "",
+    employee: task?.employee || defaultEmployee,
+    process: task?.process || defaultProcess,
+    document: task?.document || "",
+    due: task?.due || "30 Sep 2026",
+    status: task?.status || "Pending",
+    priority: task?.priority || "Medium"
   });
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <Modal title="Assign task" onClose={onClose}>
+    <Modal title={task ? `Edit Task: ${task.title}` : "Assign task"} onClose={onClose}>
       <div className="form-grid">
         <label>
           Task title
@@ -107,8 +107,9 @@ export default function TaskModal({ onClose, onSave }) {
           className="primary-button"
           disabled={!form.title.trim()}
           onClick={() => onSave(form)}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
         >
-          <Plus size={17} /> Assign task
+          {task ? <Save size={16} /> : <Plus size={17} />} {task ? "Save Changes" : "Assign task"}
         </button>
       </div>
     </Modal>

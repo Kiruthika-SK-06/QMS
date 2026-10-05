@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Check, AlertTriangle, FileText, Send } from "lucide-react";
+import { Check, AlertTriangle, FileText, Send, Edit } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 import DocumentTable from "../components/tables/DocumentTable";
 import Modal from "../components/tasks/Modal";
 import Detail from "../components/common/Detail";
 import StatusBadge from "../components/common/StatusBadge";
+import TemplateEditModal from "../components/common/TemplateEditModal";
 
 export default function Reviews() {
   const { documents, updateDocumentStatus, downloadDocument } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selected, setSelected] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -127,7 +129,7 @@ export default function Reviews() {
             <Detail label="Current status" value={<StatusBadge status={selected.status} />} />
           </div>
 
-          <div style={{ margin: "16px 0" }}>
+          <div style={{ margin: "16px 0", display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button
               type="button"
               className="secondary-button"
@@ -136,7 +138,26 @@ export default function Reviews() {
             >
               <FileText size={16} /> View controlled extract
             </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowEditModal(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#0284c7" }}
+            >
+              <Edit size={16} /> Edit {selected.type === "Templates" ? "template" : "document"}
+            </button>
           </div>
+
+          {selected.content && (
+            <div style={{ marginBottom: "16px", padding: "12px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <strong style={{ display: "block", fontSize: "12px", color: "#64748b", textTransform: "uppercase", marginBottom: "6px" }}>
+                Template Content Preview
+              </strong>
+              <pre style={{ margin: 0, fontSize: "12px", whiteSpace: "pre-wrap", fontFamily: "ui-monospace, monospace", color: "#334155" }}>
+                {selected.content}
+              </pre>
+            </div>
+          )}
 
           <label className="comment-field">
             Review comments & findings
@@ -169,6 +190,17 @@ export default function Reviews() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {showEditModal && selected && (
+        <TemplateEditModal
+          template={selected}
+          onClose={() => setShowEditModal(false)}
+          onSave={(updated) => {
+            setSelected(updated);
+            setShowEditModal(false);
+          }}
+        />
       )}
     </>
   );

@@ -58,22 +58,22 @@ export function AppProvider({ children }) {
         processService.fetchHeadOverview()
       ]);
 
-      if (docs.status === "fulfilled" && docs.value?.length) {
+      if (docs.status === "fulfilled" && Array.isArray(docs.value)) {
         setDocuments(docs.value);
       }
-      if (tsks.status === "fulfilled" && tsks.value?.length) {
+      if (tsks.status === "fulfilled" && Array.isArray(tsks.value)) {
         setTasks(tsks.value);
       }
-      if (notifs.status === "fulfilled" && notifs.value?.notifications?.length) {
+      if (notifs.status === "fulfilled" && Array.isArray(notifs.value?.notifications)) {
         setNotifications(notifs.value.notifications);
       }
-      if (procs.status === "fulfilled" && procs.value?.length) {
+      if (procs.status === "fulfilled" && Array.isArray(procs.value)) {
         setProcesses(procs.value);
       }
-      if (emps.status === "fulfilled" && emps.value?.length) {
+      if (emps.status === "fulfilled" && Array.isArray(emps.value)) {
         setEmployees(emps.value);
       }
-      if (acts.status === "fulfilled" && acts.value?.length) {
+      if (acts.status === "fulfilled" && Array.isArray(acts.value)) {
         setActivities(acts.value);
       }
       if (headData.status === "fulfilled" && headData.value) {
@@ -169,11 +169,25 @@ export function AppProvider({ children }) {
     }
   };
 
+  // Update task details (title, description, employee, process, due date, etc.)
+  const updateTask = async (id, taskData) => {
+    try {
+      const updated = await taskService.updateTask(id, taskData, token);
+      setTasks((items) => items.map((t) => (t.id === id ? updated : t)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("updateTask failed, falling back to local:", err);
+      setTasks((items) => items.map((t) => (t.id === id ? { ...t, ...taskData } : t)));
+    }
+  };
+
   // Delete task
   const deleteTask = async (id) => {
     try {
       await taskService.deleteTask(id, token);
       setTasks((items) => items.filter((t) => t.id !== id));
+      refreshData();
     } catch (err) {
       console.error("deleteTask failed:", err);
       setTasks((items) => items.filter((t) => t.id !== id));
@@ -248,6 +262,33 @@ export function AppProvider({ children }) {
     documentService.downloadDocument(id);
   };
 
+  // Delete controlled document
+  const deleteDocument = async (id) => {
+    try {
+      await documentService.deleteDocument(id, token);
+      setDocuments((items) => items.filter((d) => d.id !== id));
+      refreshData();
+    } catch (err) {
+      console.error("deleteDocument failed:", err);
+      setDocuments((items) => items.filter((d) => d.id !== id));
+    }
+  };
+
+  // Update / edit controlled document or template
+  const updateDocument = async (id, docData) => {
+    try {
+      const updated = await documentService.updateDocument(id, docData, token);
+      setDocuments((items) => items.map((doc) => (doc.id === id ? updated : doc)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("updateDocument failed, falling back to local:", err);
+      setDocuments((items) =>
+        items.map((doc) => (doc.id === id ? { ...doc, ...docData } : doc))
+      );
+    }
+  };
+
   // Mark single notification read
   const markNotificationRead = async (id) => {
     try {
@@ -289,9 +330,12 @@ export function AppProvider({ children }) {
         loginUser,
         logout,
         addTask,
+        updateTask,
         updateTaskStatus,
         deleteTask,
         createDocument,
+        deleteDocument,
+        updateDocument,
         addVersion,
         updateDocumentStatus,
         downloadDocument,

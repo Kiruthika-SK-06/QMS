@@ -27,8 +27,8 @@ export default function VersionHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {documents.flatMap((doc) =>
-                doc.versions.map((version) => (
+              {(documents || []).flatMap((doc) =>
+                (doc.versions || []).map((version) => (
                   <tr key={`${doc.id}-${version.version}`}>
                     <td>
                       <strong>{doc.name}</strong>

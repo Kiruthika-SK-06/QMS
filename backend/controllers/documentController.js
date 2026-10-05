@@ -94,6 +94,7 @@ export const createDocument = (req, res) => {
       status: "Under Review",
       submittedBy: authorName,
       description: description || "Controlled QMS document",
+      content: req.body.content || "",
       versions: [
         {
           version: "1.0",
@@ -295,7 +296,7 @@ Last Updated:    ${doc.updated} by ${doc.updatedBy}
 
 SUMMARY & PURPOSE:
 ${doc.description || "Official QMS document specification."}
-
+${doc.content ? `\nTEMPLATE SPECIFICATION & CHECKLIST:\n${doc.content}\n` : ""}
 VERSION HISTORY:
 ${doc.versions.map((v) => ` - v${v.version} (${v.date}) by ${v.author} [${v.status}]: ${v.notes || "No notes"}`).join("\n")}
 
@@ -310,3 +311,97 @@ This is a computer-generated controlled document extract.
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// PUT or PATCH /api/documents/:id (Edit template / document)
+export const updateDocument = (req, res) => {
+  try {
+    const docIndex = documentsData.findIndex((d) => d.id === req.params.id);
+    if (docIndex === -1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
+
+    const { name, process, type, description, content, status } = req.body;
+    const doc = documentsData[docIndex];
+    const editorName = req.user?.name || "QM Group";
+    const dateStr = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+
+    const updatedDoc = {
+      ...doc,
+      name: name !== undefined ? name.trim() : doc.name,
+      process: process !== undefined ? process.trim() : doc.process,
+      type: type !== undefined ? type.trim() : doc.type,
+      description: description !== undefined ? description.trim() : doc.description,
+      content: content !== undefined ? content : doc.content,
+      status: status !== undefined ? status : doc.status,
+      updated: dateStr,
+      updatedBy: editorName
+    };
+
+    documentsData[docIndex] = updatedDoc;
+
+    // Audit log entry
+    activitiesData.unshift({
+      id: `ACT-${Date.now()}`,
+      text: `${updatedDoc.type === "Templates" ? "Template" : "Document"} updated: ${updatedDoc.name} (${updatedDoc.id})`,
+      actor: editorName,
+      time: "Just now",
+      tone: "blue",
+      timestamp: new Date().toISOString()
+    });
+
+    // Notification
+    notificationsData.unshift({
+      id: Date.now(),
+      title: `${updatedDoc.type === "Templates" ? "Template" : "Document"} updated: ${updatedDoc.name}`,
+      text: `${editorName} updated the specification for ${updatedDoc.name}.`,
+      time: "Just now",
+      targetRole: "all",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      message: `${updatedDoc.type === "Templates" ? "Template" : "Document"} updated successfully`,
+      document: updatedDoc
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE /api/documents/:id
+export const deleteDocument = (req, res) => {
+  try {
+    const docIndex = documentsData.findIndex((d) => d.id === req.params.id);
+    if (docIndex === -1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
+
+    const [deleted] = documentsData.splice(docIndex, 1);
+    const actorName = req.user?.name || "QM Group";
+
+    // Audit log
+    activitiesData.unshift({
+      id: `ACT-${Date.now()}`,
+      text: `Document removed: ${deleted.name} (${deleted.id})`,
+      actor: actorName,
+      time: "Just now",
+      tone: "red",
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      message: "Document deleted successfully",
+      document: deleted
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

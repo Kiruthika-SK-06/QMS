@@ -49,6 +49,23 @@ export const taskService = {
   },
 
   /**
+   * Update / edit task details
+   */
+  async updateTask(id, taskData, token) {
+    const res = await fetch(`${API_BASE}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(taskData)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to update task");
+    return data.task;
+  },
+
+  /**
    * Delete task
    */
   async deleteTask(id, token) {
