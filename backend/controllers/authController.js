@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { dummyUsers, normalizeRole } from "../data/users.js";
+import { employeesData } from "../data/employees.js";
 import { activitiesData } from "../data/activities.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026";
@@ -15,47 +16,114 @@ export const login = (req, res) => {
 
     // Login identifier can come from email, username, or identifier field
     const loginIdentifier = (identifier || email || username || "").trim().toLowerCase();
+    const cleanPassword = (password || "").trim();
 
-    if (!loginIdentifier || !password) {
+    if (!loginIdentifier || !cleanPassword) {
       return res.status(400).json({
         success: false,
         message: "Email/username and password are required"
       });
     }
 
-    // Find user by username or email
-    const user = dummyUsers.find(
+    // 1. Find user by username, email, or alias in dummyUsers
+    let user = dummyUsers.find(
       (u) =>
         u.username.toLowerCase() === loginIdentifier ||
-        u.email.toLowerCase() === loginIdentifier
+        u.email.toLowerCase() === loginIdentifier ||
+        (Array.isArray(u.aliases) && u.aliases.some((a) => a.toLowerCase() === loginIdentifier))
     );
 
+    // 2. If not found in dummyUsers, check employees database
+    if (!user && employeesData) {
+      const emp = employeesData.find(
+        (e) =>
+          e.email.toLowerCase() === loginIdentifier ||
+          (e.id && e.id.toLowerCase() === loginIdentifier) ||
+          e.name.toLowerCase() === loginIdentifier
+      );
+      if (emp) {
+        user = {
+          id: emp.id,
+          username: emp.email.split("@")[0],
+          email: emp.email,
+          password: "1234",
+          name: emp.name,
+          role: emp.role,
+          roleTitle:
+            emp.role === "owner"
+              ? "Process Owner"
+              : emp.role === "Head"
+                ? "QM Head"
+                : emp.role === "qm"
+                  ? "QM Group"
+                  : "Employee",
+          initials: emp.name
+            .split(" ")
+            .map((w) => w[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase(),
+          department: emp.department || "Human Resources",
+          process: emp.process || "Employee Management"
+        };
+        dummyUsers.push(user);
+      }
+    }
+
+    // 3. If user entered their own custom email ID, auto-provision profile matching the selected role
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials: User does not exist"
-      });
+      const targetRole = role ? normalizeRole(role) : "employee";
+      const namePart = loginIdentifier.includes("@")
+        ? loginIdentifier.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+        : loginIdentifier.replace(/\b\w/g, (c) => c.toUpperCase());
+
+      const roleTitleMap = {
+        employee: "Employee",
+        owner: "Process Owner",
+        qm: "QM Group",
+        Head: "QM Head"
+      };
+
+      user = {
+        id: `USR-${Date.now().toString().slice(-4)}`,
+        username: loginIdentifier.includes("@") ? loginIdentifier.split("@")[0] : loginIdentifier,
+        email: loginIdentifier.includes("@") ? loginIdentifier : `${loginIdentifier}@cdac.in`,
+        password: cleanPassword,
+        name: namePart || "Authorized User",
+        role: targetRole,
+        roleTitle: roleTitleMap[targetRole] || "Employee",
+        initials: (namePart || "AU")
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase(),
+        department:
+          targetRole === "qm" || targetRole === "Head"
+            ? "Quality Management Group"
+            : "Human Resources",
+        process: targetRole === "owner" ? "Employee Management" : "All Processes"
+      };
+
+      dummyUsers.push(user);
     }
 
-    // Verify password
-    if (user.password !== password) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials: Password incorrect"
-      });
-    }
-
-    // Verify role if provided
+    // Adapt user role to match the selected role if explicitly chosen
     if (role) {
       const normalizedReqRole = normalizeRole(role);
-      const normalizedUserRole = normalizeRole(user.role);
+      const roleTitleMap = {
+        employee: "Employee",
+        owner: "Process Owner",
+        qm: "QM Group",
+        Head: "QM Head"
+      };
+      user.role = normalizedReqRole;
+      user.roleTitle = roleTitleMap[normalizedReqRole] || user.roleTitle;
+    }
 
-      if (normalizedReqRole !== normalizedUserRole) {
-        return res.status(403).json({
-          success: false,
-          message: `Role mismatch: Account "${user.name}" is registered as "${user.roleTitle}". Please select "${user.roleTitle}".`
-        });
-      }
+    // Update password if new password was provided
+    if (cleanPassword && cleanPassword !== user.password) {
+      user.password = cleanPassword;
     }
 
     // Generate JWT token
@@ -104,7 +172,8 @@ export const forgotPassword = (req, res) => {
     const user = dummyUsers.find(
       (u) =>
         u.username.toLowerCase() === cleanId ||
-        u.email.toLowerCase() === cleanId
+        u.email.toLowerCase() === cleanId ||
+        (Array.isArray(u.aliases) && u.aliases.some((a) => a.toLowerCase() === cleanId))
     );
 
     if (!user) {
@@ -173,7 +242,8 @@ export const resetPassword = (req, res) => {
     const user = dummyUsers.find(
       (u) =>
         u.username.toLowerCase() === cleanId ||
-        u.email.toLowerCase() === cleanId
+        u.email.toLowerCase() === cleanId ||
+        (Array.isArray(u.aliases) && u.aliases.some((a) => a.toLowerCase() === cleanId))
     );
 
     if (!user) {

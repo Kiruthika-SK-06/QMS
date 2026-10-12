@@ -8,31 +8,82 @@ const roles = {
 const users = {
   employee: {
     id: "EMP-1042",
+    username: "employee",
     name: "Aarav Mehta",
-    email: "aarav.mehta@cdac.in",
+    email: "employee@cdac.in",
+    aliases: [
+      "employee@cdac.in",
+      "aarav.mehta@cdac.in",
+      "arun.kumar@cdac.in",
+      "employee"
+    ],
+    password: "1234",
     role: "employee",
-    initials: "AM"
+    roleTitle: "Employee",
+    initials: "AM",
+    employeeId: "EMP001",
+    department: "Human Resources",
+    process: "Employee Management"
   },
   owner: {
     id: "PO-208",
+    username: "processowner",
     name: "Priya Nair",
-    email: "priya.nair@cdac.in",
+    email: "owner@cdac.in",
+    aliases: [
+      "owner@cdac.in",
+      "priya.nair@cdac.in",
+      "priya.sharma@cdac.in",
+      "processowner@cdac.in",
+      "processowner"
+    ],
+    password: "1234",
     role: "owner",
-    initials: "PN"
+    roleTitle: "Process Owner",
+    initials: "PN",
+    employeeId: "PO001",
+    department: "Human Resources",
+    process: "Employee Management"
   },
   qm: {
     id: "QM-001",
+    username: "qmgroup",
     name: "Quality Management Group",
-    email: "qms@cdac.in",
+    email: "qm@cdac.in",
+    aliases: [
+      "qm@cdac.in",
+      "qms@cdac.in",
+      "qmgroup@cdac.in",
+      "rahul.kumar@cdac.in",
+      "qmgroup"
+    ],
+    password: "1234",
     role: "qm",
-    initials: "QM"
+    roleTitle: "QM Group",
+    initials: "QM",
+    employeeId: "QM001",
+    department: "Quality Management",
+    process: "All Processes"
   },
   Head: {
     id: "QMH-001",
-    name: "Head of QM Group",
-    email: "qmhead@cdac.in",
+    username: "qmhead",
+    name: "Anita Rao",
+    email: "head@cdac.in",
+    aliases: [
+      "head@cdac.in",
+      "qmhead@cdac.in",
+      "anita.rao@cdac.in",
+      "head",
+      "qmhead"
+    ],
+    password: "1234",
     role: "Head",
-    initials: "HQ"
+    roleTitle: "QM Head",
+    initials: "HQ",
+    employeeId: "QMH001",
+    department: "Quality Management",
+    process: "All Processes"
   }
 };
 

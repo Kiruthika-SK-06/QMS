@@ -4,6 +4,12 @@ export const dummyUsers = [
     id: "EMP-1042",
     username: "employee",
     email: "employee@cdac.in",
+    aliases: [
+      "employee@cdac.in",
+      "aarav.mehta@cdac.in",
+      "arun.kumar@cdac.in",
+      "employee"
+    ],
     password: "1234",
     name: "Arun Kumar",
     role: "employee",
@@ -17,6 +23,13 @@ export const dummyUsers = [
     id: "PO-208",
     username: "processowner",
     email: "owner@cdac.in",
+    aliases: [
+      "owner@cdac.in",
+      "priya.nair@cdac.in",
+      "priya.sharma@cdac.in",
+      "processowner@cdac.in",
+      "processowner"
+    ],
     password: "1234",
     name: "Priya Sharma",
     role: "owner",
@@ -30,6 +43,13 @@ export const dummyUsers = [
     id: "QM-001",
     username: "qmgroup",
     email: "qm@cdac.in",
+    aliases: [
+      "qm@cdac.in",
+      "qms@cdac.in",
+      "qmgroup@cdac.in",
+      "rahul.kumar@cdac.in",
+      "qmgroup"
+    ],
     password: "1234",
     name: "Rahul Kumar",
     role: "qm",
@@ -43,6 +63,13 @@ export const dummyUsers = [
     id: "QMH-001",
     username: "qmhead",
     email: "head@cdac.in",
+    aliases: [
+      "head@cdac.in",
+      "qmhead@cdac.in",
+      "anita.rao@cdac.in",
+      "head",
+      "qmhead"
+    ],
     password: "1234",
     name: "Anita Rao",
     role: "Head",

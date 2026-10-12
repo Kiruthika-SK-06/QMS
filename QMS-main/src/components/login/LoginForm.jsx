@@ -1,49 +1,52 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { authService } from "../../services/authService";
 import Logo from "../common/Logo";
 import RolePicker from "./RolePicker";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
-const DEMO_LOGINS = [
-  { label: "Employee", username: "employee", role: "employee", pass: "1234" },
-  { label: "Process Owner", username: "processowner", role: "owner", pass: "1234" },
-  { label: "QM Group", username: "qmgroup", role: "qm", pass: "1234" },
-  { label: "QM Head", username: "qmhead", role: "Head", pass: "1234" }
-];
-
 export default function LoginForm() {
   const { loginUser } = useApp();
   const navigate = useNavigate();
 
-  const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const handleQuickFill = (demo) => {
-    setEmail(demo.username);
-    setPassword(demo.pass);
-    setRole(demo.role);
-    setError("");
-    setSuccessMessage("");
-  };
-
-  const submit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setSuccessMessage("");
+
+    if (!email.trim()) {
+      setError("Please enter your email ID or username.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    if (!role) {
+      setError("Please select a role from the dropdown to continue.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Authenticate with the backend API
+      // Authenticate with the backend API or resilient fallback
       const res = await authService.login({
-        identifier: email,
+        identifier: email.trim(),
         password,
         role
       });
@@ -65,11 +68,11 @@ export default function LoginForm() {
 
         navigate(path);
       } else {
-        setError(res.message || "Failed to sign in. Please verify your credentials.");
+        setError(res.message || "Failed to sign in. Please check your credentials.");
       }
     } catch (err) {
       console.error("Login failed:", err);
-      setError(err.message || "Unable to connect to authentication server. Please ensure the backend is running.");
+      setError(err.message || "Failed to sign in. Please verify your credentials and selected role.");
     } finally {
       setLoading(false);
     }
@@ -80,73 +83,93 @@ export default function LoginForm() {
       <div className="login-card">
         <Logo />
 
-        <h1>Sign in to QMS</h1>
-        <p>Enter your credentials to access the Quality Management System.</p>
+        <h1 className="login-heading">Sign in to QMS</h1>
+        <p className="login-subheading">
+          Enter your email ID, password, and select your role to access the workspace.
+        </p>
 
         {successMessage && (
-          <div
-            style={{
-              padding: "10px 14px",
-              background: "#f0fdf4",
-              border: "1px solid #86efac",
-              color: "#166534",
-              borderRadius: "8px",
-              marginBottom: "16px",
-              fontSize: "13px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}
-            role="status"
-          >
-            <CheckCircle2 size={18} style={{ flexShrink: 0, color: "#16a34a" }} />
+          <div className="login-success-alert" role="status">
+            <CheckCircle2 size={18} className="alert-icon" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {error && (
           <div className="login-error-alert" role="alert">
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <AlertCircle size={18} className="alert-icon" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={submit}>
-          {/* Email or Username */}
-          <label>
-            Email or username
-            <input
-              type="text"
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-                setSuccessMessage("");
-              }}
-              placeholder="e.g. employee, processowner, or cdac email"
-              autoComplete="username"
-              disabled={loading}
-              required
-            />
-          </label>
+        <form onSubmit={handleSubmit} noValidate>
+          {/* Work Email ID */}
+          <div className="login-field-group">
+            <label htmlFor="login-email">
+              Work Email ID or Username
+            </label>
+            <div className="login-input-wrapper">
+              <Mail size={16} className="login-input-icon" />
+              <input
+                id="login-email"
+                name="email"
+                type="text"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setError("");
+                  setSuccessMessage("");
+                }}
+                placeholder="e.g. employee@cdac.in"
+                autoComplete="username"
+                disabled={loading}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Role Picker (Clean role dropdown, no descriptions, smart flip) */}
+          <RolePicker role={role} onChange={(newRole) => {
+            setRole(newRole);
+            setError("");
+          }} disabled={loading} />
 
           {/* Password */}
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                setSuccessMessage("");
-              }}
-              placeholder="Enter password (dummy: 1234)"
-              autoComplete="current-password"
-              disabled={loading}
-              required
-            />
-          </label>
+          <div className="login-field-group">
+            <label htmlFor="login-password">
+              Password
+            </label>
+            <div className="login-input-wrapper">
+              <Lock size={16} className="login-input-icon" />
+              <input
+                id="login-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError("");
+                  setSuccessMessage("");
+                }}
+                placeholder="Enter password"
+                autoComplete="current-password"
+                disabled={loading}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+                tabIndex={0}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
 
-          {/* Remember Me */}
+          {/* Remember Me and Forgot Password */}
           <div className="login-options">
             <label className="checkbox">
               <input
@@ -155,7 +178,7 @@ export default function LoginForm() {
                 onChange={(event) => setRememberMe(event.target.checked)}
                 disabled={loading}
               />
-              Remember me
+              <span>Remember me</span>
             </label>
 
             <button
@@ -166,46 +189,25 @@ export default function LoginForm() {
                 setSuccessMessage("");
                 setShowForgotPassword(true);
               }}
+              disabled={loading}
             >
               Forgot password?
             </button>
           </div>
 
-          {/* Role */}
-          <RolePicker role={role} onChange={setRole} />
-
-          {/* Login Button */}
+          {/* Sign In Button */}
           <button
-            className="primary-button full"
+            className="primary-button full login-submit-btn"
             type="submit"
-            disabled={!email || !password || !role || loading}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+            disabled={!email.trim() || !password || loading}
           >
             {loading && <Loader2 size={16} className="animate-spin" />}
-            {loading ? "Signing in..." : "Continue to workspace"}
+            <span>{loading ? "Authenticating..." : "Sign in to Workspace"}</span>
           </button>
         </form>
 
-        {/* Demo Accounts Quick-Select */}
-        <div className="demo-credentials-box">
-          <span className="demo-title">Quick Demo Login (Password: 1234)</span>
-          <div className="demo-chips">
-            {DEMO_LOGINS.map((demo) => (
-              <button
-                type="button"
-                key={demo.username}
-                className="demo-chip"
-                onClick={() => handleQuickFill(demo)}
-                title={`Login as ${demo.label} (${demo.username} / 1234)`}
-              >
-                {demo.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <small className="login-footnote">
-          C-DAC Quality Management System
+          Centre for Development of Advanced Computing (C-DAC) &bull; Quality Management System
         </small>
       </div>
 
@@ -223,7 +225,7 @@ export default function LoginForm() {
             setShowForgotPassword(false);
             setError("");
             setSuccessMessage(
-              `Password reset successfully for "${identifier}"! Click "Continue to workspace" to sign in.`
+              `Password reset successfully for "${identifier}"! Click "Sign in to Workspace" to continue.`
             );
           }}
         />
