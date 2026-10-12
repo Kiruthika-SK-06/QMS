@@ -16,6 +16,8 @@
     "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "npm --prefix backend start",
     "start:frontend": "npm --prefix QMS-main run dev",
+    "stop": "node scripts/kill-ports.js",
+    "restart": "node scripts/kill-ports.js && npm run dev",
     "install:all": "npm --prefix backend install && npm --prefix QMS-main install"
   },
   "dependencies": {

@@ -81,7 +81,7 @@ app.use((err, req, res, next) => {
 
 // Start Server
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`\n=================================================`);
     console.log(`🚀 QMS Backend Server running on port ${PORT}`);
     console.log(`📡 URL: http://localhost:${PORT}`);
@@ -92,6 +92,25 @@ if (!process.env.VERCEL) {
     console.log(`   3) QM Group:      username: qmgroup       | password: 1234 | role: qm`);
     console.log(`   4) QM Head:       username: qmhead        | password: 1234 | role: Head`);
     console.log(`=================================================\n`);
+  });
+
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.log(`\n=================================================`);
+      console.log(`ℹ️  PORT ${PORT} IS ALREADY ACTIVE`);
+      console.log(`-------------------------------------------------`);
+      console.log(`The QMS Backend Server is already running and listening on port ${PORT}!`);
+      console.log(`📡 Backend API:  http://localhost:${PORT}`);
+      console.log(`🌐 Frontend App: http://localhost:5173`);
+      console.log(``);
+      console.log(`👉 You do not need to start it again. Open your browser:`);
+      console.log(`   http://localhost:5173`);
+      console.log(`=================================================\n`);
+      process.exit(0);
+    } else {
+      console.error("Unhandled server error:", err);
+      process.exit(1);
+    }
   });
 }
 
