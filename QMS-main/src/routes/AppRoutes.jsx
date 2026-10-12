@@ -18,16 +18,6 @@ import Profile from "../pages/Profile";
 export default function AppRoutes() {
   const { currentUser } = useApp();
 
-  const dashboardPath = currentUser
-    ? `/${currentUser.role === "employee"
-        ? "employee"
-        : currentUser.role === "owner"
-          ? "process-owner"
-          : currentUser.role === "Head"
-            ? "Head"
-            : "qm-group"}/dashboard`
-    : "/login";
-
   return (
     <Routes>
       <Route
@@ -35,7 +25,8 @@ export default function AppRoutes() {
         element={<LoginPage />}
       />
 
-      <Route path="/" element={<Navigate to={dashboardPath} replace />} />
+      {/* Opening the website always routes to the login page first */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route element={<DashboardLayout />}>
         <Route path="/employee/dashboard" element={<Dashboard />} />
@@ -54,7 +45,7 @@ export default function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
