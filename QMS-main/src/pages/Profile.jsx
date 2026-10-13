@@ -28,7 +28,7 @@ export default function Profile() {
         </div>
         <div className="detail-list">
           <Detail label="User ID" value={currentUser.id || "N/A"} />
-          <Detail label="Employee ID" value={currentUser.employeeId || currentUser.id || "N/A"} />
+          <Detail label="Staff / Member ID" value={currentUser.employeeId || currentUser.id || "N/A"} />
           <Detail label="Assigned Role" value={roleTitle} />
           <Detail label="Department" value={currentUser.department || "Quality Management Group"} />
           <Detail label="Mapped Process" value={currentUser.process || "All Controlled Processes"} />

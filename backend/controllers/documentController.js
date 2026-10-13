@@ -2,6 +2,7 @@ import { documentsData } from "../data/documents.js";
 import { tasksData } from "../data/tasks.js";
 import { activitiesData } from "../data/activities.js";
 import { notificationsData } from "../data/notifications.js";
+import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 // GET /api/documents
 export const getAllDocuments = (req, res) => {
@@ -75,7 +76,7 @@ export const createDocument = (req, res) => {
 
     const nextIdNumber = documentsData.length + 1;
     const newId = `DOC-${String(nextIdNumber).padStart(3, "0")}`;
-    const authorName = req.user?.name || "Process Owner";
+    const authorName = req.user?.name || "Course Coordinator";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -129,6 +130,8 @@ export const createDocument = (req, res) => {
       createdAt: new Date().toISOString()
     });
 
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "CREATED", document: newDoc });
+
     res.status(201).json({
       success: true,
       message: "Document created successfully",
@@ -148,7 +151,7 @@ export const createNewVersion = (req, res) => {
     }
 
     const doc = documentsData[docIndex];
-    const authorName = req.user?.name || "Process Owner";
+    const authorName = req.user?.name || "Course Coordinator";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -198,6 +201,8 @@ export const createNewVersion = (req, res) => {
       read: false,
       createdAt: new Date().toISOString()
     });
+
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: updatedDoc });
 
     res.json({
       success: true,
@@ -263,6 +268,8 @@ export const updateDocumentStatus = (req, res) => {
       createdAt: new Date().toISOString()
     });
 
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: updatedDoc });
+
     res.json({
       success: true,
       message: `Document status updated to ${status}`,
@@ -289,7 +296,7 @@ Document ID:     ${doc.id}
 Title:           ${doc.name}
 Type:            ${doc.type}
 Process:         ${doc.process}
-Process Owner:   ${doc.owner}
+Course Coord.:   ${doc.owner}
 Current Version: v${doc.version}
 Status:          ${doc.status}
 Last Updated:    ${doc.updated} by ${doc.updatedBy}
@@ -394,6 +401,8 @@ export const deleteDocument = (req, res) => {
       tone: "red",
       timestamp: new Date().toISOString()
     });
+
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "DELETED", id: req.params.id });
 
     res.json({
       success: true,

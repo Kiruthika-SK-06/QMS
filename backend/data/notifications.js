@@ -2,16 +2,16 @@
 export let notificationsData = [
   {
     id: 1,
-    title: "New task assigned to you",
-    text: "Complete joining documentation before 22 Sep 2026.",
+    title: "New MRM ready for distribution",
+    text: "Q3 Academic Review Meeting was approved by Trust Head. QMS Coordinator can now distribute to Course Coordinators.",
     time: "15 minutes ago",
-    targetRole: "employee",
+    targetRole: "qm",
     read: false,
     createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString()
   },
   {
     id: 2,
-    title: "Feedback Form updated to Version 3.0",
+    title: "Course Management Procedure updated to Version 3.0",
     text: "The latest approved version is available in the controlled library.",
     time: "2 hours ago",
     targetRole: "all",
@@ -20,8 +20,8 @@ export let notificationsData = [
   },
   {
     id: 3,
-    title: "Document submitted for QM review",
-    text: "Training Feedback Template (DOC-003) is awaiting QM Group review.",
+    title: "Document submitted for QMS review",
+    text: "Course Delivery Template (DOC-003) is awaiting QMS Coordinator review.",
     time: "Yesterday",
     targetRole: "qm",
     read: true,
@@ -29,8 +29,8 @@ export let notificationsData = [
   },
   {
     id: 4,
-    title: "Changes requested for Joining Form",
-    text: "Please review QM comments regarding emergency contacts section.",
+    title: "Feedback on Course Syllabus Form",
+    text: "Please review notes regarding industry project requirements.",
     time: "Yesterday",
     targetRole: "owner",
     read: true,
@@ -39,7 +39,7 @@ export let notificationsData = [
   {
     id: 5,
     title: "Document approved",
-    text: "Employee Induction Procedure (DOC-004) was approved by QM Group.",
+    text: "Course Curriculum Procedure (DOC-004) was approved by QMS Coordinator.",
     time: "2 days ago",
     targetRole: "all",
     read: true,

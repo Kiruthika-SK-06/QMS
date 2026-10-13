@@ -20,10 +20,9 @@ import Modal from "../tasks/Modal";
 import { authService } from "../../services/authService";
 
 const QUICK_ACCOUNTS = [
-  { label: "Employee", username: "employee", role: "employee" },
-  { label: "Process Owner", username: "processowner", role: "owner" },
-  { label: "QM Group", username: "qmgroup", role: "qm" },
-  { label: "QM Head", username: "qmhead", role: "Head" }
+  { label: "Course Coordinator", username: "coursecoordinator", role: "owner" },
+  { label: "QMS Coordinator", username: "qmcoordinator", role: "qm" },
+  { label: "Trust Head", username: "trusthead", role: "Head" }
 ];
 
 export default function ForgotPasswordModal({ initialIdentifier = "", onClose, onSuccess }) {
@@ -164,7 +163,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
               gap: "6px",
               fontSize: "13px",
               fontWeight: step >= 1 ? "600" : "400",
-              color: step >= 1 ? "#0284c7" : "#94a3b8"
+              color: step >= 1 ? "var(--navy)" : "#94a3b8"
             }}
           >
             <span
@@ -172,12 +171,13 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: step >= 1 ? "#0284c7" : "#e2e8f0",
+                background: step >= 1 ? "var(--navy)" : "#e2e8f0",
                 color: step >= 1 ? "#fff" : "#64748b",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "12px"
+                fontSize: "12px",
+                fontWeight: "700"
               }}
             >
               1
@@ -189,7 +189,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
             style={{
               width: "32px",
               height: "2px",
-              background: step >= 2 ? "#0284c7" : "#e2e8f0"
+              background: step >= 2 ? "var(--navy)" : "#e2e8f0"
             }}
           />
 
@@ -200,7 +200,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
               gap: "6px",
               fontSize: "13px",
               fontWeight: step >= 2 ? "600" : "400",
-              color: step >= 2 ? "#0284c7" : "#94a3b8"
+              color: step >= 2 ? "var(--navy)" : "#94a3b8"
             }}
           >
             <span
@@ -208,12 +208,13 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                 width: "22px",
                 height: "22px",
                 borderRadius: "50%",
-                background: step >= 2 ? "#0284c7" : "#e2e8f0",
+                background: step >= 2 ? "var(--navy)" : "#e2e8f0",
                 color: step >= 2 ? "#fff" : "#64748b",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "12px"
+                fontSize: "12px",
+                fontWeight: "700"
               }}
             >
               2
@@ -295,7 +296,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. employee, processowner, or cdac email"
+                  placeholder="e.g. coursecoordinator, qmcoordinator, or cdac email"
                   style={{
                     width: "100%",
                     padding: "10px 12px 10px 38px",
@@ -338,7 +339,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                   gap: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  color: "#0369a1",
+                  color: "var(--navy)",
                   marginBottom: "8px"
                 }}
               >
@@ -356,9 +357,9 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                     }}
                     style={{
                       padding: "4px 10px",
-                      background: identifier === acc.username ? "#0284c7" : "#ffffff",
+                      background: identifier === acc.username ? "var(--navy)" : "#ffffff",
                       color: identifier === acc.username ? "#ffffff" : "#334155",
-                      border: `1px solid ${identifier === acc.username ? "#0284c7" : "#cbd5e1"}`,
+                      border: `1px solid ${identifier === acc.username ? "var(--navy)" : "var(--line)"}`,
                       borderRadius: "16px",
                       fontSize: "12px",
                       fontWeight: "500",
@@ -384,7 +385,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
               </button>
               <button
                 type="submit"
-                className="primary-button"
+                className="primary-button btn-blue"
                 disabled={!identifier.trim() || loading}
                 style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
               >
@@ -415,8 +416,8 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "10px 14px",
-                  background: "#eff6ff",
-                  border: "1px solid #bfdbfe",
+                  background: "var(--navy-subtle)",
+                  border: "1px solid var(--navy-border)",
                   borderRadius: "8px",
                   marginBottom: "16px"
                 }}
@@ -424,23 +425,23 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <div
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "34px",
+                      height: "34px",
                       borderRadius: "50%",
-                      background: "#dbeafe",
+                      background: "linear-gradient(135deg, #0e3f68 0%, #0b3457 100%)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "#1d4ed8"
+                      color: "#ffffff"
                     }}
                   >
                     <UserCheck size={18} />
                   </div>
                   <div>
-                    <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e3a8a" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--navy)" }}>
                       {userInfo.name || userInfo.username}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#3b82f6" }}>
+                    <div style={{ fontSize: "11px", color: "var(--muted)" }}>
                       {userInfo.email} • Role: {userInfo.role}
                     </div>
                   </div>
@@ -455,9 +456,9 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                   style={{
                     background: "transparent",
                     border: "none",
-                    color: "#2563eb",
+                    color: "var(--navy)",
                     fontSize: "12px",
-                    fontWeight: "500",
+                    fontWeight: "600",
                     cursor: "pointer",
                     textDecoration: "underline"
                   }}
@@ -657,7 +658,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
 
               <button
                 type="submit"
-                className="primary-button"
+                className="primary-button btn-green"
                 disabled={
                   !code.trim() ||
                   !newPassword ||
@@ -727,7 +728,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#64748b" }}>New Password:</span>
-                <span style={{ fontFamily: "monospace", fontWeight: "600", color: "#0284c7" }}>
+                <span style={{ fontFamily: "monospace", fontWeight: "600", color: "var(--navy)" }}>
                   {"•".repeat(newPassword.length)} ({newPassword})
                 </span>
               </div>

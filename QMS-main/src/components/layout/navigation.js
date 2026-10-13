@@ -7,34 +7,22 @@ import {
   Bell,
   Activity,
   BookOpen,
-  FileCheck2
+  FileCheck2,
+  CalendarCheck,
+  UserCheck,
+  ShieldCheck
 } from "lucide-react";
 
 // Each role's nav is a list of groups: [groupLabel, [ [label, path, Icon], ... ] ]
 export const navByRole = {
-  employee: [
-    ["OVERVIEW", [
-      ["Dashboard", "/employee/dashboard", LayoutDashboard]
-    ]],
-    ["MANAGEMENT", [
-      ["Documents", "/documents", FileText],
-      ["Tasks", "/tasks", ClipboardList]
-    ]],
-    ["MONITORING", [
-      ["Notifications", "/notifications", Bell]
-    ]],
-    ["ACCOUNT", [
-      ["Profile", "/profile", Users]
-    ]]
-  ],
   owner: [
     ["OVERVIEW", [
       ["Dashboard", "/process-owner/dashboard", LayoutDashboard]
     ]],
-    ["MANAGEMENT", [
+    ["COURSE MANAGEMENT", [
       ["Documents", "/documents", FileText],
       ["My Processes", "/processes", BookOpen],
-      ["Employees", "/employees", Users],
+      ["Management Review Meeting", "/mrm", CalendarCheck],
       ["Tasks", "/tasks", ClipboardList]
     ]],
     ["MONITORING", [
@@ -51,15 +39,16 @@ export const navByRole = {
       ["Dashboard", "/qm-group/dashboard", LayoutDashboard]
     ]],
     ["MANAGEMENT", [
-      ["Documents", "/documents", FileText],
-      ["Document Review", "/reviews", FileCheck2],
+      ["Document Management", "/documents", FileText],
+      ["Document Review Queue", "/reviews", FileCheck2],
+      ["User Management", "/user-management", UserCheck],
+      ["Management Review Meeting", "/mrm", CalendarCheck],
       ["Processes", "/processes", BookOpen],
-      ["Employees", "/employees", Users],
       ["Tasks", "/tasks", ClipboardList]
     ]],
-    ["MONITORING", [
-      ["Version History", "/version-history", History],
-      ["Activity", "/activity", Activity],
+    ["MONITORING & AUDIT", [
+      ["Audit Trail", "/version-history", History],
+      ["Activity Logs", "/activity", Activity],
       ["Notifications", "/notifications", Bell]
     ]],
     ["ACCOUNT", [
@@ -70,10 +59,14 @@ export const navByRole = {
     ["OVERVIEW", [
       ["Dashboard", "/Head/dashboard", LayoutDashboard]
     ]],
-    ["MANAGEMENT", [
+    ["EXECUTIVE OVERSIGHT", [
+      ["MRM Approvals", "/mrm", ShieldCheck],
+      ["Approval History", "/mrm?filter=Approved", History],
+      ["Document Oversight", "/documents", FileText],
       ["Processes", "/processes", BookOpen]
     ]],
     ["MONITORING", [
+      ["Audit Trail", "/version-history", History],
       ["Notifications", "/notifications", Bell]
     ]],
     ["ACCOUNT", [

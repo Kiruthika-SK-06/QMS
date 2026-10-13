@@ -8,7 +8,8 @@ import Documents from "../pages/Documents";
 import DocumentDetails from "../pages/DocumentDetails";
 import Tasks from "../pages/Tasks";
 import Processes from "../pages/Processes";
-import Employees from "../pages/Employees";
+import UserManagement from "../pages/UserManagement";
+import ManagementReviewMeeting from "../pages/ManagementReviewMeeting";
 import Reviews from "../pages/Reviews";
 import VersionHistoryPage from "../pages/VersionHistoryPage";
 import Notifications from "../pages/Notifications";
@@ -29,20 +30,29 @@ export default function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route element={<DashboardLayout />}>
-        <Route path="/employee/dashboard" element={<Dashboard />} />
+        {/* Dashboards with new semantic routes and backward-compatible aliases */}
+        <Route path="/course-coordinator/dashboard" element={<Dashboard />} />
         <Route path="/process-owner/dashboard" element={<Dashboard />} />
+        <Route path="/qms-coordinator/dashboard" element={<Dashboard />} />
         <Route path="/qm-group/dashboard" element={<Dashboard />} />
+        <Route path="/trust-head/dashboard" element={<Dashboard />} />
         <Route path="/Head/dashboard" element={<Dashboard />} />
+
+        {/* Feature Pages */}
         <Route path="/documents" element={<Documents />} />
         <Route path="/documents/:id" element={<DocumentDetails />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/processes" element={<Processes />} />
-        <Route path="/employees" element={<Employees />} />
+        <Route path="/user-management" element={<UserManagement />} />
+        <Route path="/mrm" element={<ManagementReviewMeeting />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/version-history" element={<VersionHistoryPage />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/activity" element={<ActivityPage />} />
         <Route path="/profile" element={<Profile />} />
+
+        {/* Backward-compatibility redirect from /employees to /user-management */}
+        <Route path="/employees" element={<Navigate to="/user-management" replace />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

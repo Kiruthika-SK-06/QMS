@@ -58,13 +58,11 @@ export default function LoginForm() {
         // Determine destination dashboard based on verified user role
         const userRole = res.user.role;
         const path =
-          userRole === "employee"
-            ? "/employee/dashboard"
-            : userRole === "owner"
-              ? "/process-owner/dashboard"
-              : userRole === "Head"
-                ? "/Head/dashboard"
-                : "/qm-group/dashboard";
+          userRole === "owner"
+            ? "/process-owner/dashboard"
+            : userRole === "Head"
+              ? "/Head/dashboard"
+              : "/qm-group/dashboard";
 
         navigate(path);
       } else {
@@ -120,7 +118,7 @@ export default function LoginForm() {
                   setError("");
                   setSuccessMessage("");
                 }}
-                placeholder="e.g. employee@cdac.in"
+                placeholder="e.g. coordinator@cdac.in"
                 autoComplete="username"
                 disabled={loading}
                 required
@@ -197,7 +195,7 @@ export default function LoginForm() {
 
           {/* Sign In Button */}
           <button
-            className="primary-button full login-submit-btn"
+            className="primary-button btn-blue full login-submit-btn"
             type="submit"
             disabled={!email.trim() || !password || loading}
           >

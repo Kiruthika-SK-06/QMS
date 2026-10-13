@@ -6,8 +6,8 @@ import { useApp } from "../../context/AppContext";
 export default function TaskModal({ task, onClose, onSave }) {
   const { documents, employees, processes } = useApp();
 
-  const defaultEmployee = employees[0]?.name || "Arun Kumar";
-  const defaultProcess = processes[0]?.name || "Employee Onboarding";
+  const defaultEmployee = employees[0]?.name || "Priya Sharma";
+  const defaultProcess = processes[0]?.name || "Course Management";
 
   const [form, setForm] = useState({
     title: task?.title || "",
@@ -36,7 +36,7 @@ export default function TaskModal({ task, onClose, onSave }) {
         </label>
 
         <label>
-          Assigned employee
+          Assigned coordinator / member
           <select value={form.employee} onChange={(e) => update("employee", e.target.value)}>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.name}>
@@ -104,12 +104,13 @@ export default function TaskModal({ task, onClose, onSave }) {
         </button>
         <button
           type="button"
-          className="primary-button"
+          className="primary-button btn-blue"
           disabled={!form.title.trim()}
           onClick={() => onSave(form)}
           style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
         >
-          {task ? <Save size={16} /> : <Plus size={17} />} {task ? "Save Changes" : "Assign task"}
+          {task ? <Save size={16} /> : <Plus size={17} />}
+          <span>{task ? "Save Changes" : "Assign task"}</span>
         </button>
       </div>
     </Modal>

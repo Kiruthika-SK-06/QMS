@@ -51,20 +51,18 @@ export const login = (req, res) => {
           role: emp.role,
           roleTitle:
             emp.role === "owner"
-              ? "Process Owner"
+              ? "Course Coordinator"
               : emp.role === "Head"
-                ? "QM Head"
-                : emp.role === "qm"
-                  ? "QM Group"
-                  : "Employee",
+                ? "Trust Head"
+                : "QMS Coordinator",
           initials: emp.name
             .split(" ")
             .map((w) => w[0])
             .join("")
             .slice(0, 2)
             .toUpperCase(),
-          department: emp.department || "Human Resources",
-          process: emp.process || "Employee Management"
+          department: emp.department || "Academic Division",
+          process: emp.process || "Course Management"
         };
         dummyUsers.push(user);
       }
@@ -72,16 +70,15 @@ export const login = (req, res) => {
 
     // 3. If user entered their own custom email ID, auto-provision profile matching the selected role
     if (!user) {
-      const targetRole = role ? normalizeRole(role) : "employee";
+      const targetRole = role ? normalizeRole(role) : "owner";
       const namePart = loginIdentifier.includes("@")
         ? loginIdentifier.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
         : loginIdentifier.replace(/\b\w/g, (c) => c.toUpperCase());
 
       const roleTitleMap = {
-        employee: "Employee",
-        owner: "Process Owner",
-        qm: "QM Group",
-        Head: "QM Head"
+        owner: "Course Coordinator",
+        qm: "QMS Coordinator",
+        Head: "Trust Head"
       };
 
       user = {
@@ -91,7 +88,7 @@ export const login = (req, res) => {
         password: cleanPassword,
         name: namePart || "Authorized User",
         role: targetRole,
-        roleTitle: roleTitleMap[targetRole] || "Employee",
+        roleTitle: roleTitleMap[targetRole] || "Course Coordinator",
         initials: (namePart || "AU")
           .split(" ")
           .map((w) => w[0])
@@ -101,8 +98,8 @@ export const login = (req, res) => {
         department:
           targetRole === "qm" || targetRole === "Head"
             ? "Quality Management Group"
-            : "Human Resources",
-        process: targetRole === "owner" ? "Employee Management" : "All Processes"
+            : "Academic Division",
+        process: targetRole === "owner" ? "Course Management" : "All Processes"
       };
 
       dummyUsers.push(user);
@@ -112,10 +109,9 @@ export const login = (req, res) => {
     if (role) {
       const normalizedReqRole = normalizeRole(role);
       const roleTitleMap = {
-        employee: "Employee",
-        owner: "Process Owner",
-        qm: "QM Group",
-        Head: "QM Head"
+        owner: "Course Coordinator",
+        qm: "QMS Coordinator",
+        Head: "Trust Head"
       };
       user.role = normalizedReqRole;
       user.roleTitle = roleTitleMap[normalizedReqRole] || user.roleTitle;
@@ -179,7 +175,7 @@ export const forgotPassword = (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: `No QMS user account found matching "${cleanId}". Available demo accounts: employee, processowner, qmgroup, qmhead.`
+        message: `No QMS user account found matching "${cleanId}". Available demo accounts: coursecoordinator, qmcoordinator, trusthead.`
       });
     }
 

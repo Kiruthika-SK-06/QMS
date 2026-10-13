@@ -47,7 +47,7 @@ export default function DocumentDetails() {
             <button className="secondary-button" onClick={() => downloadDocument(document.id)}>
               <Download size={16} /> View file
             </button>
-            {currentUser?.role !== "employee" && (
+            {currentUser && (
               <>
                 <button
                   className="secondary-button"
@@ -56,21 +56,21 @@ export default function DocumentDetails() {
                 >
                   <Edit size={16} /> Edit {document.type === "Templates" ? "template" : "document"}
                 </button>
-                <button className="primary-button" onClick={() => addVersion(document.id)}>
-                  <Plus size={16} /> Create new version
+                <button className="primary-button btn-blue" onClick={() => addVersion(document.id)}>
+                  <Plus size={16} />
+                  <span>Create new version</span>
                 </button>
                 <button
-                  className="secondary-button"
+                  className="primary-button btn-red"
                   onClick={() => setShowDeleteModal(true)}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
-                    color: "#ef4444",
-                    borderColor: "#fca5a5"
+                    gap: "6px"
                   }}
                 >
-                  <Trash2 size={16} /> Delete
+                  <Trash2 size={16} />
+                  <span>Delete</span>
                 </button>
               </>
             )}
@@ -85,7 +85,7 @@ export default function DocumentDetails() {
             <Detail label="Document name" value={document.name} />
             <Detail label="Document type" value={document.type} />
             <Detail label="Process" value={document.process} />
-            <Detail label="Process owner" value={document.owner} />
+            <Detail label="Course coordinator" value={document.owner} />
             <Detail label="Current version" value={`Version ${document.version}`} />
             <Detail label="Last updated" value={document.updated} />
             <Detail label="Updated by" value={document.updatedBy} />
@@ -113,7 +113,7 @@ export default function DocumentDetails() {
         <SectionHeader
           title="Template specification & checklist format"
           action={
-            currentUser?.role !== "employee" && (
+            currentUser && (
               <button
                 type="button"
                 className="text-link"
@@ -213,12 +213,11 @@ export default function DocumentDetails() {
               </button>
               <button
                 type="button"
-                className="primary-button"
-                style={{ background: "#dc2626", borderColor: "#dc2626" }}
+                className="primary-button btn-red"
                 disabled={deleting}
                 onClick={handleDelete}
               >
-                {deleting ? "Deleting..." : "Delete Permanently"}
+                <span>{deleting ? "Deleting..." : "Delete Permanently"}</span>
               </button>
             </div>
           </div>

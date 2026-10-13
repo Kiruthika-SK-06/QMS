@@ -65,9 +65,10 @@ export default function Documents() {
         title="Document library"
         description="A single controlled view of Forms, Templates and Procedures. Previous versions remain available."
         action={
-          currentUser?.role !== "employee" && (
-            <button className="primary-button" onClick={() => setShowUploadModal(true)}>
-              <Upload size={17} /> Upload document
+          currentUser && (
+            <button className="primary-button btn-blue" onClick={() => setShowUploadModal(true)}>
+              <Upload size={17} />
+              <span>Upload document</span>
             </button>
           )
         }
@@ -98,7 +99,7 @@ export default function Documents() {
       <section className="panel">
         <DocumentTable
           items={filtered}
-          onEdit={currentUser?.role !== "employee" ? (doc) => setEditingDoc(doc) : undefined}
+          onEdit={currentUser ? (doc) => setEditingDoc(doc) : undefined}
         />
       </section>
 
@@ -172,10 +173,11 @@ export default function Documents() {
               </button>
               <button
                 type="submit"
-                className="primary-button"
+                className="primary-button btn-blue"
                 disabled={!uploadForm.name || isSubmitting}
               >
-                <Upload size={16} /> {isSubmitting ? "Uploading..." : "Register Document"}
+                <Upload size={16} />
+                <span>{isSubmitting ? "Uploading..." : "Register Document"}</span>
               </button>
             </div>
           </form>

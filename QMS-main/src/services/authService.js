@@ -57,12 +57,11 @@ export const authService = {
           (Array.isArray(u.aliases) && u.aliases.some((a) => a.toLowerCase() === cleanId))
       );
 
-      const targetRole = cleanRole || (user ? user.role : "employee");
+      const targetRole = cleanRole || (user ? user.role : "owner");
       const roleTitleMap = {
-        employee: "Employee",
-        owner: "Process Owner",
-        qm: "QM Group",
-        Head: "QM Head"
+        owner: "Course Coordinator",
+        qm: "QMS Coordinator",
+        Head: "Trust Head"
       };
 
       if (!user) {
@@ -77,7 +76,7 @@ export const authService = {
           password: cleanPass,
           name: namePart || "Authorized User",
           role: targetRole,
-          roleTitle: roleTitleMap[targetRole] || "Employee",
+          roleTitle: roleTitleMap[targetRole] || "Course Coordinator",
           initials: (namePart || "AU")
             .split(" ")
             .map((w) => w[0])
@@ -87,8 +86,8 @@ export const authService = {
           department:
             targetRole === "qm" || targetRole === "Head"
               ? "Quality Management Group"
-              : "Human Resources",
-          process: targetRole === "owner" ? "Employee Management" : "All Processes"
+              : "Academic Division",
+          process: targetRole === "owner" ? "Course Management" : "All Processes"
         };
       } else if (cleanRole) {
         user = {

@@ -4,38 +4,38 @@ import StatusBadge from "../common/StatusBadge";
 
 const processData = [
   {
-    name: "Human Resource Management",
-    owner: "HR Process Owner",
+    name: "Course Administration",
+    owner: "Course Coordinator (Priya Sharma)",
     progress: 82,
     status: "In Progress",
     target: "30 Sep 2026",
   },
   {
     name: "Training Management",
-    owner: "Training Process Owner",
+    owner: "Course Coordinator (Rohan Desai)",
     progress: 91,
     status: "In Progress",
     target: "28 Sep 2026",
   },
   {
     name: "Course Management",
-    owner: "Course Process Owner",
+    owner: "Course Coordinator (Dr. Rajesh Verma)",
     progress: 100,
     status: "Completed",
     target: "20 Sep 2026",
   },
   {
     name: "IT Support Management",
-    owner: "IT Process Owner",
+    owner: "IT Systems Coordinator",
     progress: 64,
     status: "In Progress",
     target: "05 Oct 2026",
   },
   {
-    name: "Finance Management",
-    owner: "Finance Process Owner",
-    progress: 42,
-    status: "Pending",
+    name: "Quality Governance & MRM",
+    owner: "QMS Coordinator (Rahul Kumar)",
+    progress: 95,
+    status: "Completed",
     target: "15 Oct 2026",
   },
 ];
@@ -73,7 +73,7 @@ const timelineData = [
   },
 ];
 
-export default function QMHeadDashboard() {
+export default function TrustHeadDashboard() {
   const totalProcesses = processData.length;
 
   const completedProcesses = processData.filter(

@@ -9,6 +9,8 @@ import processRoutes from "./routes/processRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import mrmRoutes from "./routes/mrmRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -38,11 +40,15 @@ app.get("/", (req, res) => {
       processes: "/api/processes",
       notifications: "/api/notifications",
       activities: "/api/activities",
+      users: "/api/users",
+      mrm: "/api/mrm",
       employees: "/api/employees"
     },
     note: "To access the QMS Web Application UI, please open http://localhost:5173 in your browser."
   });
 });
+
+import { handleRealtimeStream } from "./utils/realtime.js";
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -53,6 +59,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Real-Time Event Stream (SSE)
+app.get("/api/realtime/stream", handleRealtimeStream);
+
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
@@ -60,6 +69,8 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/processes", processRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/activities", activityRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/mrm", mrmRoutes);
 app.use("/api/employees", employeeRoutes);
 
 // 404 Fallback
@@ -86,11 +97,10 @@ if (!process.env.VERCEL) {
     console.log(`🚀 QMS Backend Server running on port ${PORT}`);
     console.log(`📡 URL: http://localhost:${PORT}`);
     console.log(`🔒 Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`👥 Available Dummy Accounts:`);
-    console.log(`   1) Employee:      username: employee      | password: 1234 | role: employee`);
-    console.log(`   2) Process Owner: username: processowner  | password: 1234 | role: owner`);
-    console.log(`   3) QM Group:      username: qmgroup       | password: 1234 | role: qm`);
-    console.log(`   4) QM Head:       username: qmhead        | password: 1234 | role: Head`);
+    console.log(`👥 Available Controlled Accounts:`);
+    console.log(`   1) Course Coordinator: username: coursecoordinator | password: 1234 | role: owner`);
+    console.log(`   2) QMS Coordinator:    username: qmcoordinator    | password: 1234 | role: qm`);
+    console.log(`   3) Trust Head:         username: trusthead        | password: 1234 | role: Head`);
     console.log(`=================================================\n`);
   });
 

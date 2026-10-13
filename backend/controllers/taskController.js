@@ -2,6 +2,7 @@ import { tasksData } from "../data/tasks.js";
 import { activitiesData } from "../data/activities.js";
 import { notificationsData } from "../data/notifications.js";
 import { processesData } from "../data/processes.js";
+import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 // GET /api/tasks
 export const getAllTasks = (req, res) => {
@@ -57,7 +58,7 @@ export const createTask = (req, res) => {
 
     const nextIdNumber = tasksData.length + 1;
     const newId = `TASK-${String(nextIdNumber).padStart(3, "0")}`;
-    const assignerName = req.user?.name || "Process Owner";
+    const assignerName = req.user?.name || "Course Coordinator";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -105,6 +106,8 @@ export const createTask = (req, res) => {
       read: false,
       createdAt: new Date().toISOString()
     });
+
+    broadcastRealtimeEvent("TASK_UPDATED", { action: "CREATED", task: newTask });
 
     res.status(201).json({
       success: true,
@@ -165,6 +168,8 @@ export const updateTaskStatus = (req, res) => {
       });
     }
 
+    broadcastRealtimeEvent("TASK_UPDATED", { action: "STATUS_UPDATED", task });
+
     res.json({
       success: true,
       message: `Task updated to ${status}`,
@@ -185,7 +190,7 @@ export const updateTask = (req, res) => {
 
     const { title, description, employee, process, document, due, priority, status } = req.body;
     const task = tasksData[taskIndex];
-    const actorName = req.user?.name || "Process Owner";
+    const actorName = req.user?.name || "Course Coordinator";
 
     const updatedTask = {
       ...task,
@@ -211,6 +216,8 @@ export const updateTask = (req, res) => {
       timestamp: new Date().toISOString()
     });
 
+    broadcastRealtimeEvent("TASK_UPDATED", { action: "UPDATED", task: updatedTask });
+
     res.json({
       success: true,
       message: "Task updated successfully",
@@ -229,6 +236,7 @@ export const deleteTask = (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
     const [deleted] = tasksData.splice(index, 1);
+    broadcastRealtimeEvent("TASK_UPDATED", { action: "DELETED", id: req.params.id });
     res.json({ success: true, message: "Task deleted", task: deleted });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

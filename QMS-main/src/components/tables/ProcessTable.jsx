@@ -16,8 +16,8 @@ export default function ProcessTable({ items = [] }) {
         <thead>
           <tr>
             <th>Process</th>
-            <th>Process owner</th>
-            <th>Employees</th>
+            <th>Course coordinator</th>
+            <th>Coordinators / Staff</th>
             <th>Active tasks</th>
             <th>Completion</th>
             <th>Documents</th>

@@ -2,7 +2,7 @@
 export let processesData = [
   {
     id: "PROC-001",
-    name: "Employee Onboarding",
+    name: "Course Administration",
     owner: "Priya Sharma",
     employees: 12,
     active: 5,
@@ -12,7 +12,7 @@ export let processesData = [
     status: "Active",
     progress: 82,
     target: "30 Sep 2026",
-    description: "End-to-end recruitment, induction, workstation provisioning, and probation review workflow."
+    description: "End-to-end course scheduling, student induction, lab workstation provisioning, and semester review workflow."
   },
   {
     id: "PROC-002",
@@ -45,7 +45,7 @@ export let processesData = [
   {
     id: "PROC-004",
     name: "Course Management",
-    owner: "Course Process Owner",
+    owner: "Priya Sharma",
     employees: 16,
     active: 4,
     completed: 28,
@@ -72,16 +72,16 @@ export let processesData = [
   },
   {
     id: "PROC-006",
-    name: "Finance Management",
-    owner: "Meera Shah",
+    name: "Quality Review & MRM",
+    owner: "Anita Rao",
     employees: 8,
     active: 3,
     completed: 22,
     pending: 3,
     documents: 5,
-    status: "Pending",
-    progress: 42,
+    status: "Active",
+    progress: 95,
     target: "15 Oct 2026",
-    description: "Budget allocation, procurement requisition scrutiny, audit reconciliations, and travel expenditure."
+    description: "Management Review Meetings, quality policy compliance, audit findings analysis, and Trust executive governance."
   }
 ];

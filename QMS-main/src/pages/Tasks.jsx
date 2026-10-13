@@ -11,22 +11,14 @@ export default function Tasks() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [query, setQuery] = useState("");
 
-  const baseTasks =
-    currentUser?.role === "employee"
-      ? (tasks || []).filter(
-          (task) =>
-            task.employee?.toLowerCase() === currentUser?.name?.toLowerCase() ||
-            task.employee?.toLowerCase() === currentUser?.username?.toLowerCase()
-        )
-      : tasks || [];
-
-  const items = baseTasks.filter((task) => {
+  const items = (tasks || []).filter((task) => {
     const matchesStatus = statusFilter === "All" || task.status === statusFilter;
+    const q = query.toLowerCase();
     const matchesQuery =
-      task.title?.toLowerCase().includes(query.toLowerCase()) ||
-      task.id?.toLowerCase().includes(query.toLowerCase()) ||
-      task.process?.toLowerCase().includes(query.toLowerCase()) ||
-      task.employee?.toLowerCase().includes(query.toLowerCase());
+      task.title?.toLowerCase().includes(q) ||
+      task.id?.toLowerCase().includes(q) ||
+      task.process?.toLowerCase().includes(q) ||
+      task.employee?.toLowerCase().includes(q);
     return matchesStatus && matchesQuery;
   });
 
@@ -35,13 +27,12 @@ export default function Tasks() {
       <PageIntro
         eyebrow="Work management"
         title="Tasks"
-        description="Track assignments and completion without relying on email threads."
+        description="Track assignments and completion across coordinators without relying on email threads."
         action={
-          currentUser?.role !== "employee" && (
-            <button className="primary-button" onClick={() => setShowModal(true)}>
-              <Plus size={17} /> Assign task
-            </button>
-          )
+          <button className="primary-button btn-blue" onClick={() => setShowModal(true)}>
+            <Plus size={17} />
+            <span>Assign task</span>
+          </button>
         }
       />
 
@@ -51,7 +42,7 @@ export default function Tasks() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tasks by title, ID, process, or employee..."
+            placeholder="Search tasks by title, ID, process, or assignee..."
           />
         </label>
         <div className="tabs">
@@ -83,4 +74,3 @@ export default function Tasks() {
     </>
   );
 }
-

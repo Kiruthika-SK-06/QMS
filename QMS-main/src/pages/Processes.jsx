@@ -20,7 +20,7 @@ export default function Processes() {
       <PageIntro
         eyebrow="Process register"
         title="Processes"
-        description="Monitor process ownership, active tasks, documentation compliance, and operating performance."
+        description="Monitor course coordinator assignments, active tasks, documentation compliance, and operating performance."
       />
       <div className="filter-bar">
         <label className="search-field">
@@ -28,7 +28,7 @@ export default function Processes() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search processes by title, owner, or ID..."
+            placeholder="Search processes by title, coordinator, or ID..."
           />
         </label>
       </div>

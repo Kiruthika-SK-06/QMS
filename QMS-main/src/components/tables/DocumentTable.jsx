@@ -87,7 +87,7 @@ export default function DocumentTable({ items = [], review = false, onEdit, onDe
                         type="button"
                         className="row-action"
                         onClick={() => (onEdit ? onEdit(document) : setEditingDoc(document))}
-                        style={{ cursor: "pointer", color: "#0284c7" }}
+                        style={{ cursor: "pointer", color: "var(--navy)", fontWeight: "600" }}
                         title="Edit specification & checklist"
                       >
                         Edit

@@ -142,7 +142,7 @@ export default function Reviews() {
               type="button"
               className="secondary-button"
               onClick={() => setShowEditModal(true)}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#0284c7" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
             >
               <Edit size={16} /> Edit {selected.type === "Templates" ? "template" : "document"}
             </button>
@@ -171,22 +171,24 @@ export default function Reviews() {
 
           <div className="modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
             <button
-              className="secondary-button"
+              className="primary-button btn-amber"
               type="button"
               disabled={submitting}
               onClick={() => handleDecision("Changes Requested")}
               style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
             >
-              <AlertTriangle size={16} color="#d97706" /> Request changes
+              <AlertTriangle size={16} />
+              <span>Request changes</span>
             </button>
             <button
-              className="primary-button"
+              className="primary-button btn-green"
               type="button"
               disabled={submitting}
               onClick={() => handleDecision("Approved")}
               style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
             >
-              <Check size={17} /> Approve document
+              <Check size={17} />
+              <span>Approve document</span>
             </button>
           </div>
         </Modal>

@@ -33,8 +33,8 @@ export const authenticateToken = (req, res, next) => {
     matchedUser = dummyUsers.find((u) => u.role.toLowerCase() === roleHeader.toLowerCase());
   }
 
-  // Default demo fallback user (Priya Sharma - Process Owner)
-  const activeUser = matchedUser || dummyUsers[1] || dummyUsers[0];
+  // Default demo fallback user (Priya Sharma - Course Coordinator)
+  const activeUser = matchedUser || dummyUsers[0];
   const { password, ...userWithoutPassword } = activeUser;
   req.user = userWithoutPassword;
   return next();

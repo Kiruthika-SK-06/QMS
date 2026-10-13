@@ -84,11 +84,11 @@ export default function TaskTable({ items = [] }) {
                     >
                       Open
                     </button>
-                    {currentUser?.role !== "employee" && (
+                    {currentUser && (
                       <button
                         className="row-action"
                         onClick={() => setEditingTask(task)}
-                        style={{ cursor: "pointer", color: "#0284c7" }}
+                        style={{ cursor: "pointer", color: "var(--navy)", fontWeight: "600" }}
                         title="Edit task"
                       >
                         Edit
@@ -162,7 +162,7 @@ export default function TaskTable({ items = [] }) {
               </button>
             )}
 
-            {currentUser?.role !== "employee" && (
+            {currentUser && (
               <>
                 <button
                   type="button"
@@ -173,7 +173,7 @@ export default function TaskTable({ items = [] }) {
                     setSelectedTask(null);
                     setEditingTask(toEdit);
                   }}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#0284c7" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "var(--navy)" }}
                 >
                   <Edit size={16} /> Edit Task
                 </button>
@@ -182,7 +182,7 @@ export default function TaskTable({ items = [] }) {
                   className="secondary-button"
                   disabled={updating}
                   onClick={handleDeleteTask}
-                  style={{ color: "#ef4444", borderColor: "#fca5a5", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                  style={{ color: "var(--status-red)", borderColor: "var(--status-red-border)", display: "inline-flex", alignItems: "center", gap: "6px" }}
                 >
                   <Trash2 size={16} /> Delete
                 </button>
