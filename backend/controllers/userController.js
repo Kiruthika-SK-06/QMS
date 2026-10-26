@@ -96,7 +96,8 @@ export const createUser = (req, res) => {
     const roleTitleMap = {
       owner: "Course Coordinator",
       qm: "QMS Coordinator",
-      Head: "Trust Head"
+      Head: "Trust Head",
+      auditor: "Internal Auditor"
     };
 
     const uname = (username || email.split("@")[0] || name.toLowerCase().replace(/\s+/g, ".")).trim();
@@ -106,6 +107,22 @@ export const createUser = (req, res) => {
       .join("")
       .slice(0, 2)
       .toUpperCase();
+
+    const defaultDept =
+      cleanRole === "auditor"
+        ? "Internal Quality Audit Cell"
+        : cleanRole === "Head"
+        ? "Trust Governance & Executive Board"
+        : cleanRole === "qm"
+        ? "Quality Assurance & Compliance"
+        : "Academic Division";
+
+    const defaultProcess =
+      cleanRole === "auditor"
+        ? "Quality Audits & Compliance"
+        : cleanRole === "owner"
+        ? "Course Management"
+        : "All Quality Processes";
 
     const newUser = {
       id: `USR-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -118,9 +135,9 @@ export const createUser = (req, res) => {
       roleTitle: roleTitleMap[cleanRole] || "Course Coordinator",
       initials,
       employeeId: `ID${Math.floor(100 + Math.random() * 900)}`,
-      department: department || "Academic Division",
-      process: process || "Course Management",
-      designation: designation || "Course Coordinator",
+      department: department || defaultDept,
+      process: process || defaultProcess,
+      designation: designation || roleTitleMap[cleanRole] || "Course Coordinator",
       status: status || "Active",
       joinDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       privileges: Array.isArray(privileges) ? privileges : [
@@ -160,7 +177,7 @@ export const updateUser = (req, res) => {
     if (req.user && req.user.role !== "qm") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized: Only the QMS Coordinator is permitted to edit users and modify privileges."
+        message: "Unauthorized: Only the QMS Coordinator is permitted to edit users."
       });
     }
 
@@ -175,7 +192,8 @@ export const updateUser = (req, res) => {
     const roleTitleMap = {
       owner: "Course Coordinator",
       qm: "QMS Coordinator",
-      Head: "Trust Head"
+      Head: "Trust Head",
+      auditor: "Internal Auditor"
     };
 
     const updatedRole = role ? normalizeRole(role) : existing.role;

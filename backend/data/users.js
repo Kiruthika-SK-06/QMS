@@ -92,6 +92,34 @@ export let dummyUsers = [
     ]
   },
   {
+    id: "IA-001",
+    username: "internalauditor",
+    email: "auditor@cdac.in",
+    aliases: [
+      "internalauditor",
+      "auditor",
+      "auditor@cdac.in",
+      "internal.auditor@cdac.in",
+      "vikas.deshmukh@cdac.in"
+    ],
+    password: "1234",
+    name: "Vikas Deshmukh",
+    role: "auditor",
+    roleTitle: "Internal Auditor",
+    initials: "VD",
+    employeeId: "IA001",
+    department: "Internal Quality Audit Cell",
+    process: "Quality Audits & Compliance",
+    designation: "Lead Internal Auditor",
+    status: "Active",
+    joinDate: "01 Feb 2024",
+    privileges: [
+      "View Audit Logs & Reports",
+      "User Management",
+      "Review Documents"
+    ]
+  },
+  {
     id: "CC-210",
     username: "rajesh.verma",
     email: "rajesh.verma@cdac.in",
@@ -158,9 +186,15 @@ export const normalizeRole = (role) => {
     head: "Head",
     trusthead: "Head",
     trust_head: "Head",
+    trustteam: "Head",
+    trust_team: "Head",
     qmhead: "Head",
     qm_head: "Head",
-    th: "Head"
+    th: "Head",
+    auditor: "auditor",
+    internalauditor: "auditor",
+    internal_auditor: "auditor",
+    ia: "auditor"
   };
   return map[role.toLowerCase()] || role;
 };

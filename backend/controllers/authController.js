@@ -78,7 +78,8 @@ export const login = (req, res) => {
       const roleTitleMap = {
         owner: "Course Coordinator",
         qm: "QMS Coordinator",
-        Head: "Trust Head"
+        Head: "Trust Head",
+        auditor: "Internal Auditor"
       };
 
       user = {
@@ -111,7 +112,8 @@ export const login = (req, res) => {
       const roleTitleMap = {
         owner: "Course Coordinator",
         qm: "QMS Coordinator",
-        Head: "Trust Head"
+        Head: "Trust Head",
+        auditor: "Internal Auditor"
       };
       user.role = normalizedReqRole;
       user.roleTitle = roleTitleMap[normalizedReqRole] || user.roleTitle;

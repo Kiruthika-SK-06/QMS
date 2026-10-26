@@ -121,6 +121,24 @@ export const mrmService = {
     }
   },
 
+  async uploadMoMDocument(id, payload, token) {
+    try {
+      const res = await fetch(`${API_BASE}/${id}/upload-mom`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to upload MoM document");
+      return data.data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async submitForApproval(id, token) {
     try {
       const res = await fetch(`${API_BASE}/${id}/submit-approval`, {

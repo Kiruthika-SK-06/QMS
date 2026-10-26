@@ -1,6 +1,7 @@
 import { mrmData } from "../data/mrm.js";
 import { notificationsData } from "../data/notifications.js";
 import { activitiesData } from "../data/activities.js";
+import { documentsData } from "../data/documents.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 // Helper to notify all real-time listeners
@@ -307,7 +308,7 @@ export const saveMoM = (req, res) => {
   }
 };
 
-// POST /api/mrm/:id/submit-approval - QMS Coordinator sends MRM to Trust Head for approval
+// POST /api/mrm/:id/submit-approval - QMS Coordinator sends planned & scheduled MRM to Trust Team for approval
 export const submitForApproval = (req, res) => {
   try {
     const mrm = mrmData.find((m) => m.id === req.params.id);
@@ -318,21 +319,14 @@ export const submitForApproval = (req, res) => {
     if (req.user?.role !== "qm") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized: Only the QMS Coordinator is authorized to submit MRMs for Trust Head approval."
+        message: "Unauthorized: Only the QMS Coordinator is authorized to submit MRMs for Trust Team approval."
       });
     }
 
     if (!mrm.scheduledDate) {
       return res.status(400).json({
         success: false,
-        message: "Meeting must be scheduled before submitting for approval."
-      });
-    }
-
-    if (!mrm.mom || !mrm.mom.summary) {
-      return res.status(400).json({
-        success: false,
-        message: "Please record the Minutes of Meeting (MoM) before submitting for Trust Head approval."
+        message: "Meeting must be planned and scheduled (specify Date, Time & Venue) before submitting for Trust Team approval."
       });
     }
 
@@ -343,18 +337,18 @@ export const submitForApproval = (req, res) => {
     const senderRole = req.user?.roleTitle || "QMS Coordinator";
 
     mrm.timeline.push({
-      action: "Submitted for Trust Head Approval",
+      action: "Submitted for Trust Team Approval",
       actor: `${sender} (${senderRole})`,
       timestamp: mrm.submittedForApprovalAt,
       version: mrm.version || "1.0",
-      details: `Complete MRM package (Plan, Schedule, MoM with ${mrm.mom.actionItems?.length || 0} action items) submitted for executive approval.`
+      details: `Meeting plan & schedule for ${mrm.scheduledDate} at ${mrm.scheduledTime || "11:00 AM"} (${mrm.venue || "Boardroom"}) submitted for Trust Team approval.`
     });
 
-    // Notify Trust Head
+    // Notify Trust Team
     notificationsData.unshift({
       id: Date.now(),
-      title: "MRM Submitted for Approval",
-      text: `${sender} submitted "${mrm.title}" MoM (v${mrm.version || "1.0"}) for your formal approval.`,
+      title: "MRM Schedule Submitted for Approval",
+      text: `${sender} submitted proposed meeting "${mrm.title}" (${mrm.scheduledDate}) for Trust Team approval.`,
       time: "Just now",
       targetRole: "Head",
       read: false,
@@ -363,7 +357,7 @@ export const submitForApproval = (req, res) => {
 
     activitiesData.unshift({
       id: `ACT-${Date.now()}`,
-      text: `MRM MoM "${mrm.title}" submitted to Trust Head for approval`,
+      text: `Meeting schedule "${mrm.title}" submitted to Trust Team for approval`,
       actor: sender,
       time: "Just now",
       tone: "amber",
@@ -371,13 +365,13 @@ export const submitForApproval = (req, res) => {
     });
 
     notifyMRMChange("SUBMITTED_FOR_APPROVAL", mrm);
-    res.json({ success: true, message: "Submitted to Trust Head for approval", data: mrm });
+    res.json({ success: true, message: "Meeting plan and schedule submitted to Trust Team for approval", data: mrm });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/mrm/:id/approve - Trust Head approves
+// POST /api/mrm/:id/approve - Trust Team approves meeting plan and schedule
 export const approveMRM = (req, res) => {
   try {
     const mrm = mrmData.find((m) => m.id === req.params.id);
@@ -385,11 +379,11 @@ export const approveMRM = (req, res) => {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }
 
-    // Role check: Only Trust Head can approve
+    // Role check: Only Trust Team can approve
     if (req.user?.role !== "Head") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized: Only the Trust Head is authorized to approve MRM submissions."
+        message: "Unauthorized: Only the Trust Team is authorized to approve MRM schedules."
       });
     }
 
@@ -402,23 +396,23 @@ export const approveMRM = (req, res) => {
       approved: true,
       approvedBy: trustHeadName,
       approvedAt: formatNow(),
-      remarks: remarks || "Approved without modifications. Clear for distribution to all Course Coordinators.",
+      remarks: remarks || "Meeting plan & schedule approved by Trust Team. Clear to share with all Course Coordinators, QMS Coordinator, and Trust Head via email.",
       versionReviewed: mrm.version || "1.0"
     };
 
     mrm.timeline.push({
-      action: "Approved by Trust Head",
-      actor: `${trustHeadName} (Trust Head)`,
+      action: "Approved by Trust Team",
+      actor: `${trustHeadName} (Trust Team)`,
       timestamp: mrm.trustHeadApproval.approvedAt,
       version: mrm.version || "1.0",
       details: mrm.trustHeadApproval.remarks
     });
 
-    // Notify QMS Coordinator that it can now be shared
+    // Notify QMS Coordinator that it can now be shared via email
     notificationsData.unshift({
       id: Date.now(),
-      title: "MRM Approved by Trust Head",
-      text: `"${mrm.title}" (v${mrm.version}) was approved by Trust Head. QMS Coordinator can now distribute it to all Course Coordinators.`,
+      title: "MRM Schedule Approved by Trust Team",
+      text: `"${mrm.title}" schedule was approved by Trust Team. QMS Coordinator can now dispatch the meeting notice via email to all Course Coordinators, QMS Coordinator, and Trust Head.`,
       time: "Just now",
       targetRole: "qm",
       read: false,
@@ -427,7 +421,7 @@ export const approveMRM = (req, res) => {
 
     activitiesData.unshift({
       id: `ACT-${Date.now()}`,
-      text: `Trust Head (${trustHeadName}) approved MRM MoM: "${mrm.title}"`,
+      text: `Trust Team (${trustHeadName}) approved MRM schedule: "${mrm.title}"`,
       actor: trustHeadName,
       time: "Just now",
       tone: "green",
@@ -437,7 +431,7 @@ export const approveMRM = (req, res) => {
     notifyMRMChange("APPROVED", mrm);
     res.json({
       success: true,
-      message: "MRM approved by Trust Head. Eligible for distribution by QMS Coordinator.",
+      message: "MRM plan and schedule approved by Trust Team. Ready for email dispatch to all Course Coordinators, QMS Coordinator, and Trust Head.",
       data: mrm
     });
   } catch (error) {
@@ -649,7 +643,7 @@ export const resubmitMRM = (req, res) => {
   }
 };
 
-// POST /api/mrm/:id/share - QMS Coordinator shares with all Course Coordinators
+// POST /api/mrm/:id/share - QMS Coordinator shares approved MRM via email to all Course Coordinators, QMS Coordinator, and Trust Head
 export const shareMRM = (req, res) => {
   try {
     const mrm = mrmData.find((m) => m.id === req.params.id);
@@ -661,52 +655,59 @@ export const shareMRM = (req, res) => {
     if (req.user?.role !== "qm") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized: Only the QMS Coordinator is authorized to distribute MRMs to Course Coordinators."
+        message: "Unauthorized: Only the QMS Coordinator is authorized to dispatch MRM meeting notices via email."
       });
     }
 
-    // Strict Workflow rule: MUST be approved by Trust Head first!
+    // Strict Workflow rule: MUST be approved by Trust Team first!
     const isApproved = mrm.status === "Approved" || mrm.status === "Approved by Trust Head" || mrm.trustHeadApproval?.approved;
     if (!isApproved) {
       return res.status(403).json({
         success: false,
-        message: "Workflow constraint: Trust Head approval is required before the QMS Coordinator can share the MRM with all Course Coordinators."
+        message: "Workflow constraint: Trust Team approval is required before sharing the meeting notice via email."
       });
     }
 
     const coordinatorName = req.user?.name || "Rahul Kumar";
 
-    mrm.status = "Shared";
+    mrm.status = "Notice Emailed";
     mrm.sharedWithAll = true;
+    mrm.emailNoticeSent = true;
     mrm.sharedAt = formatNow();
     mrm.sharedBy = coordinatorName;
     mrm.sharedVersion = mrm.version || "1.0";
+    mrm.emailRecipients = [
+      "All Course Coordinators (coordinator@cdac.in, rajesh.verma@cdac.in, sunita.patil@cdac.in)",
+      "QMS Coordinator (qm@cdac.in)",
+      "Trust Head (head@cdac.in)"
+    ];
+
     if (!Array.isArray(mrm.acknowledgements)) {
       mrm.acknowledgements = [];
     }
 
     mrm.timeline.push({
-      action: "Shared with All Course Coordinators",
+      action: "Meeting Notice Emailed",
       actor: `${coordinatorName} (QMS Coordinator)`,
       timestamp: mrm.sharedAt,
       version: mrm.sharedVersion,
-      details: "Distributed approved Minutes of Meeting to all academic coordinators."
+      details: `Meeting invitation and schedule dispatched via email to all Course Coordinators, QMS Coordinator, and Trust Head for meeting on ${mrm.scheduledDate} at ${mrm.scheduledTime || "11:00 AM"}.`
     });
 
-    // Broadcast notification to all Course Coordinators
+    // Broadcast notification to all recipients
     notificationsData.unshift({
       id: Date.now(),
-      title: "MRM Distributed to All Coordinators",
-      text: `Approved Minutes of Meeting for "${mrm.title}" (v${mrm.sharedVersion}) has been shared with all Course Coordinators.`,
+      title: "MRM Invitation Emailed to Coordinators & Trust Head",
+      text: `Approved meeting notice for "${mrm.title}" (${mrm.scheduledDate}) sent via email to All Course Coordinators, QMS Coordinator, and Trust Head.`,
       time: "Just now",
-      targetRole: "owner",
+      targetRole: "all",
       read: false,
       createdAt: new Date().toISOString()
     });
 
     activitiesData.unshift({
       id: `ACT-${Date.now()}`,
-      text: `QMS Coordinator (${coordinatorName}) shared approved MRM "${mrm.title}" with all Course Coordinators`,
+      text: `QMS Coordinator (${coordinatorName}) emailed MRM schedule for "${mrm.title}" to All Course Coordinators, QMS Coordinator, and Trust Head`,
       actor: coordinatorName,
       time: "Just now",
       tone: "green",
@@ -716,8 +717,136 @@ export const shareMRM = (req, res) => {
     notifyMRMChange("SHARED_WITH_ALL", mrm);
     res.json({
       success: true,
-      message: "MRM and Minutes of Meeting successfully shared with all Course Coordinators!",
+      message: "Meeting notice successfully dispatched via email to all Course Coordinators, QMS Coordinator, and Trust Head!",
       data: mrm
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/mrm/:id/upload-mom - Once meeting is done, QMS coordinator shares MoM in document (upload document)
+export const uploadMoMDocument = (req, res) => {
+  try {
+    const mrm = mrmData.find((m) => m.id === req.params.id);
+    if (!mrm) {
+      return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
+    }
+
+    if (req.user?.role !== "qm") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: Only the QMS Coordinator is authorized to upload and share Minutes of Meeting documents."
+      });
+    }
+
+    const {
+      summary,
+      discussionPoints,
+      actionItems,
+      decisions,
+      documentName,
+      documentType = "Forms",
+      fileName,
+      fileSize = "1.4 MB",
+      documentDescription
+    } = req.body;
+
+    const authorName = req.user?.name || "Rahul Kumar";
+    const authorRole = req.user?.roleTitle || "QMS Coordinator";
+
+    // Create and register the controlled document in QMS Document Library
+    const docId = `DOC-MOM-${new Date().getFullYear()}-${String(documentsData.length + 1).padStart(3, "0")}`;
+    const registeredDoc = {
+      id: docId,
+      name: (documentName || `Minutes of Meeting - ${mrm.title}`).trim(),
+      type: documentType || "Forms",
+      process: "Quality Management",
+      owner: authorName,
+      version: "1.0",
+      updated: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      updatedBy: authorName,
+      status: "Approved",
+      submittedBy: authorName,
+      description: documentDescription || `Official Minutes of Management Review Meeting held on ${mrm.scheduledDate || "recent schedule"}. Summary: ${summary || mrm.title}`,
+      fileName: fileName || `${mrm.id}_Minutes_of_Meeting.pdf`,
+      fileSize: fileSize || "1.4 MB",
+      versions: [
+        {
+          version: "1.0",
+          date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          author: authorName,
+          status: "Current",
+          notes: `Official MoM for MRM ${mrm.id} uploaded by QMS Coordinator`
+        }
+      ]
+    };
+
+    // Register into documents database
+    documentsData.unshift(registeredDoc);
+
+    // Attach MoM details and document reference onto MRM
+    mrm.mom = {
+      recordedBy: authorName,
+      recordedRole: authorRole,
+      recordedDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      summary: summary || `Meeting successfully conducted on ${mrm.scheduledDate}. MoM document registered in Document Library.`,
+      discussionPoints: Array.isArray(discussionPoints) && discussionPoints.length ? discussionPoints.filter(p => p && p.trim()) : [
+        "Curriculum delivery review and faculty feedback evaluated.",
+        "Infrastructure and compute server allocations reviewed."
+      ],
+      actionItems: Array.isArray(actionItems) ? actionItems : [],
+      decisions: Array.isArray(decisions) && decisions.length ? decisions.filter(d => d && d.trim()) : [
+        "Approved curriculum updates and resource allocations."
+      ]
+    };
+
+    mrm.momDocument = {
+      documentId: registeredDoc.id,
+      documentName: registeredDoc.name,
+      fileName: registeredDoc.fileName,
+      fileSize: registeredDoc.fileSize,
+      uploadedBy: authorName,
+      uploadedAt: formatNow(),
+      documentUrl: `/documents/${registeredDoc.id}`
+    };
+
+    mrm.status = "MoM Document Uploaded";
+    mrm.meetingDone = true;
+
+    mrm.timeline.push({
+      action: "MoM Document Uploaded & Published",
+      actor: `${authorName} (${authorRole})`,
+      timestamp: formatNow(),
+      version: mrm.version || "1.0",
+      details: `Meeting completed. Minutes of Meeting document "${registeredDoc.name}" (${registeredDoc.id}) registered in Document Library and shared.`
+    });
+
+    notificationsData.unshift({
+      id: Date.now(),
+      title: "MRM MoM Document Uploaded & Published",
+      text: `QMS Coordinator uploaded the Minutes of Meeting document for "${mrm.title}". Accessible in Document Library (${registeredDoc.id}).`,
+      time: "Just now",
+      targetRole: "all",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    activitiesData.unshift({
+      id: `ACT-${Date.now()}`,
+      text: `QMS Coordinator uploaded MoM document "${registeredDoc.name}" for ${mrm.title}`,
+      actor: authorName,
+      time: "Just now",
+      tone: "green",
+      timestamp: new Date().toISOString()
+    });
+
+    notifyMRMChange("MOM_DOCUMENT_UPLOADED", mrm);
+    res.json({
+      success: true,
+      message: "Minutes of Meeting document uploaded and published in QMS Document Library successfully!",
+      data: mrm,
+      document: registeredDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

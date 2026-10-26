@@ -395,6 +395,49 @@ export function AppProvider({ children }) {
     }
   };
 
+  const uploadMoMDocument = async (id, payload) => {
+    try {
+      const updated = await mrmService.uploadMoMDocument(id, payload, token);
+      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("uploadMoMDocument failed, fallback to local:", err);
+      let localUpdated = null;
+      setMrmList((prev) =>
+        prev.map((m) => {
+          if (m.id === id) {
+            const author = currentUser?.name || "QMS Coordinator";
+            localUpdated = {
+              ...m,
+              mom: {
+                recordedBy: author,
+                recordedDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+                summary: payload.summary || "Meeting conducted successfully. MoM uploaded.",
+                discussionPoints: payload.discussionPoints || [],
+                actionItems: payload.actionItems || [],
+                decisions: payload.decisions || []
+              },
+              momDocument: {
+                documentId: `DOC-MOM-${new Date().getFullYear()}-001`,
+                documentName: payload.documentName || `Minutes of Meeting - ${m.title}`,
+                fileName: payload.fileName || `${m.id}_Minutes_of_Meeting.pdf`,
+                fileSize: payload.fileSize || "1.4 MB",
+                uploadedBy: author,
+                uploadedAt: new Date().toLocaleString()
+              },
+              status: "MoM Document Uploaded",
+              meetingDone: true
+            };
+            return localUpdated;
+          }
+          return m;
+        })
+      );
+      return localUpdated;
+    }
+  };
+
   const submitMRMForApproval = async (id) => {
     try {
       const updated = await mrmService.submitForApproval(id, token);
@@ -797,6 +840,7 @@ export function AppProvider({ children }) {
         scheduleMRM,
         updateMRM,
         saveMoM,
+        uploadMoMDocument,
         submitMRMForApproval,
         approveMRM,
         requestChangesMRM,

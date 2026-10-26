@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronDown, Check, User, Briefcase, Users, Award, Shield } from "lucide-react";
+import { ChevronDown, Check, User, Briefcase, Users, Award, Shield, ShieldCheck } from "lucide-react";
 
 const ROLES_LIST = [
   { key: "owner", label: "Course Coordinator", icon: Briefcase },
   { key: "qm", label: "QMS Coordinator", icon: Users },
-  { key: "Head", label: "Trust Head", icon: Award }
+  { key: "Head", label: "Trust Team / Trust Head", icon: Award },
+  { key: "auditor", label: "Internal Auditor", icon: ShieldCheck }
 ];
 
 export default function RolePicker({ role, onChange, disabled = false }) {

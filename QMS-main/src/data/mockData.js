@@ -293,6 +293,24 @@ const initialUsersList = [
     ]
   },
   {
+    id: "IA-001",
+    name: "Vikas Deshmukh",
+    email: "auditor@cdac.in",
+    username: "internalauditor",
+    designation: "Lead Internal Auditor",
+    department: "Internal Quality Audit Cell",
+    role: "auditor",
+    roleTitle: "Internal Auditor",
+    status: "Active",
+    initials: "VD",
+    joinDate: "01 Feb 2024",
+    privileges: [
+      "View Audit Logs & Reports",
+      "User Management",
+      "Review Documents"
+    ]
+  },
+  {
     id: "CC-210",
     name: "Dr. Rajesh Verma",
     email: "rajesh.verma@cdac.in",

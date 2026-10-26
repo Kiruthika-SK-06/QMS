@@ -6,71 +6,20 @@ import {
   Edit2,
   Trash2,
   Shield,
-  CheckCircle,
   Users,
   Award,
   Briefcase,
-  KeyRound,
-  Check,
-  X,
-  Eye,
   Power,
-  ArrowUpDown,
-  Lock
+  Lock,
+  Eye,
+  ShieldCheck,
+  ShieldAlert
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 import StatCard from "../components/common/StatCard";
 import StatusBadge from "../components/common/StatusBadge";
 import Modal from "../components/tasks/Modal";
-
-const AVAILABLE_PRIVILEGES = [
-  {
-    id: "Manage Documents",
-    name: "Manage Documents",
-    desc: "Create, edit, and archive controlled QMS course documents"
-  },
-  {
-    id: "Review Documents",
-    name: "Review Documents",
-    desc: "Review drafts in queue and recommend revisions or approval"
-  },
-  {
-    id: "Plan & Schedule MRM",
-    name: "Plan & Schedule MRM",
-    desc: "Initiate and schedule Management Review Meetings"
-  },
-  {
-    id: "Draft Minutes of Meeting (MoM)",
-    name: "Draft Minutes of Meeting (MoM)",
-    desc: "Record meeting discussion points, decisions, and action items"
-  },
-  {
-    id: "Approve MRM",
-    name: "Approve MRM",
-    desc: "Trust Head executive sign-off and ratification for MRM MoM"
-  },
-  {
-    id: "Share MRM with Coordinators",
-    name: "Share MRM with Coordinators",
-    desc: "Distribute approved MRMs to all Course Coordinators"
-  },
-  {
-    id: "User Management",
-    name: "User Management",
-    desc: "Add, edit, view user accounts and assign security privileges"
-  },
-  {
-    id: "Assign & Supervise Tasks",
-    name: "Assign & Supervise Tasks",
-    desc: "Create, delegate, and supervise tasks across departments"
-  },
-  {
-    id: "View Audit Logs & Reports",
-    name: "View Audit Logs & Reports",
-    desc: "Access compliance audit trails and system activity logs"
-  }
-];
 
 const ROLE_PRESETS = {
   owner: [
@@ -91,6 +40,11 @@ const ROLE_PRESETS = {
     "Approve MRM",
     "Review Documents",
     "View Audit Logs & Reports"
+  ],
+  auditor: [
+    "View Audit Logs & Reports",
+    "User Management",
+    "Review Documents"
   ]
 };
 
@@ -104,7 +58,11 @@ export default function UserManagement() {
     currentUser
   } = useApp();
 
+  // Role permissions
   const isQMSCoordinator = currentUser?.role === "qm";
+  const isTrustTeam = currentUser?.role === "Head";
+  const isInternalAuditor = currentUser?.role === "auditor";
+  const canViewUserManagement = isQMSCoordinator || isTrustTeam || isInternalAuditor;
 
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -117,18 +75,12 @@ export default function UserManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
 
-  // Form state
+  // Simplified Form state: Only User Name, Email Address, Assigned Role, and Account Status
   const [form, setForm] = useState({
     name: "",
     email: "",
-    username: "",
-    password: "1234",
     role: "owner",
-    designation: "Course Coordinator",
-    department: "Advanced Computing Division",
-    process: "Course Management",
-    status: "Active",
-    privileges: [...ROLE_PRESETS.owner]
+    status: "Active"
   });
 
   const openAddModal = () => {
@@ -136,14 +88,8 @@ export default function UserManagement() {
     setForm({
       name: "",
       email: "",
-      username: "",
-      password: "1234",
       role: "owner",
-      designation: "Course Coordinator",
-      department: "Academic Division",
-      process: "Course Management",
-      status: "Active",
-      privileges: [...ROLE_PRESETS.owner]
+      status: "Active"
     });
     setShowModal(true);
   };
@@ -151,42 +97,12 @@ export default function UserManagement() {
   const openEditModal = (user) => {
     setEditingUser(user);
     setForm({
-      name: user.name,
-      email: user.email,
-      username: user.username,
-      password: "",
-      role: user.role,
-      designation: user.designation || "",
-      department: user.department || "",
-      process: user.process || "",
-      status: user.status || "Active",
-      privileges: Array.isArray(user.privileges) ? [...user.privileges] : [...(ROLE_PRESETS[user.role] || [])]
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "owner",
+      status: user.status || "Active"
     });
     setShowModal(true);
-  };
-
-  const handleRoleChange = (newRole) => {
-    setForm((prev) => ({
-      ...prev,
-      role: newRole,
-      privileges: [...(ROLE_PRESETS[newRole] || ROLE_PRESETS.owner)],
-      designation:
-        newRole === "owner"
-          ? "Course Coordinator"
-          : newRole === "qm"
-          ? "QMS Coordinator"
-          : "Trust Head"
-    }));
-  };
-
-  const handleTogglePrivilege = (privId) => {
-    setForm((prev) => {
-      const exists = prev.privileges.includes(privId);
-      const nextPrivs = exists
-        ? prev.privileges.filter((p) => p !== privId)
-        : [...prev.privileges, privId];
-      return { ...prev, privileges: nextPrivs };
-    });
   };
 
   const handleSubmit = async (e) => {
@@ -195,10 +111,52 @@ export default function UserManagement() {
 
     setSubmitting(true);
     try {
+      const derivedUsername =
+        editingUser?.username ||
+        form.email.trim().split("@")[0].toLowerCase().replace(/[^a-z0-9._-]/g, "") ||
+        form.name.trim().toLowerCase().replace(/\s+/g, ".");
+
+      const roleTitle =
+        form.role === "owner"
+          ? "Course Coordinator"
+          : form.role === "qm"
+          ? "QMS Coordinator"
+          : form.role === "auditor"
+          ? "Internal Auditor"
+          : "Trust Head";
+
+      const defaultDepartment =
+        form.role === "auditor"
+          ? "Internal Quality Audit Cell"
+          : form.role === "Head"
+          ? "Trust Governance & Executive Board"
+          : form.role === "qm"
+          ? "Quality Assurance & Compliance"
+          : "Academic Division";
+
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        username: derivedUsername,
+        role: form.role,
+        roleTitle,
+        status: form.status,
+        department: editingUser?.department || defaultDepartment,
+        designation: editingUser?.designation || roleTitle,
+        process:
+          editingUser?.process ||
+          (form.role === "owner"
+            ? "Course Management"
+            : form.role === "auditor"
+            ? "Quality Audits & Compliance"
+            : "All Quality Processes"),
+        privileges: editingUser?.privileges || ROLE_PRESETS[form.role] || ROLE_PRESETS.owner
+      };
+
       if (editingUser) {
-        await updateUser(editingUser.id, form);
+        await updateUser(editingUser.id, payload);
       } else {
-        await addUser(form);
+        await addUser(payload);
       }
       setShowModal(false);
     } catch (err) {
@@ -233,6 +191,33 @@ export default function UserManagement() {
     }
   };
 
+  // Restrict access if user is not authorized
+  if (!canViewUserManagement) {
+    return (
+      <div style={{ padding: "60px 20px", textAlign: "center", maxWidth: "600px", margin: "0 auto" }}>
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            background: "#fee2e2",
+            color: "#dc2626",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "16px"
+          }}
+        >
+          <ShieldAlert size={32} />
+        </div>
+        <h2 style={{ fontSize: "20px", color: "#0f172a", marginBottom: "8px" }}>Access Restricted</h2>
+        <p style={{ color: "#64748b", fontSize: "14px", lineHeight: "1.5" }}>
+          User Management is confidential and only accessible by the <strong>Internal Auditor</strong>, <strong>Trust Team</strong>, and <strong>QMS Coordinator</strong>.
+        </p>
+      </div>
+    );
+  }
+
   // Filter & sort list
   const filtered = (usersList || [])
     .filter((user) => {
@@ -240,7 +225,8 @@ export default function UserManagement() {
         roleFilter === "All" ||
         (roleFilter === "Course Coordinator" && user.role === "owner") ||
         (roleFilter === "QMS Coordinator" && user.role === "qm") ||
-        (roleFilter === "Trust Head" && user.role === "Head");
+        (roleFilter === "Trust Team" && user.role === "Head") ||
+        (roleFilter === "Internal Auditor" && user.role === "auditor");
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -251,11 +237,8 @@ export default function UserManagement() {
       const matchesQuery =
         user.name.toLowerCase().includes(q) ||
         user.email.toLowerCase().includes(q) ||
-        user.username.toLowerCase().includes(q) ||
-        (user.department && user.department.toLowerCase().includes(q)) ||
-        (user.roleTitle && user.roleTitle.toLowerCase().includes(q)) ||
-        (Array.isArray(user.privileges) &&
-          user.privileges.some((p) => p.toLowerCase().includes(q)));
+        (user.username && user.username.toLowerCase().includes(q)) ||
+        (user.roleTitle && user.roleTitle.toLowerCase().includes(q));
 
       return matchesRole && matchesStatus && matchesQuery;
     })
@@ -263,7 +246,6 @@ export default function UserManagement() {
       if (sortBy === "name-asc") return a.name.localeCompare(b.name);
       if (sortBy === "name-desc") return b.name.localeCompare(a.name);
       if (sortBy === "role") return (a.roleTitle || "").localeCompare(b.roleTitle || "");
-      if (sortBy === "department") return (a.department || "").localeCompare(b.department || "");
       if (sortBy === "status") return (a.status || "").localeCompare(b.status || "");
       return 0;
     });
@@ -271,14 +253,14 @@ export default function UserManagement() {
   const totalUsers = (usersList || []).length;
   const courseCoordinators = (usersList || []).filter((u) => u.role === "owner").length;
   const qmsCoordinators = (usersList || []).filter((u) => u.role === "qm").length;
-  const trustHeads = (usersList || []).filter((u) => u.role === "Head").length;
+  const trustAndAuditors = (usersList || []).filter((u) => u.role === "Head" || u.role === "auditor").length;
 
   return (
     <>
       <PageIntro
         eyebrow="Access Control & Governance"
         title="User Management"
-        description="Add, edit, view, and supervise Course Coordinators and staff. Manage their role assignments, account statuses, and system privileges."
+        description="View and govern user accounts across the institution. Add, update, and manage account statuses and role assignments."
         action={
           isQMSCoordinator && (
             <button
@@ -287,30 +269,31 @@ export default function UserManagement() {
               style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
             >
               <Plus size={17} />
-              <span>Add New User</span>
+              <span>Add User</span>
             </button>
           )
         }
       />
 
+      {/* Role specific visibility banner */}
       {!isQMSCoordinator && (
         <div
           style={{
             marginBottom: "18px",
             padding: "12px 16px",
-            background: "var(--navy-subtle)",
-            border: "1px solid var(--navy-border)",
+            background: "#f0fdf4",
+            border: "1px solid #bbf7d0",
             borderRadius: "8px",
-            color: "var(--navy)",
+            color: "#166534",
             fontSize: "13px",
             display: "flex",
             alignItems: "center",
-            gap: "8px"
+            gap: "10px"
           }}
         >
-          <Lock size={16} />
+          {isInternalAuditor ? <ShieldCheck size={18} color="#15803d" /> : <Award size={18} color="#15803d" />}
           <span>
-            <strong>Read-Only Mode:</strong> Only the <strong>QMS Coordinator</strong> has authorization to add, edit, or modify user accounts and security privileges.
+            <strong>{isInternalAuditor ? "Internal Auditor View" : "Trust Team View"}:</strong> You have authorized read-only visibility into all user accounts and statuses. User account creation and edits are administered by the <strong>QMS Coordinator</strong>.
           </span>
         </div>
       )}
@@ -319,7 +302,7 @@ export default function UserManagement() {
         <StatCard label="Total User Accounts" value={totalUsers} icon={Users} tone="blue" />
         <StatCard label="Course Coordinators" value={courseCoordinators} icon={Briefcase} tone="teal" />
         <StatCard label="QMS Coordinators" value={qmsCoordinators} icon={UserCheck} tone="blue" />
-        <StatCard label="Trust Executives" value={trustHeads} icon={Award} tone="green" />
+        <StatCard label="Trust Team & Auditors" value={trustAndAuditors} icon={Award} tone="green" />
       </div>
 
       <div className="filter-bar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
@@ -328,12 +311,12 @@ export default function UserManagement() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search users by name, email, department, or assigned privileges..."
+            placeholder="Search users by name, email, or role..."
           />
         </label>
 
         <div className="tabs">
-          {["All", "Course Coordinator", "QMS Coordinator", "Trust Head"].map((tab) => (
+          {["All", "Course Coordinator", "QMS Coordinator", "Trust Team", "Internal Auditor"].map((tab) => (
             <button
               key={tab}
               className={roleFilter === tab ? "tab active" : "tab"}
@@ -377,7 +360,6 @@ export default function UserManagement() {
             <option value="name-asc">Sort: Name (A-Z)</option>
             <option value="name-desc">Sort: Name (Z-A)</option>
             <option value="role">Sort: Role</option>
-            <option value="department">Sort: Department</option>
             <option value="status">Sort: Status</option>
           </select>
         </div>
@@ -389,16 +371,16 @@ export default function UserManagement() {
             <thead>
               <tr>
                 <th>User / Staff</th>
-                <th>Role</th>
-                <th>Department & Process</th>
-                <th>Assigned Privileges</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>Assigned Role</th>
+                <th>Account Status</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((user) => {
-                const userPrivs = Array.isArray(user.privileges) ? user.privileges : [];
+                const isTrust = user.role === "Head";
+                const isQM = user.role === "qm";
+                const isAud = user.role === "auditor";
 
                 return (
                   <tr key={user.id || user.username}>
@@ -409,9 +391,9 @@ export default function UserManagement() {
                             width: "36px",
                             height: "36px",
                             borderRadius: "50%",
-                            background: "var(--navy-subtle)",
-                            border: "1px solid var(--navy-border)",
-                            color: "var(--navy)",
+                            background: isTrust ? "#f3e8ff" : isAud ? "#fef3c7" : isQM ? "#dbeafe" : "var(--navy-subtle)",
+                            border: `1px solid ${isTrust ? "#d8b4fe" : isAud ? "#fde68a" : isQM ? "#bfdbfe" : "var(--navy-border)"}`,
+                            color: isTrust ? "#7e22ce" : isAud ? "#b45309" : isQM ? "#1d4ed8" : "var(--navy)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -420,16 +402,13 @@ export default function UserManagement() {
                             flexShrink: 0
                           }}
                         >
-                          {user.initials || "U"}
+                          {user.initials || user.name?.charAt(0) || "U"}
                         </div>
                         <div>
                           <strong>{user.name}</strong>
                           <small style={{ color: "#64748b", display: "block" }}>
-                            {user.email} • <code>@{user.username}</code>
+                            {user.email}
                           </small>
-                          {user.designation && (
-                            <small style={{ color: "var(--navy)", fontWeight: "500" }}>{user.designation}</small>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -438,68 +417,25 @@ export default function UserManagement() {
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px",
-                          padding: "3px 8px",
-                          borderRadius: "12px",
+                          gap: "5px",
+                          padding: "4px 10px",
+                          borderRadius: "14px",
                           fontSize: "12px",
                           fontWeight: "600",
-                          background: "var(--navy-subtle)",
-                          border: "1px solid var(--navy-border)",
-                          color: "var(--navy)"
+                          background: isTrust ? "#faf5ff" : isAud ? "#fffbeb" : isQM ? "var(--navy-subtle)" : "#f8fafc",
+                          border: `1px solid ${isTrust ? "#e9d5ff" : isAud ? "#fef3c7" : isQM ? "var(--navy-border)" : "#e2e8f0"}`,
+                          color: isTrust ? "#6b21a8" : isAud ? "#92400e" : isQM ? "var(--navy)" : "#334155"
                         }}
                       >
-                        {user.role === "Head" ? <Award size={13} /> : user.role === "qm" ? <UserCheck size={13} /> : <Briefcase size={13} />}
-                        {user.roleTitle || (user.role === "Head" ? "Trust Head" : user.role === "qm" ? "QMS Coordinator" : "Course Coordinator")}
+                        {isTrust ? <Award size={13} /> : isAud ? <ShieldCheck size={13} /> : isQM ? <UserCheck size={13} /> : <Briefcase size={13} />}
+                        {user.roleTitle || (isTrust ? "Trust Team" : isAud ? "Internal Auditor" : isQM ? "QMS Coordinator" : "Course Coordinator")}
                       </span>
-                    </td>
-                    <td>
-                      <strong>{user.department || "Academic Division"}</strong>
-                      <small style={{ color: "#64748b", display: "block" }}>
-                        {user.process || "Course Management"}
-                      </small>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "320px" }}>
-                        {userPrivs.slice(0, 3).map((priv) => (
-                          <span
-                            key={priv}
-                            style={{
-                              fontSize: "11px",
-                              padding: "2px 7px",
-                              background: "#f1f5f9",
-                              color: "#334155",
-                              borderRadius: "4px",
-                              border: "1px solid #e2e8f0"
-                            }}
-                          >
-                            {priv}
-                          </span>
-                        ))}
-                        {userPrivs.length > 3 && (
-                          <span
-                            style={{
-                              fontSize: "11px",
-                              padding: "2px 6px",
-                              background: "var(--navy-subtle)",
-                              color: "var(--navy)",
-                              borderRadius: "4px",
-                              fontWeight: "600",
-                              cursor: "pointer",
-                              border: "1px solid var(--navy-border)"
-                            }}
-                            onClick={() => setViewingProfile(user)}
-                            title={userPrivs.slice(3).join(", ")}
-                          >
-                            +{userPrivs.length - 3} more
-                          </span>
-                        )}
-                      </div>
                     </td>
                     <td>
                       <StatusBadge status={user.status || "Active"} />
                     </td>
-                    <td>
-                      <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                    <td style={{ textAlign: "right" }}>
+                      <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
                         <button
                           type="button"
                           className="row-action"
@@ -591,8 +527,8 @@ export default function UserManagement() {
                   width: "56px",
                   height: "56px",
                   borderRadius: "50%",
-                  background: viewingProfile.role === "Head" ? "#f3e8ff" : viewingProfile.role === "qm" ? "#dbeafe" : "#ccfbf1",
-                  color: viewingProfile.role === "Head" ? "#6b21a8" : viewingProfile.role === "qm" ? "#1d4ed8" : "#0f766e",
+                  background: viewingProfile.role === "Head" ? "#f3e8ff" : viewingProfile.role === "auditor" ? "#fef3c7" : viewingProfile.role === "qm" ? "#dbeafe" : "#ccfbf1",
+                  color: viewingProfile.role === "Head" ? "#6b21a8" : viewingProfile.role === "auditor" ? "#92400e" : viewingProfile.role === "qm" ? "#1d4ed8" : "#0f766e",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -600,72 +536,38 @@ export default function UserManagement() {
                   fontSize: "20px"
                 }}
               >
-                {viewingProfile.initials || "U"}
+                {viewingProfile.initials || viewingProfile.name?.charAt(0) || "U"}
               </div>
               <div>
                 <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", color: "#0f172a" }}>{viewingProfile.name}</h3>
                 <span style={{ fontSize: "13px", color: "#64748b" }}>
-                  Staff ID: <strong>{viewingProfile.employeeId || viewingProfile.id}</strong> • Joined: {viewingProfile.joinDate || "N/A"}
+                  Staff ID: <strong>{viewingProfile.employeeId || viewingProfile.id}</strong>
                 </span>
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", fontSize: "13px" }}>
               <div>
-                <span style={{ color: "#64748b", display: "block" }}>Email Address</span>
-                <strong>{viewingProfile.email}</strong>
+                <span style={{ color: "#64748b", display: "block", marginBottom: "3px" }}>User Name</span>
+                <strong style={{ fontSize: "14px", color: "#0f172a" }}>{viewingProfile.name}</strong>
               </div>
               <div>
-                <span style={{ color: "#64748b", display: "block" }}>Username</span>
-                <code>@{viewingProfile.username}</code>
+                <span style={{ color: "#64748b", display: "block", marginBottom: "3px" }}>Email Address</span>
+                <strong style={{ fontSize: "14px", color: "#0f172a" }}>{viewingProfile.email}</strong>
               </div>
               <div>
-                <span style={{ color: "#64748b", display: "block" }}>Assigned Role</span>
+                <span style={{ color: "#64748b", display: "block", marginBottom: "3px" }}>Assigned Role</span>
                 <span style={{ fontWeight: "700", color: "var(--navy)" }}>
-                  {viewingProfile.roleTitle || (viewingProfile.role === "Head" ? "Trust Head" : viewingProfile.role === "qm" ? "QMS Coordinator" : "Course Coordinator")}
+                  {viewingProfile.roleTitle || (viewingProfile.role === "Head" ? "Trust Team" : viewingProfile.role === "auditor" ? "Internal Auditor" : viewingProfile.role === "qm" ? "QMS Coordinator" : "Course Coordinator")}
                 </span>
               </div>
               <div>
-                <span style={{ color: "#64748b", display: "block" }}>Account Status</span>
+                <span style={{ color: "#64748b", display: "block", marginBottom: "3px" }}>Account Status</span>
                 <StatusBadge status={viewingProfile.status || "Active"} />
               </div>
-              <div>
-                <span style={{ color: "#64748b", display: "block" }}>Department / Division</span>
-                <strong>{viewingProfile.department || "Academic Division"}</strong>
-              </div>
-              <div>
-                <span style={{ color: "#64748b", display: "block" }}>Designation</span>
-                <strong>{viewingProfile.designation || "Course Coordinator"}</strong>
-              </div>
             </div>
 
-            <div style={{ marginTop: "10px", padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-              <strong style={{ fontSize: "13px", color: "#0f172a", display: "block", marginBottom: "8px" }}>
-                Assigned Security Privileges ({viewingProfile.privileges?.length || 0})
-              </strong>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {(viewingProfile.privileges || []).map((p) => (
-                  <span
-                    key={p}
-                    style={{
-                      fontSize: "12px",
-                      padding: "4px 9px",
-                      background: "#ffffff",
-                      color: "#1e293b",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px"
-                    }}
-                  >
-                    <CheckCircle size={12} color="#16a34a" /> {p}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
               {isQMSCoordinator && (
                 <button
                   type="button"
@@ -692,16 +594,17 @@ export default function UserManagement() {
         </Modal>
       )}
 
-      {/* Add / Edit User Modal */}
+      {/* Add / Edit User Modal — ONLY User Name, Email Address, Assigned Role, and Account Status */}
       {showModal && (
         <Modal
-          title={editingUser ? `Edit User & Privileges: ${editingUser.name}` : "Add New User & Assign Privileges"}
+          title={editingUser ? `Edit User: ${editingUser.name}` : "Add User"}
           onClose={() => setShowModal(false)}
         >
           <form onSubmit={handleSubmit}>
-            <div className="form-grid">
+            <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "14px" }}>
+              {/* 1. User Name */}
               <label>
-                Full Name
+                User Name (Full Name)
                 <input
                   type="text"
                   required
@@ -711,6 +614,7 @@ export default function UserManagement() {
                 />
               </label>
 
+              {/* 2. Email Address */}
               <label>
                 Email Address
                 <input
@@ -722,140 +626,33 @@ export default function UserManagement() {
                 />
               </label>
 
-              <label>
-                Username
-                <input
-                  type="text"
-                  placeholder="e.g. rajesh.verma (leave blank to auto-generate)"
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                />
-              </label>
-
+              {/* 3. Assigned Role */}
               <label>
                 Assigned Role
                 <select
                   value={form.role}
-                  onChange={(e) => handleRoleChange(e.target.value)}
-                  style={{ padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff", width: "100%" }}
                 >
                   <option value="owner">Course Coordinator</option>
                   <option value="qm">QMS Coordinator</option>
-                  <option value="Head">Trust Head</option>
+                  <option value="Head">Trust Team</option>
+                  <option value="auditor">Internal Auditor</option>
                 </select>
               </label>
 
-              <label>
-                Department / Division
-                <input
-                  type="text"
-                  placeholder="e.g. Artificial Intelligence Division"
-                  value={form.department}
-                  onChange={(e) => setForm({ ...form, department: e.target.value })}
-                />
-              </label>
-
-              <label>
-                Course / Process Responsibilities
-                <input
-                  type="text"
-                  placeholder="e.g. AI & Machine Learning PG Diploma"
-                  value={form.process}
-                  onChange={(e) => setForm({ ...form, process: e.target.value })}
-                />
-              </label>
-
-              <label>
-                Official Designation
-                <input
-                  type="text"
-                  placeholder="e.g. Senior Course Coordinator"
-                  value={form.designation}
-                  onChange={(e) => setForm({ ...form, designation: e.target.value })}
-                />
-              </label>
-
+              {/* 4. Account Status */}
               <label>
                 Account Status
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  style={{ padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff", width: "100%" }}
                 >
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
               </label>
-            </div>
-
-            {/* PRIVILEGES CHECKLIST SECTION */}
-            <div style={{ marginTop: "20px", borderTop: "1px solid #e2e8f0", paddingTop: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <div>
-                  <strong style={{ fontSize: "14px", color: "#0f172a" }}>
-                    Security & Workflow Privileges
-                  </strong>
-                  <small style={{ display: "block", color: "#64748b" }}>
-                    Select granular capabilities for this user account or apply role default presets.
-                  </small>
-                </div>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  style={{ fontSize: "12px", padding: "4px 8px" }}
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      privileges: [...(ROLE_PRESETS[prev.role] || ROLE_PRESETS.owner)]
-                    }))
-                  }
-                >
-                  Reset to Role Defaults
-                </button>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: "10px"
-                }}
-              >
-                {AVAILABLE_PRIVILEGES.map((priv) => {
-                  const checked = form.privileges.includes(priv.id);
-                  return (
-                    <label
-                      key={priv.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        padding: "10px",
-                        borderRadius: "6px",
-                        border: `1px solid ${checked ? "#93c5fd" : "#e2e8f0"}`,
-                        background: checked ? "#eff6ff" : "#f8fafc",
-                        cursor: "pointer",
-                        transition: "all 0.15s"
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => handleTogglePrivilege(priv.id)}
-                        style={{ marginTop: "2px" }}
-                      />
-                      <div>
-                        <strong style={{ fontSize: "12px", color: "#1e293b", display: "block" }}>
-                          {priv.name}
-                        </strong>
-                        <small style={{ fontSize: "11px", color: "#64748b", lineHeight: "1.3", display: "block" }}>
-                          {priv.desc}
-                        </small>
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
             </div>
 
             <div className="modal-actions" style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
@@ -869,10 +666,10 @@ export default function UserManagement() {
               </button>
               <button
                 type="submit"
-                className="primary-button btn-green"
-                disabled={submitting}
+                className="primary-button btn-blue"
+                disabled={submitting || !form.name.trim() || !form.email.trim()}
               >
-                <span>{submitting ? "Saving..." : editingUser ? "Save Changes" : "Create User"}</span>
+                <span>{submitting ? "Saving..." : editingUser ? "Save Changes" : "Add User"}</span>
               </button>
             </div>
           </form>

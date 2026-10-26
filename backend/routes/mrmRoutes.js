@@ -14,7 +14,8 @@ import {
   shareMRM,
   acknowledgeMRM,
   archiveMRM,
-  deleteMRM
+  deleteMRM,
+  uploadMoMDocument
 } from "../controllers/mrmController.js";
 import { authenticateToken } from "../middleware/authMiddleware.js";
 
@@ -28,6 +29,8 @@ router.put("/:id/schedule", authenticateToken, scheduleMRM);
 router.put("/:id", authenticateToken, updateMRM);
 router.post("/:id/mom", authenticateToken, saveMoM);
 router.put("/:id/mom", authenticateToken, saveMoM);
+router.post("/:id/upload-mom", authenticateToken, uploadMoMDocument);
+router.put("/:id/upload-mom", authenticateToken, uploadMoMDocument);
 router.post("/:id/submit-approval", authenticateToken, submitForApproval);
 router.put("/:id/submit-approval", authenticateToken, submitForApproval);
 router.post("/:id/approve", authenticateToken, approveMRM);

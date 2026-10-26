@@ -62,11 +62,31 @@ export const navByRole = {
     ["EXECUTIVE OVERSIGHT", [
       ["MRM Approvals", "/mrm", ShieldCheck],
       ["Approval History", "/mrm?filter=Approved", History],
+      ["User Management", "/user-management", UserCheck],
       ["Document Oversight", "/documents", FileText],
       ["Processes", "/processes", BookOpen]
     ]],
     ["MONITORING", [
       ["Audit Trail", "/version-history", History],
+      ["Notifications", "/notifications", Bell]
+    ]],
+    ["ACCOUNT", [
+      ["Profile", "/profile", Users]
+    ]]
+  ],
+  auditor: [
+    ["OVERVIEW", [
+      ["Dashboard", "/qm-group/dashboard", LayoutDashboard]
+    ]],
+    ["COMPLIANCE & AUDIT", [
+      ["User Management", "/user-management", UserCheck],
+      ["Management Review Meeting", "/mrm", CalendarCheck],
+      ["Documents", "/documents", FileText],
+      ["Processes", "/processes", BookOpen]
+    ]],
+    ["MONITORING & LOGS", [
+      ["Audit Trail", "/version-history", History],
+      ["Activity Logs", "/activity", Activity],
       ["Notifications", "/notifications", Bell]
     ]],
     ["ACCOUNT", [
