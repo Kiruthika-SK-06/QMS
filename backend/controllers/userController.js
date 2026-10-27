@@ -96,16 +96,37 @@ export const createUser = (req, res) => {
     const roleTitleMap = {
       owner: "Course Coordinator",
       qm: "QMS Coordinator",
-      Head: "Trust Head"
+      Head: "Trust Head",
+      auditor: "Internal Auditor"
     };
 
-    const uname = (username || email.split("@")[0] || name.toLowerCase().replace(/\s+/g, ".")).trim();
+    const uname = (username || req.body.userName || email.split("@")[0] || name.toLowerCase().replace(/\s+/g, ".")).trim();
     const initials = name
       .split(" ")
       .map((w) => w[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
+
+    const empId = (req.body.employeeId || req.body.empId || `ID${Math.floor(100 + Math.random() * 900)}`).trim();
+
+    const defaultDept =
+      cleanRole === "auditor"
+        ? "Internal Quality Audit Division"
+        : cleanRole === "Head"
+        ? "Trust Governance"
+        : cleanRole === "qm"
+        ? "Quality Assurance & Compliance"
+        : "Academic Division";
+
+    const defaultPrivileges =
+      cleanRole === "auditor"
+        ? ["Review & Approve MRM Plans", "Verify Audit Compliance", "View All MoM Records", "Audit Trail & Logs"]
+        : cleanRole === "Head"
+        ? ["Approve MRM", "Review Documents", "View Audit Logs & Reports"]
+        : cleanRole === "qm"
+        ? ["Manage Documents", "Review Documents", "Plan & Schedule MRM", "Share MRM with Coordinators", "User Management", "Assign & Supervise Tasks", "View Audit Logs & Reports"]
+        : ["Manage Documents", "Draft Minutes of Meeting (MoM)", "Assign & Supervise Tasks"];
 
     const newUser = {
       id: `USR-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -117,17 +138,13 @@ export const createUser = (req, res) => {
       role: cleanRole,
       roleTitle: roleTitleMap[cleanRole] || "Course Coordinator",
       initials,
-      employeeId: `ID${Math.floor(100 + Math.random() * 900)}`,
-      department: department || "Academic Division",
-      process: process || "Course Management",
-      designation: designation || "Course Coordinator",
+      employeeId: empId,
+      department: department || defaultDept,
+      process: process || (cleanRole === "owner" ? "Course Management" : "Quality Oversight"),
+      designation: designation || roleTitleMap[cleanRole] || "Course Coordinator",
       status: status || "Active",
       joinDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-      privileges: Array.isArray(privileges) ? privileges : [
-        "Manage Documents",
-        "Plan & Schedule MRM",
-        "Draft Minutes of Meeting (MoM)"
-      ]
+      privileges: Array.isArray(privileges) && privileges.length ? privileges : defaultPrivileges
     };
 
     dummyUsers.push(newUser);
@@ -171,11 +188,13 @@ export const updateUser = (req, res) => {
 
     const existing = dummyUsers[index];
     const { name, email, role, designation, department, process, privileges, status } = req.body;
+    const empId = req.body.employeeId || req.body.empId;
 
     const roleTitleMap = {
       owner: "Course Coordinator",
       qm: "QMS Coordinator",
-      Head: "Trust Head"
+      Head: "Trust Head",
+      auditor: "Internal Auditor"
     };
 
     const updatedRole = role ? normalizeRole(role) : existing.role;
@@ -184,6 +203,7 @@ export const updateUser = (req, res) => {
       ...existing,
       name: name ? name.trim() : existing.name,
       email: email ? email.trim() : existing.email,
+      employeeId: empId ? empId.trim() : existing.employeeId,
       role: updatedRole,
       roleTitle: roleTitleMap[updatedRole] || existing.roleTitle,
       designation: designation !== undefined ? designation : existing.designation,

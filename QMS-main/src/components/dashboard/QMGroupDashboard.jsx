@@ -208,7 +208,7 @@ export default function QMGroupDashboard() {
       {/* MRM Sequential Workflow Control Center */}
       <section className="panel">
         <SectionHeader
-          title="Management Review Meeting (MRM) — Quality Lifecycle Center"
+          title="Management Review Meeting (MRM)"
           action={
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <NavLink className="primary-button" to="/mrm" style={{ fontSize: "12px", padding: "5px 12px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
@@ -218,61 +218,43 @@ export default function QMGroupDashboard() {
           }
         />
 
-        {/* 6-Stage Workflow Progress Stepper */}
+        {/* 4-Stage Workflow Progress Cards */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
             gap: "10px",
             marginBottom: "18px",
-            padding: "14px 16px",
+            padding: "12px 14px",
             background: "#ffffff",
             borderRadius: "10px",
             border: "1px solid var(--line)",
             boxShadow: "var(--shadow-xs)"
           }}
         >
-          <div style={{ textAlign: "center", padding: "6px 8px", background: "var(--navy-subtle)", borderRadius: "8px", border: "1px solid var(--navy-border)" }}>
+          <div style={{ textAlign: "center", padding: "8px", background: "var(--navy-subtle)", borderRadius: "8px", border: "1px solid var(--navy-border)" }}>
             <span style={{ fontSize: "11px", color: "var(--navy)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>1. Planned</span>
-            <strong style={{ fontSize: "19px", color: "var(--navy)", fontFamily: "Space Grotesk, sans-serif" }}>
+            <strong style={{ fontSize: "20px", color: "var(--navy)", fontFamily: "Space Grotesk, sans-serif" }}>
               {(mrmList || []).filter((m) => m.status === "Planned").length}
             </strong>
-            <small style={{ fontSize: "10px", color: "var(--muted)", display: "block" }}>Needs Scheduling</small>
           </div>
-          <div style={{ textAlign: "center", padding: "6px 8px", background: "var(--navy-subtle)", borderRadius: "8px", border: "1px solid var(--navy-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--navy)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>2. Scheduled</span>
-            <strong style={{ fontSize: "19px", color: "var(--navy)", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => m.status === "Scheduled" && !m.mom).length}
-            </strong>
-            <small style={{ fontSize: "10px", color: "var(--muted)", display: "block" }}>Needs MoM</small>
-          </div>
-          <div style={{ textAlign: "center", padding: "6px 8px", background: "var(--navy-subtle)", borderRadius: "8px", border: "1px solid var(--navy-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--navy)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>3. MoM Done</span>
-            <strong style={{ fontSize: "19px", color: "var(--navy)", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => m.status === "MoM Recorded").length}
-            </strong>
-            <small style={{ fontSize: "10px", color: "var(--muted)", display: "block" }}>Ready for Approval</small>
-          </div>
-          <div style={{ textAlign: "center", padding: "6px 8px", background: "var(--status-amber-bg)", borderRadius: "8px", border: "1px solid var(--status-amber-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--status-amber)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>4. With Trust</span>
-            <strong style={{ fontSize: "19px", color: "var(--status-amber)", fontFamily: "Space Grotesk, sans-serif" }}>
+          <div style={{ textAlign: "center", padding: "8px", background: "var(--status-amber-bg)", borderRadius: "8px", border: "1px solid var(--status-amber-border)" }}>
+            <span style={{ fontSize: "11px", color: "var(--status-amber)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>2. Pending Approval</span>
+            <strong style={{ fontSize: "20px", color: "var(--status-amber)", fontFamily: "Space Grotesk, sans-serif" }}>
               {(mrmList || []).filter((m) => m.status === "Submitted for Approval" || m.status === "Pending Trust Head Approval").length}
             </strong>
-            <small style={{ fontSize: "10px", color: "var(--status-amber)", display: "block" }}>In Review</small>
           </div>
-          <div style={{ textAlign: "center", padding: "6px 8px", background: "var(--status-green-bg)", borderRadius: "8px", border: "1px solid var(--status-green-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--status-green)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>5. Approved</span>
-            <strong style={{ fontSize: "19px", color: "var(--status-green)", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => (m.status === "Approved" || m.trustHeadApproval?.approved) && !m.sharedWithAll).length}
+          <div style={{ textAlign: "center", padding: "8px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
+            <span style={{ fontSize: "11px", color: "#166534", fontWeight: "700", textTransform: "uppercase", display: "block" }}>3. Email Stage</span>
+            <strong style={{ fontSize: "20px", color: "#166534", fontFamily: "Space Grotesk, sans-serif" }}>
+              {(mrmList || []).filter((m) => (m.status === "Approved" || m.status === "Approved by Trust Head") && !m.emailNotification?.sent).length}
             </strong>
-            <small style={{ fontSize: "10px", color: "var(--status-green)", fontWeight: "600", display: "block" }}>Ready to Share!</small>
           </div>
-          <div style={{ textAlign: "center", padding: "6px 8px", background: "var(--navy-subtle)", borderRadius: "8px", border: "1px solid var(--navy-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--navy)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>6. Shared</span>
-            <strong style={{ fontSize: "19px", color: "var(--navy)", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => m.sharedWithAll || m.status === "Shared").length}
+          <div style={{ textAlign: "center", padding: "8px", background: "#eff6ff", borderRadius: "8px", border: "1px solid #bfdbfe" }}>
+            <span style={{ fontSize: "11px", color: "#1e40af", fontWeight: "700", textTransform: "uppercase", display: "block" }}>4. MoM Published</span>
+            <strong style={{ fontSize: "20px", color: "#1e40af", fontFamily: "Space Grotesk, sans-serif" }}>
+              {(mrmList || []).filter((m) => m.momFile || m.status === "MoM Recorded" || m.status === "Shared").length}
             </strong>
-            <small style={{ fontSize: "10px", color: "var(--muted)", display: "block" }}>Distributed</small>
           </div>
         </div>
 
@@ -280,7 +262,7 @@ export default function QMGroupDashboard() {
           <table>
             <thead>
               <tr>
-                <th>Meeting Title & Scope</th>
+                <th>Meeting Title</th>
                 <th>Stage & Status</th>
                 <th>Schedule</th>
                 <th>Minutes (MoM)</th>
@@ -303,9 +285,6 @@ export default function QMGroupDashboard() {
                     <td>
                       <NavLink to="/mrm" className="table-link">
                         <strong style={{ fontSize: "13px" }}>{mrm.title}</strong>
-                        <small style={{ display: "block", color: "#64748b", marginTop: "2px" }}>
-                          {mrm.id} • {mrm.department || "Academic Quality"}
-                        </small>
                       </NavLink>
                     </td>
                     <td>

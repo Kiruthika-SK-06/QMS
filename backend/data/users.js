@@ -135,6 +135,35 @@ export let dummyUsers = [
       "Plan & Schedule MRM",
       "Draft Minutes of Meeting (MoM)"
     ]
+  },
+  {
+    id: "IA-001",
+    username: "internalauditor",
+    email: "auditor@cdac.in",
+    aliases: [
+      "internalauditor",
+      "auditor",
+      "auditor@cdac.in",
+      "suresh.menon@cdac.in",
+      "suresh"
+    ],
+    password: "1234",
+    name: "Suresh Menon",
+    role: "auditor",
+    roleTitle: "Internal Auditor",
+    initials: "SM",
+    employeeId: "IA001",
+    department: "Internal Quality Audit Division",
+    process: "Quality System & ISO Audit",
+    designation: "Lead Internal Auditor",
+    status: "Active",
+    joinDate: "12 Feb 2023",
+    privileges: [
+      "Review & Approve MRM Plans",
+      "Verify Audit Compliance",
+      "View All MoM Records",
+      "Audit Trail & Logs"
+    ]
   }
 ];
 
@@ -160,7 +189,11 @@ export const normalizeRole = (role) => {
     trust_head: "Head",
     qmhead: "Head",
     qm_head: "Head",
-    th: "Head"
+    th: "Head",
+    auditor: "auditor",
+    internalauditor: "auditor",
+    internal_auditor: "auditor",
+    ia: "auditor"
   };
   return map[role.toLowerCase()] || role;
 };

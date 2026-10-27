@@ -62,7 +62,9 @@ export default function LoginForm() {
             ? "/process-owner/dashboard"
             : userRole === "Head"
               ? "/Head/dashboard"
-              : "/qm-group/dashboard";
+              : userRole === "auditor"
+                ? "/Head/dashboard"
+                : "/qm-group/dashboard";
 
         navigate(path);
       } else {

@@ -361,30 +361,26 @@ export function AppProvider({ children }) {
     }
   };
 
-  const saveMoM = async (id, momData) => {
+  const requestMRMApproval = async (id) => {
     try {
-      const updated = await mrmService.saveMoM(id, momData, token);
+      const updated = await mrmService.requestApproval(id, token);
       setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
       refreshData();
       return updated;
     } catch (err) {
-      console.error("saveMoM failed, fallback to local:", err);
+      console.error("requestMRMApproval failed, fallback to local:", err);
       let localUpdated = null;
       setMrmList((prev) =>
         prev.map((m) => {
           if (m.id === id) {
             localUpdated = {
               ...m,
-              mom: {
-                ...momData,
-                recordedBy: currentUser?.name || "QMS Coordinator",
-                recordedDate: new Date().toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric"
-                })
-              },
-              status: "MoM Recorded"
+              status: "Pending Approval",
+              stage: 2,
+              approvals: {
+                teamHead: { status: "Pending", decision: null, approverName: null, approverRole: null, approvedAt: null, remarks: null },
+                internalAuditor: { status: "Pending", decision: null, approverName: null, approverRole: null, approvedAt: null, remarks: null }
+              }
             };
             return localUpdated;
           }
@@ -395,22 +391,39 @@ export function AppProvider({ children }) {
     }
   };
 
-  const submitMRMForApproval = async (id) => {
+  const shareMeetingEmail = async (id) => {
     try {
-      const updated = await mrmService.submitForApproval(id, token);
+      const updated = await mrmService.shareMeetingEmail(id, token);
       setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
       refreshData();
       return updated;
     } catch (err) {
-      console.error("submitMRMForApproval failed, fallback to local:", err);
+      console.error("shareMeetingEmail failed, fallback to local:", err);
       let localUpdated = null;
       setMrmList((prev) =>
         prev.map((m) => {
           if (m.id === id) {
             localUpdated = {
               ...m,
-              status: "Submitted for Approval",
-              submittedForApprovalAt: new Date().toLocaleString()
+              status: "Notification Sent",
+              stage: 4,
+              sharedWithAll: true,
+              sharedAt: new Date().toLocaleString(),
+              sharedBy: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
+              emailNotification: {
+                sent: true,
+                sentAt: new Date().toLocaleString(),
+                sentBy: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
+                subject: `Official Notice: ${m.title} Scheduled`,
+                status: "Delivered",
+                recipients: [
+                  { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
+                  { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
+                  { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
+                  { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
+                  { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+                ]
+              }
             };
             return localUpdated;
           }
@@ -419,6 +432,60 @@ export function AppProvider({ children }) {
       );
       return localUpdated;
     }
+  };
+
+  const uploadMoMFile = async (id, momPayload) => {
+    try {
+      const updated = await mrmService.uploadMoMFile(id, momPayload, token);
+      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("uploadMoMFile failed, fallback to local:", err);
+      let localUpdated = null;
+      setMrmList((prev) =>
+        prev.map((m) => {
+          if (m.id === id) {
+            localUpdated = {
+              ...m,
+              status: "MoM Uploaded",
+              stage: 5,
+              momFile: {
+                fileName: momPayload.fileName || `MRM_${m.id}_MoM.pdf`,
+                fileSize: momPayload.fileSize || "2.1 MB",
+                fileType: momPayload.fileType || "application/pdf",
+                fileData: momPayload.fileData || null,
+                uploadedBy: currentUser?.name || "Rahul Kumar",
+                uploadedByRole: currentUser?.roleTitle || "QMS Coordinator",
+                uploadedAt: new Date().toLocaleString(),
+                downloadUrl: `/api/mrm/${m.id}/mom-download`,
+                summary: momPayload.summary || "Official Minutes of Meeting recorded",
+                discussionPoints: momPayload.discussionPoints || [],
+                actionItems: momPayload.actionItems || [],
+                decisions: momPayload.decisions || []
+              },
+              mom: {
+                summary: momPayload.summary,
+                discussionPoints: momPayload.discussionPoints,
+                actionItems: momPayload.actionItems,
+                decisions: momPayload.decisions
+              }
+            };
+            return localUpdated;
+          }
+          return m;
+        })
+      );
+      return localUpdated;
+    }
+  };
+
+  const saveMoM = async (id, momData) => {
+    return uploadMoMFile(id, momData);
+  };
+
+  const submitMRMForApproval = async (id) => {
+    return requestMRMApproval(id);
   };
 
   const approveMRM = async (id, remarks = "") => {
@@ -429,23 +496,35 @@ export function AppProvider({ children }) {
       return updated;
     } catch (err) {
       console.error("approveMRM failed, fallback to local:", err);
+      const isAuditor = currentUser?.role === "auditor";
+      const approverName = currentUser?.name || (isAuditor ? "Suresh Menon" : "Anita Rao");
+      const approverRole = currentUser?.roleTitle || (isAuditor ? "Internal Auditor" : "Trust Head");
+
       setMrmList((prev) =>
-        prev.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                status: "Approved",
-                trustHeadApproval: {
-                  decision: "Approved",
-                  approved: true,
-                  approvedBy: currentUser?.name || "Anita Rao (Trust Head)",
-                  approvedAt: new Date().toLocaleString(),
-                  remarks: remarks || "Approved without modifications.",
-                  versionReviewed: m.version || "1.0"
-                }
-              }
-            : m
-        )
+        prev.map((m) => {
+          if (m.id !== id) return m;
+          const currentApprovals = m.approvals || { teamHead: { status: "Pending" }, internalAuditor: { status: "Pending" } };
+          const updatedApprovals = {
+            ...currentApprovals,
+            ...(isAuditor
+              ? { internalAuditor: { status: "Approved", decision: "Approved", approverName, approverRole, approvedAt: new Date().toLocaleString(), remarks } }
+              : { teamHead: { status: "Approved", decision: "Approved", approverName, approverRole, approvedAt: new Date().toLocaleString(), remarks } })
+          };
+          const bothApproved = updatedApprovals.teamHead?.status === "Approved" && updatedApprovals.internalAuditor?.status === "Approved";
+          return {
+            ...m,
+            status: bothApproved ? "Approved" : "Pending Approval",
+            stage: bothApproved ? 3 : 2,
+            approvals: updatedApprovals,
+            trustHeadApproval: {
+              decision: "Approved",
+              approved: true,
+              approvedBy: approverName,
+              approvedAt: new Date().toLocaleString(),
+              remarks
+            }
+          };
+        })
       );
     }
   };
@@ -797,12 +876,15 @@ export function AppProvider({ children }) {
         scheduleMRM,
         updateMRM,
         saveMoM,
+        uploadMoMFile,
         submitMRMForApproval,
+        requestMRMApproval,
         approveMRM,
         requestChangesMRM,
         rejectMRM,
         resubmitMRM,
         shareMRM,
+        shareMeetingEmail,
         acknowledgeMRM,
         addTask,
         updateTask,

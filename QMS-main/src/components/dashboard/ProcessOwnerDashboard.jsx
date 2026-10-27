@@ -73,7 +73,6 @@ export default function ProcessOwnerDashboard() {
                   <td>
                     <NavLink to="/mrm" className="table-link">
                       <strong>{mrm.title}</strong>
-                      <small>{mrm.id} • {mrm.venue}</small>
                     </NavLink>
                   </td>
                   <td>{mrm.scheduledDate} {mrm.scheduledTime && `• ${mrm.scheduledTime}`}</td>

@@ -39,27 +39,35 @@ export const mrmService = {
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to schedule MRM");
+      if (!res.ok) throw new Error(data.message || "Failed to create MRM plan");
       return data.data;
     } catch (err) {
-      if (!err.message?.includes("Failed to schedule")) throw err;
+      console.error("createMRM API error, fallback to local:", err);
+      const isReq = !!payload.requestApprovalImmediately;
       const newMRM = {
         ...payload,
         id: `MRM-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
         version: "1.0",
         versionHistory: [],
-        status: payload.scheduledDate ? "Scheduled" : "Planned",
+        status: isReq ? "Pending Approval" : "Planned",
+        stage: isReq ? 2 : 1,
+        approvals: {
+          teamHead: { status: "Pending", decision: null, approverName: null, approverRole: null, approvedAt: null, remarks: null },
+          internalAuditor: { status: "Pending", decision: null, approverName: null, approverRole: null, approvedAt: null, remarks: null }
+        },
+        emailNotification: null,
+        momFile: null,
         mom: null,
         trustHeadApproval: null,
         sharedWithAll: false,
         acknowledgements: [],
         timeline: [
           {
-            action: payload.scheduledDate ? "Meeting Planned & Scheduled" : "Meeting Planned",
-            actor: payload.plannedBy || "QMS Coordinator",
+            action: "Meeting Planned by QMS Coordinator",
+            actor: payload.plannedBy || "Rahul Kumar (QMS Coordinator)",
             timestamp: new Date().toLocaleString(),
             version: "1.0",
-            details: payload.scheduledDate ? `Scheduled for ${payload.scheduledDate}` : "Meeting Planned"
+            details: payload.scheduledDate ? `Planned for ${payload.scheduledDate} at ${payload.scheduledTime || "10:30 AM"}` : "Meeting plan created"
           }
         ]
       };
@@ -103,27 +111,10 @@ export const mrmService = {
     }
   },
 
-  async saveMoM(id, momData, token) {
+  // QMS Coordinator asks for approval from Team Head & Internal Auditor
+  async requestApproval(id, token) {
     try {
-      const res = await fetch(`${API_BASE}/${id}/mom`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(momData)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to save MoM");
-      return data.data;
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async submitForApproval(id, token) {
-    try {
-      const res = await fetch(`${API_BASE}/${id}/submit-approval`, {
+      const res = await fetch(`${API_BASE}/${id}/request-approval`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,13 +122,14 @@ export const mrmService = {
         }
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to submit MRM for approval");
+      if (!res.ok) throw new Error(data.message || "Failed to request approval");
       return data.data;
     } catch (err) {
       throw err;
     }
   },
 
+  // Team Head or Internal Auditor approves
   async approveMRM(id, { remarks = "" }, token) {
     try {
       const res = await fetch(`${API_BASE}/${id}/approve`, {
@@ -192,7 +184,7 @@ export const mrmService = {
     }
   },
 
-  async resubmitMRM(id, { mom, revisionNotes }, token) {
+  async resubmitMRM(id, { revisionNotes }, token) {
     try {
       const res = await fetch(`${API_BASE}/${id}/resubmit`, {
         method: "POST",
@@ -200,7 +192,7 @@ export const mrmService = {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ mom, revisionNotes })
+        body: JSON.stringify({ revisionNotes })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to resubmit MRM");
@@ -210,9 +202,10 @@ export const mrmService = {
     }
   },
 
-  async shareMRM(id, token) {
+  // Share meeting notification through email to Course Coordinators, Trust Head, and Internal Auditor
+  async shareMeetingEmail(id, token) {
     try {
-      const res = await fetch(`${API_BASE}/${id}/share`, {
+      const res = await fetch(`${API_BASE}/${id}/share-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -220,11 +213,48 @@ export const mrmService = {
         }
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to distribute MRM");
+      if (!res.ok) throw new Error(data.message || "Failed to share meeting notification through email");
       return data.data;
     } catch (err) {
       throw err;
     }
+  },
+
+  // QMS Coordinator uploads the MoM file (seen by everyone)
+  async uploadMoMFile(id, momPayload, token) {
+    try {
+      const res = await fetch(`${API_BASE}/${id}/upload-mom`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(momPayload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to upload MoM file");
+      return data.data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // Trigger download of MoM file or text extract
+  downloadMoMUrl(id) {
+    return `${API_BASE}/${id}/mom-download`;
+  },
+
+  // Backward compatibility alias methods
+  async submitForApproval(id, token) {
+    return this.requestApproval(id, token);
+  },
+
+  async saveMoM(id, momData, token) {
+    return this.uploadMoMFile(id, momData, token);
+  },
+
+  async shareMRM(id, token) {
+    return this.shareMeetingEmail(id, token);
   },
 
   async acknowledgeMRM(id, token) {
@@ -237,10 +267,9 @@ export const mrmService = {
         }
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to acknowledge MRM");
       return data.data;
     } catch (err) {
-      throw err;
+      return null;
     }
   },
 
@@ -254,7 +283,6 @@ export const mrmService = {
         }
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to archive MRM");
       return data.data;
     } catch (err) {
       throw err;

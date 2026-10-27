@@ -5,18 +5,14 @@ import {
   Search,
   Edit2,
   Trash2,
-  Shield,
+  ShieldCheck,
   CheckCircle,
   Users,
   Award,
   Briefcase,
-  KeyRound,
-  Check,
-  X,
   Eye,
   Power,
-  ArrowUpDown,
-  Lock
+  IdCard
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
@@ -24,74 +20,56 @@ import StatCard from "../components/common/StatCard";
 import StatusBadge from "../components/common/StatusBadge";
 import Modal from "../components/tasks/Modal";
 
-const AVAILABLE_PRIVILEGES = [
-  {
-    id: "Manage Documents",
-    name: "Manage Documents",
-    desc: "Create, edit, and archive controlled QMS course documents"
+// Default metadata and privileges preset by role
+const ROLE_METADATA = {
+  owner: {
+    roleTitle: "Course Coordinator",
+    designation: "Course Coordinator",
+    department: "Academic Division",
+    process: "Course Management",
+    privileges: [
+      "Manage Documents",
+      "Draft Minutes of Meeting (MoM)",
+      "Assign & Supervise Tasks"
+    ]
   },
-  {
-    id: "Review Documents",
-    name: "Review Documents",
-    desc: "Review drafts in queue and recommend revisions or approval"
+  qm: {
+    roleTitle: "QMS Coordinator",
+    designation: "QMS Coordinator",
+    department: "Quality Assurance & Compliance",
+    process: "Quality Management & MRM",
+    privileges: [
+      "Manage Documents",
+      "Review Documents",
+      "Plan & Schedule MRM",
+      "Share MRM with Coordinators",
+      "User Management",
+      "Assign & Supervise Tasks",
+      "View Audit Logs & Reports"
+    ]
   },
-  {
-    id: "Plan & Schedule MRM",
-    name: "Plan & Schedule MRM",
-    desc: "Initiate and schedule Management Review Meetings"
+  Head: {
+    roleTitle: "Trust Head",
+    designation: "Trust Head",
+    department: "Trust Governance",
+    process: "Governance & Approvals",
+    privileges: [
+      "Approve MRM",
+      "Review Documents",
+      "View Audit Logs & Reports"
+    ]
   },
-  {
-    id: "Draft Minutes of Meeting (MoM)",
-    name: "Draft Minutes of Meeting (MoM)",
-    desc: "Record meeting discussion points, decisions, and action items"
-  },
-  {
-    id: "Approve MRM",
-    name: "Approve MRM",
-    desc: "Trust Head executive sign-off and ratification for MRM MoM"
-  },
-  {
-    id: "Share MRM with Coordinators",
-    name: "Share MRM with Coordinators",
-    desc: "Distribute approved MRMs to all Course Coordinators"
-  },
-  {
-    id: "User Management",
-    name: "User Management",
-    desc: "Add, edit, view user accounts and assign security privileges"
-  },
-  {
-    id: "Assign & Supervise Tasks",
-    name: "Assign & Supervise Tasks",
-    desc: "Create, delegate, and supervise tasks across departments"
-  },
-  {
-    id: "View Audit Logs & Reports",
-    name: "View Audit Logs & Reports",
-    desc: "Access compliance audit trails and system activity logs"
+  auditor: {
+    roleTitle: "Internal Auditor",
+    designation: "Internal Auditor",
+    department: "Internal Quality Audit Division",
+    process: "Quality & Compliance Audit",
+    privileges: [
+      "Review Documents",
+      "Approve MRM",
+      "View Audit Logs & Reports"
+    ]
   }
-];
-
-const ROLE_PRESETS = {
-  owner: [
-    "Manage Documents",
-    "Draft Minutes of Meeting (MoM)",
-    "Assign & Supervise Tasks"
-  ],
-  qm: [
-    "Manage Documents",
-    "Review Documents",
-    "Plan & Schedule MRM",
-    "Share MRM with Coordinators",
-    "User Management",
-    "Assign & Supervise Tasks",
-    "View Audit Logs & Reports"
-  ],
-  Head: [
-    "Approve MRM",
-    "Review Documents",
-    "View Audit Logs & Reports"
-  ]
 };
 
 export default function UserManagement() {
@@ -104,7 +82,11 @@ export default function UserManagement() {
     currentUser
   } = useApp();
 
+  // Role permissions
   const isQMSCoordinator = currentUser?.role === "qm";
+  const isTrustHead = currentUser?.role === "Head";
+  const isInternalAuditor = currentUser?.role === "auditor";
+  const canEdit = isQMSCoordinator;
 
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -117,33 +99,24 @@ export default function UserManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
 
-  // Form state
+  // Simplified form with only the 5 required fields:
+  // 1. User Name, 2. Emp ID, 3. Email Address, 4. Assigned Role, 5. Active Status
   const [form, setForm] = useState({
     name: "",
+    employeeId: "",
     email: "",
-    username: "",
-    password: "1234",
     role: "owner",
-    designation: "Course Coordinator",
-    department: "Advanced Computing Division",
-    process: "Course Management",
-    status: "Active",
-    privileges: [...ROLE_PRESETS.owner]
+    status: "Active"
   });
 
   const openAddModal = () => {
     setEditingUser(null);
     setForm({
       name: "",
+      employeeId: "",
       email: "",
-      username: "",
-      password: "1234",
       role: "owner",
-      designation: "Course Coordinator",
-      department: "Academic Division",
-      process: "Course Management",
-      status: "Active",
-      privileges: [...ROLE_PRESETS.owner]
+      status: "Active"
     });
     setShowModal(true);
   };
@@ -151,54 +124,53 @@ export default function UserManagement() {
   const openEditModal = (user) => {
     setEditingUser(user);
     setForm({
-      name: user.name,
-      email: user.email,
-      username: user.username,
-      password: "",
-      role: user.role,
-      designation: user.designation || "",
-      department: user.department || "",
-      process: user.process || "",
-      status: user.status || "Active",
-      privileges: Array.isArray(user.privileges) ? [...user.privileges] : [...(ROLE_PRESETS[user.role] || [])]
+      name: user.name || "",
+      employeeId: user.employeeId || user.id || "",
+      email: user.email || "",
+      role: user.role || "owner",
+      status: user.status || "Active"
     });
     setShowModal(true);
   };
 
-  const handleRoleChange = (newRole) => {
-    setForm((prev) => ({
-      ...prev,
-      role: newRole,
-      privileges: [...(ROLE_PRESETS[newRole] || ROLE_PRESETS.owner)],
-      designation:
-        newRole === "owner"
-          ? "Course Coordinator"
-          : newRole === "qm"
-          ? "QMS Coordinator"
-          : "Trust Head"
-    }));
-  };
-
-  const handleTogglePrivilege = (privId) => {
-    setForm((prev) => {
-      const exists = prev.privileges.includes(privId);
-      const nextPrivs = exists
-        ? prev.privileges.filter((p) => p !== privId)
-        : [...prev.privileges, privId];
-      return { ...prev, privileges: nextPrivs };
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim()) return;
+    if (!form.name.trim() || !form.email.trim() || !form.employeeId.trim()) return;
 
     setSubmitting(true);
+    const meta = ROLE_METADATA[form.role] || ROLE_METADATA.owner;
+
     try {
       if (editingUser) {
-        await updateUser(editingUser.id, form);
+        const payload = {
+          name: form.name.trim(),
+          employeeId: form.employeeId.trim(),
+          email: form.email.trim(),
+          role: form.role,
+          status: form.status,
+          roleTitle: meta.roleTitle,
+          designation: editingUser.designation || meta.designation,
+          department: editingUser.department || meta.department,
+          process: editingUser.process || meta.process,
+          privileges: editingUser.privileges?.length ? editingUser.privileges : meta.privileges
+        };
+        await updateUser(editingUser.id, payload);
       } else {
-        await addUser(form);
+        const payload = {
+          name: form.name.trim(),
+          employeeId: form.employeeId.trim(),
+          email: form.email.trim(),
+          role: form.role,
+          status: form.status,
+          roleTitle: meta.roleTitle,
+          username: form.email.trim().split("@")[0].toLowerCase(),
+          password: "1234",
+          designation: meta.designation,
+          department: meta.department,
+          process: meta.process,
+          privileges: meta.privileges
+        };
+        await addUser(payload);
       }
       setShowModal(false);
     } catch (err) {
@@ -240,7 +212,8 @@ export default function UserManagement() {
         roleFilter === "All" ||
         (roleFilter === "Course Coordinator" && user.role === "owner") ||
         (roleFilter === "QMS Coordinator" && user.role === "qm") ||
-        (roleFilter === "Trust Head" && user.role === "Head");
+        (roleFilter === "Trust Head" && user.role === "Head") ||
+        (roleFilter === "Internal Auditor" && user.role === "auditor");
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -249,19 +222,19 @@ export default function UserManagement() {
 
       const q = query.toLowerCase();
       const matchesQuery =
-        user.name.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q) ||
-        user.username.toLowerCase().includes(q) ||
+        (user.name && user.name.toLowerCase().includes(q)) ||
+        (user.email && user.email.toLowerCase().includes(q)) ||
+        (user.employeeId && user.employeeId.toLowerCase().includes(q)) ||
+        (user.username && user.username.toLowerCase().includes(q)) ||
         (user.department && user.department.toLowerCase().includes(q)) ||
-        (user.roleTitle && user.roleTitle.toLowerCase().includes(q)) ||
-        (Array.isArray(user.privileges) &&
-          user.privileges.some((p) => p.toLowerCase().includes(q)));
+        (user.roleTitle && user.roleTitle.toLowerCase().includes(q));
 
       return matchesRole && matchesStatus && matchesQuery;
     })
     .sort((a, b) => {
-      if (sortBy === "name-asc") return a.name.localeCompare(b.name);
-      if (sortBy === "name-desc") return b.name.localeCompare(a.name);
+      if (sortBy === "name-asc") return (a.name || "").localeCompare(b.name || "");
+      if (sortBy === "name-desc") return (b.name || "").localeCompare(a.name || "");
+      if (sortBy === "empId") return (a.employeeId || "").localeCompare(b.employeeId || "");
       if (sortBy === "role") return (a.roleTitle || "").localeCompare(b.roleTitle || "");
       if (sortBy === "department") return (a.department || "").localeCompare(b.department || "");
       if (sortBy === "status") return (a.status || "").localeCompare(b.status || "");
@@ -270,17 +243,16 @@ export default function UserManagement() {
 
   const totalUsers = (usersList || []).length;
   const courseCoordinators = (usersList || []).filter((u) => u.role === "owner").length;
-  const qmsCoordinators = (usersList || []).filter((u) => u.role === "qm").length;
-  const trustHeads = (usersList || []).filter((u) => u.role === "Head").length;
+  const internalAuditors = (usersList || []).filter((u) => u.role === "auditor").length;
 
   return (
     <>
       <PageIntro
-        eyebrow="Access Control & Governance"
+        eyebrow="Access Control"
         title="User Management"
-        description="Add, edit, view, and supervise Course Coordinators and staff. Manage their role assignments, account statuses, and system privileges."
+        description="Directory of user accounts, staff IDs, and assigned roles."
         action={
-          isQMSCoordinator && (
+          canEdit && (
             <button
               className="primary-button btn-blue"
               onClick={openAddModal}
@@ -293,47 +265,33 @@ export default function UserManagement() {
         }
       />
 
-      {!isQMSCoordinator && (
-        <div
-          style={{
-            marginBottom: "18px",
-            padding: "12px 16px",
-            background: "var(--navy-subtle)",
-            border: "1px solid var(--navy-border)",
-            borderRadius: "8px",
-            color: "var(--navy)",
-            fontSize: "13px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px"
-          }}
-        >
-          <Lock size={16} />
-          <span>
-            <strong>Read-Only Mode:</strong> Only the <strong>QMS Coordinator</strong> has authorization to add, edit, or modify user accounts and security privileges.
-          </span>
-        </div>
-      )}
-
-      <div className="stats-grid four">
+      {/* KPI / Statistics Cards Grid - Exactly 3 cards as requested */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: "16px",
+          marginBottom: "20px"
+        }}
+      >
         <StatCard label="Total User Accounts" value={totalUsers} icon={Users} tone="blue" />
         <StatCard label="Course Coordinators" value={courseCoordinators} icon={Briefcase} tone="teal" />
-        <StatCard label="QMS Coordinators" value={qmsCoordinators} icon={UserCheck} tone="blue" />
-        <StatCard label="Trust Executives" value={trustHeads} icon={Award} tone="green" />
+        <StatCard label="Internal Auditors" value={internalAuditors} icon={ShieldCheck} tone="purple" />
       </div>
 
+      {/* Filter and Search Bar */}
       <div className="filter-bar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
         <label className="search-field" style={{ flex: 1, minWidth: "260px" }}>
           <Search size={17} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search users by name, email, department, or assigned privileges..."
+            placeholder="Search by user name, Emp ID, email, role, or department..."
           />
         </label>
 
-        <div className="tabs">
-          {["All", "Course Coordinator", "QMS Coordinator", "Trust Head"].map((tab) => (
+        <div className="tabs" style={{ overflowX: "auto" }}>
+          {["All", "Course Coordinator", "QMS Coordinator", "Trust Head", "Internal Auditor"].map((tab) => (
             <button
               key={tab}
               className={roleFilter === tab ? "tab active" : "tab"}
@@ -376,6 +334,7 @@ export default function UserManagement() {
           >
             <option value="name-asc">Sort: Name (A-Z)</option>
             <option value="name-desc">Sort: Name (Z-A)</option>
+            <option value="empId">Sort: Emp ID</option>
             <option value="role">Sort: Role</option>
             <option value="department">Sort: Department</option>
             <option value="status">Sort: Status</option>
@@ -383,35 +342,46 @@ export default function UserManagement() {
         </div>
       </div>
 
+      {/* Users Directory Table */}
       <section className="panel">
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>User / Staff</th>
-                <th>Role</th>
+                <th>User Name & Emp ID</th>
+                <th>Assigned Role</th>
+                <th>Email Address</th>
                 <th>Department & Process</th>
-                <th>Assigned Privileges</th>
-                <th>Status</th>
+                <th>Active Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((user) => {
                 const userPrivs = Array.isArray(user.privileges) ? user.privileges : [];
+                const roleBadgeTone =
+                  user.role === "Head"
+                    ? { bg: "#f0fdf4", border: "#bbf7d0", color: "#166534", icon: Award }
+                    : user.role === "auditor"
+                    ? { bg: "#faf5ff", border: "#e9d5ff", color: "#6b21a8", icon: ShieldCheck }
+                    : user.role === "qm"
+                    ? { bg: "#eff6ff", border: "#bfdbfe", color: "#1e40af", icon: UserCheck }
+                    : { bg: "#f0fdfa", border: "#99f6e4", color: "#115e59", icon: Briefcase };
+
+                const RoleIcon = roleBadgeTone.icon;
 
                 return (
-                  <tr key={user.id || user.username}>
+                  <tr key={user.id || user.username || user.employeeId}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <div
                           style={{
-                            width: "36px",
-                            height: "36px",
+                            width: "38px",
+                            height: "38px",
                             borderRadius: "50%",
-                            background: "var(--navy-subtle)",
-                            border: "1px solid var(--navy-border)",
-                            color: "var(--navy)",
+                            background: roleBadgeTone.bg,
+                            border: `1px solid ${roleBadgeTone.border}`,
+                            color: roleBadgeTone.color,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -423,13 +393,29 @@ export default function UserManagement() {
                           {user.initials || "U"}
                         </div>
                         <div>
-                          <strong>{user.name}</strong>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <strong>{user.name}</strong>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                fontSize: "11px",
+                                padding: "1px 6px",
+                                borderRadius: "4px",
+                                background: "#f1f5f9",
+                                border: "1px solid #cbd5e1",
+                                color: "#334155",
+                                fontWeight: "600"
+                              }}
+                            >
+                              <IdCard size={11} />
+                              {user.employeeId || user.id}
+                            </span>
+                          </div>
                           <small style={{ color: "#64748b", display: "block" }}>
-                            {user.email} • <code>@{user.username}</code>
+                            <code>@{user.username || user.email?.split("@")[0]}</code>
                           </small>
-                          {user.designation && (
-                            <small style={{ color: "var(--navy)", fontWeight: "500" }}>{user.designation}</small>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -438,62 +424,35 @@ export default function UserManagement() {
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px",
-                          padding: "3px 8px",
+                          gap: "5px",
+                          padding: "3px 9px",
                           borderRadius: "12px",
                           fontSize: "12px",
                           fontWeight: "600",
-                          background: "var(--navy-subtle)",
-                          border: "1px solid var(--navy-border)",
-                          color: "var(--navy)"
+                          background: roleBadgeTone.bg,
+                          border: `1px solid ${roleBadgeTone.border}`,
+                          color: roleBadgeTone.color
                         }}
                       >
-                        {user.role === "Head" ? <Award size={13} /> : user.role === "qm" ? <UserCheck size={13} /> : <Briefcase size={13} />}
-                        {user.roleTitle || (user.role === "Head" ? "Trust Head" : user.role === "qm" ? "QMS Coordinator" : "Course Coordinator")}
+                        <RoleIcon size={13} />
+                        {user.roleTitle ||
+                          (user.role === "Head"
+                            ? "Trust Head"
+                            : user.role === "auditor"
+                            ? "Internal Auditor"
+                            : user.role === "qm"
+                            ? "QMS Coordinator"
+                            : "Course Coordinator")}
                       </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: "13px", color: "#334155" }}>{user.email}</span>
                     </td>
                     <td>
                       <strong>{user.department || "Academic Division"}</strong>
                       <small style={{ color: "#64748b", display: "block" }}>
                         {user.process || "Course Management"}
                       </small>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "320px" }}>
-                        {userPrivs.slice(0, 3).map((priv) => (
-                          <span
-                            key={priv}
-                            style={{
-                              fontSize: "11px",
-                              padding: "2px 7px",
-                              background: "#f1f5f9",
-                              color: "#334155",
-                              borderRadius: "4px",
-                              border: "1px solid #e2e8f0"
-                            }}
-                          >
-                            {priv}
-                          </span>
-                        ))}
-                        {userPrivs.length > 3 && (
-                          <span
-                            style={{
-                              fontSize: "11px",
-                              padding: "2px 6px",
-                              background: "var(--navy-subtle)",
-                              color: "var(--navy)",
-                              borderRadius: "4px",
-                              fontWeight: "600",
-                              cursor: "pointer",
-                              border: "1px solid var(--navy-border)"
-                            }}
-                            onClick={() => setViewingProfile(user)}
-                            title={userPrivs.slice(3).join(", ")}
-                          >
-                            +{userPrivs.length - 3} more
-                          </span>
-                        )}
-                      </div>
                     </td>
                     <td>
                       <StatusBadge status={user.status || "Active"} />
@@ -512,10 +471,11 @@ export default function UserManagement() {
                             gap: "4px"
                           }}
                         >
-                          <Eye size={13} /> Profile
+                          <Eye size={13} /> View Details
                         </button>
 
-                        {isQMSCoordinator && (
+                        {/* Edit, Toggle, and Delete are ONLY rendered for QMS Coordinator */}
+                        {canEdit && (
                           <>
                             <button
                               type="button"
@@ -562,6 +522,7 @@ export default function UserManagement() {
                                   alignItems: "center",
                                   gap: "4px"
                                 }}
+                                title="Delete user"
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -578,7 +539,7 @@ export default function UserManagement() {
         </div>
       </section>
 
-      {/* User Profile View Modal */}
+      {/* User Profile View Modal - Read-only details accessible to all roles */}
       {viewingProfile && (
         <Modal
           title={`User Profile: ${viewingProfile.name}`}
@@ -591,8 +552,22 @@ export default function UserManagement() {
                   width: "56px",
                   height: "56px",
                   borderRadius: "50%",
-                  background: viewingProfile.role === "Head" ? "#f3e8ff" : viewingProfile.role === "qm" ? "#dbeafe" : "#ccfbf1",
-                  color: viewingProfile.role === "Head" ? "#6b21a8" : viewingProfile.role === "qm" ? "#1d4ed8" : "#0f766e",
+                  background:
+                    viewingProfile.role === "Head"
+                      ? "#f0fdf4"
+                      : viewingProfile.role === "auditor"
+                      ? "#faf5ff"
+                      : viewingProfile.role === "qm"
+                      ? "#eff6ff"
+                      : "#f0fdfa",
+                  color:
+                    viewingProfile.role === "Head"
+                      ? "#166534"
+                      : viewingProfile.role === "auditor"
+                      ? "#6b21a8"
+                      : viewingProfile.role === "qm"
+                      ? "#1e40af"
+                      : "#115e59",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -605,28 +580,35 @@ export default function UserManagement() {
               <div>
                 <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", color: "#0f172a" }}>{viewingProfile.name}</h3>
                 <span style={{ fontSize: "13px", color: "#64748b" }}>
-                  Staff ID: <strong>{viewingProfile.employeeId || viewingProfile.id}</strong> • Joined: {viewingProfile.joinDate || "N/A"}
+                  Emp ID: <strong>{viewingProfile.employeeId || viewingProfile.id}</strong> • Joined: {viewingProfile.joinDate || "N/A"}
                 </span>
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13px" }}>
               <div>
+                <span style={{ color: "#64748b", display: "block" }}>Emp ID</span>
+                <strong>{viewingProfile.employeeId || viewingProfile.id}</strong>
+              </div>
+              <div>
                 <span style={{ color: "#64748b", display: "block" }}>Email Address</span>
                 <strong>{viewingProfile.email}</strong>
               </div>
               <div>
-                <span style={{ color: "#64748b", display: "block" }}>Username</span>
-                <code>@{viewingProfile.username}</code>
-              </div>
-              <div>
                 <span style={{ color: "#64748b", display: "block" }}>Assigned Role</span>
                 <span style={{ fontWeight: "700", color: "var(--navy)" }}>
-                  {viewingProfile.roleTitle || (viewingProfile.role === "Head" ? "Trust Head" : viewingProfile.role === "qm" ? "QMS Coordinator" : "Course Coordinator")}
+                  {viewingProfile.roleTitle ||
+                    (viewingProfile.role === "Head"
+                      ? "Trust Head"
+                      : viewingProfile.role === "auditor"
+                      ? "Internal Auditor"
+                      : viewingProfile.role === "qm"
+                      ? "QMS Coordinator"
+                      : "Course Coordinator")}
                 </span>
               </div>
               <div>
-                <span style={{ color: "#64748b", display: "block" }}>Account Status</span>
+                <span style={{ color: "#64748b", display: "block" }}>Active Status</span>
                 <StatusBadge status={viewingProfile.status || "Active"} />
               </div>
               <div>
@@ -641,7 +623,7 @@ export default function UserManagement() {
 
             <div style={{ marginTop: "10px", padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
               <strong style={{ fontSize: "13px", color: "#0f172a", display: "block", marginBottom: "8px" }}>
-                Assigned Security Privileges ({viewingProfile.privileges?.length || 0})
+                Role System Privileges ({viewingProfile.privileges?.length || 0})
               </strong>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                 {(viewingProfile.privileges || []).map((p) => (
@@ -666,7 +648,7 @@ export default function UserManagement() {
             </div>
 
             <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-              {isQMSCoordinator && (
+              {canEdit && (
                 <button
                   type="button"
                   className="primary-button btn-blue"
@@ -692,170 +674,91 @@ export default function UserManagement() {
         </Modal>
       )}
 
-      {/* Add / Edit User Modal */}
+      {/* Simplified Add / Edit User Modal: strictly contains the 5 required fields */}
       {showModal && (
         <Modal
-          title={editingUser ? `Edit User & Privileges: ${editingUser.name}` : "Add New User & Assign Privileges"}
+          title={editingUser ? `Edit User: ${editingUser.name}` : "Add New User"}
           onClose={() => setShowModal(false)}
         >
           <form onSubmit={handleSubmit}>
-            <div className="form-grid">
-              <label>
-                Full Name
+
+            <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              {/* 1. User Name */}
+              <label style={{ gridColumn: "span 2" }}>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                  User Name <span style={{ color: "#ef4444" }}>*</span>
+                </span>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Dr. Rajesh Verma"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
 
+              {/* 2. Emp ID */}
               <label>
-                Email Address
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                  Emp ID <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CDAC-104 or ID104"
+                  value={form.employeeId}
+                  onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                />
+              </label>
+
+              {/* 3. Email Address */}
+              <label>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                  Email Address <span style={{ color: "#ef4444" }}>*</span>
+                </span>
                 <input
                   type="email"
                   required
                   placeholder="e.g. rajesh.verma@cdac.in"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
 
+              {/* 4. Assigned Role */}
               <label>
-                Username
-                <input
-                  type="text"
-                  placeholder="e.g. rajesh.verma (leave blank to auto-generate)"
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                />
-              </label>
-
-              <label>
-                Assigned Role
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                  Assigned Role <span style={{ color: "#ef4444" }}>*</span>
+                </span>
                 <select
                   value={form.role}
-                  onChange={(e) => handleRoleChange(e.target.value)}
-                  style={{ padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff" }}
                 >
                   <option value="owner">Course Coordinator</option>
                   <option value="qm">QMS Coordinator</option>
                   <option value="Head">Trust Head</option>
+                  <option value="auditor">Internal Auditor</option>
                 </select>
               </label>
 
+              {/* 5. Active Status */}
               <label>
-                Department / Division
-                <input
-                  type="text"
-                  placeholder="e.g. Artificial Intelligence Division"
-                  value={form.department}
-                  onChange={(e) => setForm({ ...form, department: e.target.value })}
-                />
-              </label>
-
-              <label>
-                Course / Process Responsibilities
-                <input
-                  type="text"
-                  placeholder="e.g. AI & Machine Learning PG Diploma"
-                  value={form.process}
-                  onChange={(e) => setForm({ ...form, process: e.target.value })}
-                />
-              </label>
-
-              <label>
-                Official Designation
-                <input
-                  type="text"
-                  placeholder="e.g. Senior Course Coordinator"
-                  value={form.designation}
-                  onChange={(e) => setForm({ ...form, designation: e.target.value })}
-                />
-              </label>
-
-              <label>
-                Account Status
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                  Active Status <span style={{ color: "#ef4444" }}>*</span>
+                </span>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  style={{ padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff" }}
                 >
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
               </label>
-            </div>
-
-            {/* PRIVILEGES CHECKLIST SECTION */}
-            <div style={{ marginTop: "20px", borderTop: "1px solid #e2e8f0", paddingTop: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <div>
-                  <strong style={{ fontSize: "14px", color: "#0f172a" }}>
-                    Security & Workflow Privileges
-                  </strong>
-                  <small style={{ display: "block", color: "#64748b" }}>
-                    Select granular capabilities for this user account or apply role default presets.
-                  </small>
-                </div>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  style={{ fontSize: "12px", padding: "4px 8px" }}
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      privileges: [...(ROLE_PRESETS[prev.role] || ROLE_PRESETS.owner)]
-                    }))
-                  }
-                >
-                  Reset to Role Defaults
-                </button>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: "10px"
-                }}
-              >
-                {AVAILABLE_PRIVILEGES.map((priv) => {
-                  const checked = form.privileges.includes(priv.id);
-                  return (
-                    <label
-                      key={priv.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        padding: "10px",
-                        borderRadius: "6px",
-                        border: `1px solid ${checked ? "#93c5fd" : "#e2e8f0"}`,
-                        background: checked ? "#eff6ff" : "#f8fafc",
-                        cursor: "pointer",
-                        transition: "all 0.15s"
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => handleTogglePrivilege(priv.id)}
-                        style={{ marginTop: "2px" }}
-                      />
-                      <div>
-                        <strong style={{ fontSize: "12px", color: "#1e293b", display: "block" }}>
-                          {priv.name}
-                        </strong>
-                        <small style={{ fontSize: "11px", color: "#64748b", lineHeight: "1.3", display: "block" }}>
-                          {priv.desc}
-                        </small>
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
             </div>
 
             <div className="modal-actions" style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
@@ -887,7 +790,7 @@ export default function UserManagement() {
         >
           <div style={{ padding: "6px 0" }}>
             <p style={{ margin: "0 0 16px 0", color: "#334155" }}>
-              Are you sure you want to remove <strong>{deleteConfirmUser.name}</strong> (<code>{deleteConfirmUser.email}</code>) from the active user directory?
+              Are you sure you want to remove <strong>{deleteConfirmUser.name}</strong> (Emp ID: <code>{deleteConfirmUser.employeeId || deleteConfirmUser.id}</code>) from the active user directory?
             </p>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
               <button
