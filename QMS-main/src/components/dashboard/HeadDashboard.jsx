@@ -1,4 +1,7 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle, ArrowRight, ClipboardCheck } from "lucide-react";
+import { useApp } from "../../context/AppContext";
 import StatCard from "../common/StatCard";
 import StatusBadge from "../common/StatusBadge";
 
@@ -74,6 +77,10 @@ const timelineData = [
 ];
 
 export default function TrustHeadDashboard() {
+  const navigate = useNavigate();
+  const { auditList = [] } = useApp();
+
+  const pendingAudits = auditList.filter((a) => a.stage === 2);
   const totalProcesses = processData.length;
 
   const completedProcesses = processData.filter(
@@ -116,6 +123,46 @@ export default function TrustHeadDashboard() {
           <strong>21 Sep 2026</strong>
         </div>
       </div>
+
+      {/* Urgent Action Banner for Trust Head: Pending Audit Schedule Confirmations */}
+      {pendingAudits.length > 0 && (
+        <div
+          style={{
+            padding: "14px 18px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            borderRadius: "8px",
+            marginBottom: "20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "12px",
+            boxShadow: "0 2px 6px rgba(29, 78, 216, 0.08)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "#1e40af" }}>
+            <AlertCircle size={22} color="#2563eb" />
+            <div>
+              <strong style={{ display: "block", fontSize: "14px" }}>
+                Action Required: {pendingAudits.length} Internal Quality Audit schedule{pendingAudits.length > 1 ? "s" : ""} awaiting your confirmation
+              </strong>
+              <span style={{ fontSize: "12px", color: "#3b82f6" }}>
+                Latest: {pendingAudits[0]?.process} ({pendingAudits[0]?.scheduledDate}). QMS Coordinator is awaiting authorization.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="primary-button btn-blue"
+            onClick={() => navigate("/internal-audit")}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", fontSize: "12px" }}
+          >
+            <span>Review & Confirm in Internal Audit</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Summary Statistics */}
       <div className="stats-grid">

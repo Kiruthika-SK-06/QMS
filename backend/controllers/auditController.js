@@ -1,6 +1,6 @@
 import { auditData } from "../data/audits.js";
 import { notificationsData } from "../data/notifications.js";
-import { notifyAllUsers } from "../utils/realtime.js";
+import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 const formatNow = () => {
   const d = new Date();
@@ -20,7 +20,7 @@ const pushNotification = (title, text, targetRole = "all") => {
     createdAt: new Date().toISOString()
   };
   notificationsData.unshift(notif);
-  notifyAllUsers("new_notification", notif);
+  broadcastRealtimeEvent("new_notification", notif);
   return notif;
 };
 
@@ -177,7 +177,7 @@ export const createAudit = (req, res) => {
       "owner"
     );
 
-    notifyAllUsers("audit_scheduled", {
+    broadcastRealtimeEvent("audit_scheduled", {
       auditId: newAudit.id,
       process: newAudit.process,
       title: newAudit.title,
@@ -194,6 +194,21 @@ export const createAudit = (req, res) => {
   }
 };
 
+// POST /api/audit/:id/share-schedule
+export const shareSchedule = (req, res) => {
+  try {
+    const audit = auditData.find((a) => a.id === req.params.id);
+    if (!audit) {
+      return res.status(404).json({ success: false, message: "Internal Audit not found" });
+    }
+    audit.status = "Awaiting Confirmation";
+    audit.stage = 2;
+    res.json({ success: true, message: "Schedule shared with stakeholders", data: audit });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // POST /api/audit/:id/confirm-schedule - Trust Head confirms audit schedule
 export const confirmSchedule = (req, res) => {
   try {
@@ -202,8 +217,9 @@ export const confirmSchedule = (req, res) => {
       return res.status(404).json({ success: false, message: "Internal Audit not found" });
     }
 
-    const userName = req.user?.name || "Anita Rao";
-    const userRole = req.user?.roleTitle || "Trust Head";
+    const isTrustHeadUser = req.user?.role?.toLowerCase() === "head";
+    const userName = isTrustHeadUser ? (req.user?.name || "Anita Rao") : (req.body?.confirmedBy || "Anita Rao");
+    const userRole = "Trust Head";
     const remarks = req.body?.remarks || "Audit schedule ratified and authorized for execution.";
 
     audit.trustHeadConfirmation = {
@@ -239,7 +255,7 @@ export const confirmSchedule = (req, res) => {
       "auditor"
     );
 
-    notifyAllUsers("audit_schedule_confirmed", {
+    broadcastRealtimeEvent("audit_schedule_confirmed", {
       auditId: audit.id,
       title: audit.title,
       confirmedBy: userName
@@ -312,7 +328,7 @@ export const submitNoticingSheet = (req, res) => {
       "qm"
     );
 
-    notifyAllUsers("noticing_sheet_submitted", {
+    broadcastRealtimeEvent("noticing_sheet_submitted", {
       auditId: audit.id,
       title: audit.title,
       submittedBy: userName
@@ -377,7 +393,7 @@ export const shareNCDocs = (req, res) => {
       "auditor"
     );
 
-    notifyAllUsers("nc_docs_shared", {
+    broadcastRealtimeEvent("nc_docs_shared", {
       auditId: audit.id,
       title: audit.title,
       sharedBy: userName
@@ -442,7 +458,7 @@ export const auditeeClose = (req, res) => {
       "qm"
     );
 
-    notifyAllUsers("auditee_closed", {
+    broadcastRealtimeEvent("auditee_closed", {
       auditId: audit.id,
       title: audit.title,
       closedBy: userName
@@ -496,7 +512,7 @@ export const finalCloseAudit = (req, res) => {
       "all"
     );
 
-    notifyAllUsers("audit_final_closed", {
+    broadcastRealtimeEvent("audit_final_closed", {
       auditId: audit.id,
       title: audit.title,
       closedBy: userName

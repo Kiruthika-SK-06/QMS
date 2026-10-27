@@ -26,6 +26,7 @@ import Modal from "../components/tasks/Modal";
 export default function InternalAudit() {
   const {
     currentUser,
+    processes = [],
     auditList = [],
     scheduleAudit,
     confirmAuditSchedule,
@@ -39,13 +40,44 @@ export default function InternalAudit() {
   // Active testing role (defaults to logged-in user role: 'qm', 'Head', 'auditor', or 'owner')
   const [activeRole, setActiveRole] = useState(() => currentUser?.role || "qm");
 
-  const isQMS = activeRole === "qm";
-  const isTrustHead = activeRole === "Head";
-  const isAuditor = activeRole === "auditor";
-  const isAuditee = activeRole === "owner";
+  // Keep activeRole strictly synced when user changes or logs in as Trust Head in another tab
+  useEffect(() => {
+    if (currentUser?.role) {
+      setActiveRole(currentUser.role);
+    }
+  }, [currentUser?.role]);
+
+  // Robust normalized role matching (case-insensitive and tolerant of title variants)
+  const effectiveRole = (activeRole || currentUser?.role || "qm").toLowerCase();
+  const isQMS = effectiveRole === "qm" || effectiveRole === "qms";
+  const isTrustHead = effectiveRole === "head" || effectiveRole === "trusthead" || effectiveRole === "trust head";
+  const isAuditor = effectiveRole === "auditor" || effectiveRole === "internal auditor";
+  const isAuditee = effectiveRole === "owner" || effectiveRole === "course coordinator" || effectiveRole === "auditee";
+
+  // Registered system processes list
+  const systemProcesses = useMemo(() => {
+    const defaultList = [
+      "Course Administration",
+      "Course Management",
+      "Training & Development",
+      "Knowledge Management",
+      "IT Support Management",
+      "Quality Review & MRM",
+      "Curriculum Design & Review",
+      "Admissions & Student Enrollment",
+      "Examination & Evaluation",
+      "Faculty Development & Competency",
+      "Library & Knowledge Resources",
+      "Student Feedback & Grievance Redressal"
+    ];
+    const fromContext = (processes || []).map((p) => (typeof p === "string" ? p : p.name || p.processName)).filter(Boolean);
+    const combined = Array.from(new Set([...fromContext, ...defaultList]));
+    return combined;
+  }, [processes]);
 
   // Filter & Search
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterProcess, setFilterProcess] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [toast, setToast] = useState(null);
 
@@ -63,8 +95,11 @@ export default function InternalAudit() {
     startDate: "",
     endDate: "",
     process: "",
+    customProcess: "",
     auditorName: "",
-    auditeeName: ""
+    customAuditor: "",
+    auditeeName: "",
+    customAuditee: ""
   });
 
   // Action remarks/inputs
@@ -106,6 +141,15 @@ export default function InternalAudit() {
   // Filtered audits
   const filteredAudits = useMemo(() => {
     return auditList.filter((audit) => {
+      // Process Filter
+      if (filterProcess !== "all") {
+        const auditProc = (audit.process || "").toLowerCase();
+        const selected = filterProcess.toLowerCase();
+        const matches = auditProc.includes(selected) || selected.includes(auditProc) || auditProc.includes("all processes");
+        if (!matches) return false;
+      }
+
+      // Status / Actions filter
       if (filterStatus === "pending") {
         if (isQMS && (audit.stage === 3 || audit.stage === 5)) return true;
         if (isTrustHead && audit.stage === 2) return true;
@@ -116,6 +160,7 @@ export default function InternalAudit() {
       if (filterStatus === "in_progress" && (audit.stage < 2 || audit.stage >= 6)) return false;
       if (filterStatus === "completed" && audit.stage !== 6) return false;
 
+      // Free Search Term
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
         return (
@@ -127,7 +172,7 @@ export default function InternalAudit() {
       }
       return true;
     });
-  }, [auditList, filterStatus, searchTerm, isQMS, isTrustHead, isAuditor, isAuditee]);
+  }, [auditList, filterStatus, filterProcess, searchTerm, isQMS, isTrustHead, isAuditor, isAuditee]);
 
   // =========================================================================
   // HANDLERS
@@ -136,7 +181,11 @@ export default function InternalAudit() {
   // 1. QMS Coordinator Schedules & Automatically Shares with Trust Head, Auditor & Auditee
   const handleScheduleSubmit = async (e) => {
     e.preventDefault();
-    if (!scheduleForm.startDate || !scheduleForm.endDate || !scheduleForm.process || !scheduleForm.auditorName.trim() || !scheduleForm.auditeeName.trim()) {
+    const finalProcess = scheduleForm.process === "__custom__" ? scheduleForm.customProcess.trim() : scheduleForm.process.trim();
+    const finalAuditor = scheduleForm.auditorName === "__custom__" ? scheduleForm.customAuditor.trim() : scheduleForm.auditorName.trim();
+    const finalAuditee = scheduleForm.auditeeName === "__custom__" ? scheduleForm.customAuditee.trim() : scheduleForm.auditeeName.trim();
+
+    if (!scheduleForm.startDate || !scheduleForm.endDate || !finalProcess || !finalAuditor || !finalAuditee) {
       showToast("Please fill all required fields.", "error");
       return;
     }
@@ -144,24 +193,24 @@ export default function InternalAudit() {
     setSubmitting(true);
     try {
       const payload = {
-        title: `${scheduleForm.process} Internal Quality Audit`,
-        process: scheduleForm.process,
+        title: `${finalProcess} Internal Quality Audit`,
+        process: finalProcess,
         startDate: scheduleForm.startDate,
         endDate: scheduleForm.endDate,
         internalAuditor: {
-          name: scheduleForm.auditorName.trim(),
+          name: finalAuditor,
           role: "Internal Auditor",
           department: "Internal Quality Audit Cell",
-          email: `${scheduleForm.auditorName.trim().toLowerCase().replace(/\s+/g, ".")}@cdac.in`
+          email: `${finalAuditor.toLowerCase().replace(/[^a-z0-9]/g, ".")}@cdac.in`
         },
         internalAuditee: {
-          name: scheduleForm.auditeeName.trim(),
+          name: finalAuditee,
           role: "Course Coordinator",
           department: "Academic Division",
-          email: `${scheduleForm.auditeeName.trim().toLowerCase().replace(/\s+/g, ".")}@cdac.in`
+          email: `${finalAuditee.toLowerCase().replace(/[^a-z0-9]/g, ".")}@cdac.in`
         },
         venue: "Academic Block & QMS Portal",
-        scope: `Verification of operational procedures and ISO 9001:2015 compliance for ${scheduleForm.process}.`,
+        scope: `Verification of operational procedures and ISO 9001:2015 compliance for ${finalProcess}.`,
         scheduledBy: {
           name: currentUser?.name || "Rahul Kumar",
           role: currentUser?.roleTitle || "QMS Coordinator"
@@ -194,8 +243,11 @@ export default function InternalAudit() {
         startDate: "",
         endDate: "",
         process: "",
+        customProcess: "",
         auditorName: "",
-        auditeeName: ""
+        customAuditor: "",
+        auditeeName: "",
+        customAuditee: ""
       });
       showToast(`Audit ${created.id} scheduled! Details automatically shared with Trust Head, Auditor, and Course Coordinators.`);
     } catch (err) {
@@ -508,12 +560,55 @@ export default function InternalAudit() {
         <StatCard title="Completed" value={stats.completed} icon={CheckCircle2} variant="green" subtitle="100% closed & certified" />
       </div>
 
-      {/* Filter Tabs & Search */}
+      {/* Trust Head Action Banner: Immediately alert Trust Head of pending audit schedule confirmation */}
+      {isTrustHead && stats.awaitingConfirmation > 0 && (
+        <div
+          style={{
+            padding: "12px 18px",
+            background: "#f0fdf4",
+            border: "1px solid #86efac",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "12px",
+            boxShadow: "0 2px 8px rgba(22, 101, 52, 0.08)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#166534" }}>
+            <AlertCircle size={20} color="#16a34a" />
+            <div>
+              <strong style={{ display: "block", fontSize: "13px" }}>
+                Action Required: {stats.awaitingConfirmation} Audit Schedule awaiting Trust Head Confirmation
+              </strong>
+              <span style={{ fontSize: "12px", color: "#15803d" }}>
+                QMS Coordinator has scheduled and shared the audit plan. Click confirm to authorize auditing.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="primary-button btn-green"
+            style={{ padding: "7px 15px", fontSize: "12px", fontWeight: "600" }}
+            onClick={() => {
+              const pending = auditList.find((a) => a.stage === 2);
+              if (pending) setConfirmingAudit(pending);
+            }}
+          >
+            <Check size={14} style={{ marginRight: "5px" }} />
+            Review & Confirm Schedule
+          </button>
+        </div>
+      )}
+
+      {/* Filter Tabs & Search & Process Selector */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
         <div style={{ display: "flex", gap: "6px" }}>
           {[
             { key: "all", label: `All (${stats.total})` },
-            { key: "pending", label: "My Actions" },
+            { key: "pending", label: `My Actions ${isTrustHead && stats.awaitingConfirmation > 0 ? `(${stats.awaitingConfirmation})` : ""}` },
             { key: "in_progress", label: `In Progress (${stats.inProgress})` },
             { key: "completed", label: `Completed (${stats.completed})` }
           ].map((t) => (
@@ -537,19 +632,41 @@ export default function InternalAudit() {
           ))}
         </div>
 
-        <input
-          type="text"
-          placeholder="Search by ID, process, auditor..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            padding: "7px 12px",
-            borderRadius: "6px",
-            border: "1px solid #cbd5e1",
-            fontSize: "12px",
-            minWidth: "240px"
-          }}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          {/* Process Filter Dropdown showing all registered processes */}
+          <select
+            value={filterProcess}
+            onChange={(e) => setFilterProcess(e.target.value)}
+            style={{
+              padding: "7px 12px",
+              borderRadius: "6px",
+              border: "1px solid #cbd5e1",
+              fontSize: "12px",
+              background: "#ffffff",
+              color: "#334155"
+            }}
+            title="Filter by Process"
+          >
+            <option value="all">All Processes ({auditList.length})</option>
+            {systemProcesses.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+
+          <input
+            type="text"
+            placeholder="Search by ID, process, auditor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              padding: "7px 12px",
+              borderRadius: "6px",
+              border: "1px solid #cbd5e1",
+              fontSize: "12px",
+              minWidth: "220px"
+            }}
+          />
+        </div>
       </div>
 
       {/* Clean Table of Audits */}
@@ -747,50 +864,149 @@ export default function InternalAudit() {
                 </label>
               </div>
 
-              {/* Process */}
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+              {/* Process Selection: Shows all processes with All Processes option and custom option */}
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
                   Process to be Audited <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <input
-                  type="text"
+                </label>
+                <select
                   required
-                  placeholder="e.g. Course Management, Examination & Evaluation, Admissions..."
                   value={scheduleForm.process}
                   onChange={(e) => setScheduleForm({ ...scheduleForm, process: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
-                />
-              </label>
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "13px",
+                    background: "#ffffff",
+                    color: "#0f172a"
+                  }}
+                >
+                  <option value="">-- Select Process to be Audited --</option>
+                  <option value="All Processes (Comprehensive QMS Audit)" style={{ fontWeight: "bold", color: "var(--navy)" }}>
+                    All Processes (Comprehensive QMS Audit)
+                  </option>
+                  <optgroup label="Registered Academic & Operations Processes">
+                    {systemProcesses.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="__custom__">+ Enter Custom / Other Process...</option>
+                </select>
 
-              {/* Internal Auditor */}
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                {scheduleForm.process === "__custom__" && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Type custom process name..."
+                    value={scheduleForm.customProcess}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, customProcess: e.target.value })}
+                    style={{
+                      width: "100%",
+                      marginTop: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #94a3b8",
+                      fontSize: "13px"
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Internal Auditor Selection */}
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
                   Internal Auditor <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <input
-                  type="text"
+                </label>
+                <select
                   required
-                  placeholder="e.g. Vikas Deshmukh or Suresh Menon"
                   value={scheduleForm.auditorName}
                   onChange={(e) => setScheduleForm({ ...scheduleForm, auditorName: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
-                />
-              </label>
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "13px",
+                    background: "#ffffff",
+                    color: "#0f172a"
+                  }}
+                >
+                  <option value="">-- Select Internal Auditor --</option>
+                  <option value="Vikas Deshmukh">Vikas Deshmukh (Lead Internal Auditor - IA001)</option>
+                  <option value="Suresh Menon">Suresh Menon (Internal Auditor - IA002)</option>
+                  <option value="Dr. Meenakshi Sundaram">Dr. Meenakshi Sundaram (Senior Auditor - IA003)</option>
+                  <option value="__custom__">+ Enter Other Auditor...</option>
+                </select>
 
-              {/* Internal Auditee */}
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                {scheduleForm.auditorName === "__custom__" && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Type auditor full name..."
+                    value={scheduleForm.customAuditor}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, customAuditor: e.target.value })}
+                    style={{
+                      width: "100%",
+                      marginTop: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #94a3b8",
+                      fontSize: "13px"
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Internal Auditee Selection */}
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
                   Internal Auditee (Course Coordinator) <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <input
-                  type="text"
+                </label>
+                <select
                   required
-                  placeholder="e.g. Priya Sharma or Dr. Rajesh Verma"
                   value={scheduleForm.auditeeName}
                   onChange={(e) => setScheduleForm({ ...scheduleForm, auditeeName: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
-                />
-              </label>
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "13px",
+                    background: "#ffffff",
+                    color: "#0f172a"
+                  }}
+                >
+                  <option value="">-- Select Internal Auditee (Course Coordinator) --</option>
+                  <option value="Priya Sharma">Priya Sharma (Course Coordinator - Advanced Computing)</option>
+                  <option value="Dr. Rajesh Verma">Dr. Rajesh Verma (Course Coordinator - AI Division)</option>
+                  <option value="Sunita Patil">Sunita Patil (Course Coordinator - Cyber Security)</option>
+                  <option value="Rohan Desai">Rohan Desai (Training Coordinator)</option>
+                  <option value="Karthik Verma">Karthik Verma (IT Systems Coordinator)</option>
+                  <option value="__custom__">+ Enter Other Auditee...</option>
+                </select>
+
+                {scheduleForm.auditeeName === "__custom__" && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Type auditee full name..."
+                    value={scheduleForm.customAuditee}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, customAuditee: e.target.value })}
+                    style={{
+                      width: "100%",
+                      marginTop: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #94a3b8",
+                      fontSize: "13px"
+                    }}
+                  />
+                )}
+              </div>
 
               {/* Submit Button (enabled once data is filled) */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
@@ -809,9 +1025,9 @@ export default function InternalAudit() {
                     submitting ||
                     !scheduleForm.startDate ||
                     !scheduleForm.endDate ||
-                    !scheduleForm.process.trim() ||
-                    !scheduleForm.auditorName.trim() ||
-                    !scheduleForm.auditeeName.trim()
+                    !(scheduleForm.process === "__custom__" ? scheduleForm.customProcess.trim() : scheduleForm.process.trim()) ||
+                    !(scheduleForm.auditorName === "__custom__" ? scheduleForm.customAuditor.trim() : scheduleForm.auditorName.trim()) ||
+                    !(scheduleForm.auditeeName === "__custom__" ? scheduleForm.customAuditee.trim() : scheduleForm.auditeeName.trim())
                   }
                 >
                   <span>{submitting ? "Scheduling & Sharing..." : "Submit & Share Schedule"}</span>

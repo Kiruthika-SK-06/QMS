@@ -48,7 +48,7 @@ export function AppProvider({ children }) {
   const [employees, setEmployees] = useState(initialEmployees);
   const [usersList, setUsersList] = useState(initialUsersList);
   const [mrmList, setMrmList] = useState(initialMRMList);
-  const [auditList, setAuditList] = useState(initialAuditList);
+  const [auditList, setAuditList] = useState(() => auditService.getStoredAudits());
   const [activities, setActivities] = useState(initialActivities);
   const [headOverview, setHeadOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -180,6 +180,41 @@ export function AppProvider({ children }) {
       window.removeEventListener("focus", handleFocus);
     };
   }, [silentRefresh]);
+
+  // Instant Cross-Tab Audit Synchronizer (BroadcastChannel + LocalStorage Event)
+  useEffect(() => {
+    let auditChannel = null;
+    try {
+      if (typeof BroadcastChannel !== "undefined") {
+        auditChannel = new BroadcastChannel("qms_audit_channel");
+        auditChannel.onmessage = (event) => {
+          if (event.data?.type === "AUDIT_UPDATE" && Array.isArray(event.data.audits)) {
+            setAuditList(event.data.audits);
+          }
+        };
+      }
+    } catch (e) {
+      console.warn("BroadcastChannel initialization notice:", e);
+    }
+
+    const handleStorageChange = (e) => {
+      if (e.key === "qms_audits" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAuditList(parsed);
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      if (auditChannel) auditChannel.close();
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // Login handler accepting user object and token from backend
   const loginUser = (user, authToken) => {
@@ -695,7 +730,11 @@ export function AppProvider({ children }) {
   const scheduleAudit = async (payload) => {
     try {
       const created = await auditService.createAudit(payload, token);
-      setAuditList((prev) => [created, ...prev.filter((a) => a.id !== created.id)]);
+      setAuditList((prev) => {
+        const next = [created, ...prev.filter((a) => a.id !== created.id)];
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return created;
     } catch (err) {
@@ -707,7 +746,11 @@ export function AppProvider({ children }) {
   const shareAuditSchedule = async (id) => {
     try {
       const updated = await auditService.shareSchedule(id, token);
-      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      setAuditList((prev) => {
+        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return updated;
     } catch (err) {
@@ -719,7 +762,11 @@ export function AppProvider({ children }) {
   const confirmAuditSchedule = async (id, remarks) => {
     try {
       const updated = await auditService.confirmSchedule(id, remarks, token);
-      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      setAuditList((prev) => {
+        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return updated;
     } catch (err) {
@@ -731,7 +778,11 @@ export function AppProvider({ children }) {
   const submitNoticingSheet = async (id, payload) => {
     try {
       const updated = await auditService.submitNoticingSheet(id, payload, token);
-      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      setAuditList((prev) => {
+        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return updated;
     } catch (err) {
@@ -743,7 +794,11 @@ export function AppProvider({ children }) {
   const shareNCDocs = async (id, payload) => {
     try {
       const updated = await auditService.shareNCDocs(id, payload, token);
-      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      setAuditList((prev) => {
+        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return updated;
     } catch (err) {
@@ -755,7 +810,11 @@ export function AppProvider({ children }) {
   const submitAuditeeClosure = async (id, payload) => {
     try {
       const updated = await auditService.auditeeClose(id, payload, token);
-      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      setAuditList((prev) => {
+        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return updated;
     } catch (err) {
@@ -767,7 +826,11 @@ export function AppProvider({ children }) {
   const finalCloseAudit = async (id, remarks) => {
     try {
       const updated = await auditService.finalCloseAudit(id, remarks, token);
-      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      setAuditList((prev) => {
+        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        auditService.saveStoredAudits(next);
+        return next;
+      });
       refreshData();
       return updated;
     } catch (err) {
