@@ -1,10 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
-  ClipboardCheck,
   Plus,
   CheckCircle2,
   Clock,
-  ShieldCheck,
   AlertCircle,
   Eye,
   Send,
@@ -13,14 +11,9 @@ import {
   FileCheck2,
   UploadCloud,
   CheckCheck,
-  X,
-  FileText,
-  User,
-  Users
+  X
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
-import PageIntro from "../components/common/PageIntro";
-import StatCard from "../components/common/StatCard";
 import Modal from "../components/tasks/Modal";
 
 export default function InternalAudit() {
@@ -492,123 +485,34 @@ export default function InternalAudit() {
         </div>
       )}
 
-      {/* Clean Header Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px", marginBottom: "20px" }}>
-        <div>
-          <h1 style={{ margin: "0 0 4px 0", fontSize: "22px", fontWeight: "700", color: "#0f2233" }}>
-            Internal Quality Audit
-          </h1>
-          <p style={{ margin: 0, fontSize: "13px", color: "#5d7182" }}>
-            Real-time ISO 9001:2015 audit lifecycle: scheduling, confirmation, noticing sheets, NC corrective actions, and completion.
-          </p>
-        </div>
+      {/* Clean Minimal Header Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", gap: "12px", flexWrap: "wrap" }}>
+        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#0f2233" }}>
+          Internal Quality Audit
+        </h1>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* Subtle Role Toggle so user can test all roles effortlessly */}
-          <div style={{ display: "inline-flex", alignItems: "center", background: "#f1f5f9", padding: "3px 4px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-            <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", padding: "0 6px" }}>Role:</span>
-            {[
-              { key: "qm", label: "QMS Coord" },
-              { key: "Head", label: "Trust Head" },
-              { key: "auditor", label: "Auditor" },
-              { key: "owner", label: "Auditee" }
-            ].map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setActiveRole(r.key)}
-                style={{
-                  border: "none",
-                  padding: "5px 9px",
-                  borderRadius: "5px",
-                  fontSize: "11px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  background: activeRole === r.key ? "var(--navy)" : "transparent",
-                  color: activeRole === r.key ? "#ffffff" : "#475569"
-                }}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Schedule Auditing Button (visible to QMS Coordinator) */}
-          {isQMS && (
-            <button
-              type="button"
-              className="primary-button btn-blue"
-              onClick={() => {
-                // Ensure form starts clean and blank
-                setScheduleForm({ startDate: "", endDate: "", process: "", auditorName: "", auditeeName: "" });
-                setShowScheduleModal(true);
-              }}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px" }}
-            >
-              <Plus size={16} />
-              <span>Schedule Audit</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 4 Compact Stat Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", marginBottom: "20px" }}>
-        <StatCard title="Total Audits" value={stats.total} icon={ClipboardCheck} variant="default" subtitle="Logged in system" />
-        <StatCard title="Awaiting Confirmation" value={stats.awaitingConfirmation} icon={Clock} variant="blue" subtitle="Trust Head action" />
-        <StatCard title="In Progress" value={stats.inProgress} icon={Clock} variant="amber" subtitle="Auditing & NC resolution" />
-        <StatCard title="Completed" value={stats.completed} icon={CheckCircle2} variant="green" subtitle="100% closed & certified" />
-      </div>
-
-      {/* Trust Head Action Banner: Immediately alert Trust Head of pending audit schedule confirmation */}
-      {isTrustHead && stats.awaitingConfirmation > 0 && (
-        <div
-          style={{
-            padding: "12px 18px",
-            background: "#f0fdf4",
-            border: "1px solid #86efac",
-            borderRadius: "8px",
-            marginBottom: "16px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "12px",
-            boxShadow: "0 2px 8px rgba(22, 101, 52, 0.08)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#166534" }}>
-            <AlertCircle size={20} color="#16a34a" />
-            <div>
-              <strong style={{ display: "block", fontSize: "13px" }}>
-                Action Required: {stats.awaitingConfirmation} Audit Schedule awaiting Trust Head Confirmation
-              </strong>
-              <span style={{ fontSize: "12px", color: "#15803d" }}>
-                QMS Coordinator has scheduled and shared the audit plan. Click confirm to authorize auditing.
-              </span>
-            </div>
-          </div>
+        {isQMS && (
           <button
             type="button"
-            className="primary-button btn-green"
-            style={{ padding: "7px 15px", fontSize: "12px", fontWeight: "600" }}
+            className="primary-button btn-blue"
             onClick={() => {
-              const pending = auditList.find((a) => a.stage === 2);
-              if (pending) setConfirmingAudit(pending);
+              setScheduleForm({ startDate: "", endDate: "", process: "", customProcess: "", auditorName: "", customAuditor: "", auditeeName: "", customAuditee: "" });
+              setShowScheduleModal(true);
             }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 14px", fontSize: "13px" }}
           >
-            <Check size={14} style={{ marginRight: "5px" }} />
-            Review & Confirm Schedule
+            <Plus size={15} />
+            <span>Schedule Audit</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Filter Tabs & Search & Process Selector */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
-        <div style={{ display: "flex", gap: "6px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           {[
             { key: "all", label: `All (${stats.total})` },
-            { key: "pending", label: `My Actions ${isTrustHead && stats.awaitingConfirmation > 0 ? `(${stats.awaitingConfirmation})` : ""}` },
+            { key: "pending", label: "My Actions" },
             { key: "in_progress", label: `In Progress (${stats.inProgress})` },
             { key: "completed", label: `Completed (${stats.completed})` }
           ].map((t) => (
@@ -617,7 +521,7 @@ export default function InternalAudit() {
               type="button"
               onClick={() => setFilterStatus(t.key)}
               style={{
-                padding: "7px 12px",
+                padding: "6px 12px",
                 borderRadius: "6px",
                 fontSize: "12px",
                 fontWeight: "600",
@@ -633,12 +537,11 @@ export default function InternalAudit() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          {/* Process Filter Dropdown showing all registered processes */}
           <select
             value={filterProcess}
             onChange={(e) => setFilterProcess(e.target.value)}
             style={{
-              padding: "7px 12px",
+              padding: "6px 10px",
               borderRadius: "6px",
               border: "1px solid #cbd5e1",
               fontSize: "12px",
@@ -655,34 +558,33 @@ export default function InternalAudit() {
 
           <input
             type="text"
-            placeholder="Search by ID, process, auditor..."
+            placeholder="Search audit..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              padding: "7px 12px",
+              padding: "6px 10px",
               borderRadius: "6px",
               border: "1px solid #cbd5e1",
               fontSize: "12px",
-              minWidth: "220px"
+              width: "180px"
             }}
           />
         </div>
       </div>
 
       {/* Clean Table of Audits */}
-      <div style={{ background: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
-            <thead>
-              <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600" }}>
-                <th style={{ padding: "12px 16px" }}>Audit Ref & Process</th>
-                <th style={{ padding: "12px 16px" }}>Audit Dates</th>
-                <th style={{ padding: "12px 16px" }}>Internal Auditor</th>
-                <th style={{ padding: "12px 16px" }}>Internal Auditee</th>
-                <th style={{ padding: "12px 16px" }}>Status</th>
-                <th style={{ padding: "12px 16px", textAlign: "right" }}>Action</th>
-              </tr>
-            </thead>
+      <div className="audit-table-wrapper">
+        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+          <thead>
+            <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600" }}>
+              <th style={{ padding: "10px 14px", width: "24%" }}>Audit Ref & Process</th>
+              <th style={{ padding: "10px 14px", width: "15%" }}>Dates</th>
+              <th style={{ padding: "10px 14px", width: "18%" }}>Internal Auditor</th>
+              <th style={{ padding: "10px 14px", width: "18%" }}>Internal Auditee</th>
+              <th style={{ padding: "10px 14px", width: "12%" }}>Status</th>
+              <th style={{ padding: "10px 14px", width: "13%", textAlign: "right" }}>Action</th>
+            </tr>
+          </thead>
             <tbody>
               {filteredAudits.length === 0 ? (
                 <tr>
@@ -818,7 +720,6 @@ export default function InternalAudit() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* =========================================================================
@@ -830,15 +731,11 @@ export default function InternalAudit() {
           onClose={() => setShowScheduleModal(false)}
         >
           <form onSubmit={handleScheduleSubmit}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#64748b" }}>
-                Fill the audit details. Once submitted, the schedule will be automatically distributed to the Trust Head, Internal Auditor, and Course Coordinators.
-              </p>
-
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {/* Dates */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                     Start Date <span style={{ color: "#ef4444" }}>*</span>
                   </span>
                   <input
@@ -846,12 +743,12 @@ export default function InternalAudit() {
                     required
                     value={scheduleForm.startDate}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, startDate: e.target.value })}
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12.5px" }}
                   />
                 </label>
 
                 <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                     End Date <span style={{ color: "#ef4444" }}>*</span>
                   </span>
                   <input
@@ -859,14 +756,14 @@ export default function InternalAudit() {
                     required
                     value={scheduleForm.endDate}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, endDate: e.target.value })}
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12.5px" }}
                   />
                 </label>
               </div>
 
-              {/* Process Selection: Shows all processes with All Processes option and custom option */}
+              {/* Process Selection */}
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
+                <label style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
                   Process to be Audited <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <select
@@ -875,10 +772,10 @@ export default function InternalAudit() {
                   onChange={(e) => setScheduleForm({ ...scheduleForm, process: e.target.value })}
                   style={{
                     width: "100%",
-                    padding: "9px 12px",
+                    padding: "7px 10px",
                     borderRadius: "6px",
                     border: "1px solid #cbd5e1",
-                    fontSize: "13px",
+                    fontSize: "12.5px",
                     background: "#ffffff",
                     color: "#0f172a"
                   }}
@@ -907,10 +804,10 @@ export default function InternalAudit() {
                     style={{
                       width: "100%",
                       marginTop: "6px",
-                      padding: "8px 12px",
+                      padding: "7px 10px",
                       borderRadius: "6px",
                       border: "1px solid #94a3b8",
-                      fontSize: "13px"
+                      fontSize: "12.5px"
                     }}
                   />
                 )}
@@ -918,7 +815,7 @@ export default function InternalAudit() {
 
               {/* Internal Auditor Selection */}
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
+                <label style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
                   Internal Auditor <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <select
@@ -927,10 +824,10 @@ export default function InternalAudit() {
                   onChange={(e) => setScheduleForm({ ...scheduleForm, auditorName: e.target.value })}
                   style={{
                     width: "100%",
-                    padding: "9px 12px",
+                    padding: "7px 10px",
                     borderRadius: "6px",
                     border: "1px solid #cbd5e1",
-                    fontSize: "13px",
+                    fontSize: "12.5px",
                     background: "#ffffff",
                     color: "#0f172a"
                   }}
@@ -952,10 +849,10 @@ export default function InternalAudit() {
                     style={{
                       width: "100%",
                       marginTop: "6px",
-                      padding: "8px 12px",
+                      padding: "7px 10px",
                       borderRadius: "6px",
                       border: "1px solid #94a3b8",
-                      fontSize: "13px"
+                      fontSize: "12.5px"
                     }}
                   />
                 )}
@@ -963,7 +860,7 @@ export default function InternalAudit() {
 
               {/* Internal Auditee Selection */}
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
+                <label style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px", color: "#334155" }}>
                   Internal Auditee (Course Coordinator) <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <select
@@ -972,10 +869,10 @@ export default function InternalAudit() {
                   onChange={(e) => setScheduleForm({ ...scheduleForm, auditeeName: e.target.value })}
                   style={{
                     width: "100%",
-                    padding: "9px 12px",
+                    padding: "7px 10px",
                     borderRadius: "6px",
                     border: "1px solid #cbd5e1",
-                    fontSize: "13px",
+                    fontSize: "12.5px",
                     background: "#ffffff",
                     color: "#0f172a"
                   }}
@@ -999,22 +896,23 @@ export default function InternalAudit() {
                     style={{
                       width: "100%",
                       marginTop: "6px",
-                      padding: "8px 12px",
+                      padding: "7px 10px",
                       borderRadius: "6px",
                       border: "1px solid #94a3b8",
-                      fontSize: "13px"
+                      fontSize: "12.5px"
                     }}
                   />
                 )}
               </div>
 
-              {/* Submit Button (enabled once data is filled) */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
+              {/* Submit Button */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
                 <button
                   type="button"
                   className="secondary-button"
                   onClick={() => setShowScheduleModal(false)}
                   disabled={submitting}
+                  style={{ padding: "7px 14px", fontSize: "12.5px" }}
                 >
                   Cancel
                 </button>
@@ -1029,6 +927,7 @@ export default function InternalAudit() {
                     !(scheduleForm.auditorName === "__custom__" ? scheduleForm.customAuditor.trim() : scheduleForm.auditorName.trim()) ||
                     !(scheduleForm.auditeeName === "__custom__" ? scheduleForm.customAuditee.trim() : scheduleForm.auditeeName.trim())
                   }
+                  style={{ padding: "7px 16px", fontSize: "12.5px" }}
                 >
                   <span>{submitting ? "Scheduling & Sharing..." : "Submit & Share Schedule"}</span>
                 </button>
@@ -1046,28 +945,28 @@ export default function InternalAudit() {
           title={`Confirm Audit Schedule: ${confirmingAudit.id}`}
           onClose={() => setConfirmingAudit(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ padding: "10px", background: "#f0f9ff", borderRadius: "6px", border: "1px solid #bae6fd", fontSize: "12px", color: "#0369a1" }}>
-              As Trust Head, confirm the schedule for <strong>{confirmingAudit.process}</strong> ({confirmingAudit.scheduledDate}). An automated confirmation message will be dispatched to the QMS Coordinator.
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ fontSize: "12.5px", color: "#334155" }}>
+              Process: <strong>{confirmingAudit.process}</strong> ({confirmingAudit.scheduledDate})
             </div>
 
             <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+              <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                 Remarks / Authorization Notes
               </span>
               <textarea
                 rows={2}
                 value={confirmRemarks}
                 onChange={(e) => setConfirmRemarks(e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
               />
             </label>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-              <button type="button" className="secondary-button" onClick={() => setConfirmingAudit(null)} disabled={submitting}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+              <button type="button" className="secondary-button" onClick={() => setConfirmingAudit(null)} disabled={submitting} style={{ padding: "7px 14px", fontSize: "12.5px" }}>
                 Cancel
               </button>
-              <button type="button" className="primary-button btn-green" onClick={handleConfirmSubmit} disabled={submitting}>
+              <button type="button" className="primary-button btn-green" onClick={handleConfirmSubmit} disabled={submitting} style={{ padding: "7px 16px", fontSize: "12.5px" }}>
                 <Check size={14} style={{ marginRight: "4px" }} />
                 <span>{submitting ? "Confirming..." : "Confirm Schedule"}</span>
               </button>
@@ -1085,13 +984,9 @@ export default function InternalAudit() {
           onClose={() => setNoticingSheetAudit(null)}
         >
           <form onSubmit={handleNoticingSheetSubmit}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <p style={{ margin: "0", fontSize: "12px", color: "#64748b" }}>
-                Auditing completed for <strong>{noticingSheetAudit.process}</strong>. Fill the observations to submit to the QMS Coordinator.
-              </p>
-
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                   Audit Observations Summary <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <textarea
@@ -1100,12 +995,12 @@ export default function InternalAudit() {
                   placeholder="e.g. Audit concluded across lectures and lab tracking. Found 1 minor non-conformance..."
                   value={noticingSheetData.summary}
                   onChange={(e) => setNoticingSheetData({ ...noticingSheetData, summary: e.target.value })}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                 />
               </label>
 
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                   Non-Conformance (NC) Finding Description <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <textarea
@@ -1114,44 +1009,45 @@ export default function InternalAudit() {
                   placeholder="e.g. Practical lab attendance logbook lacked weekly coordinator signatures..."
                   value={noticingSheetData.ncDescription}
                   onChange={(e) => setNoticingSheetData({ ...noticingSheetData, ncDescription: e.target.value })}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                 />
               </label>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                     ISO 9001 Clause
                   </span>
                   <input
                     type="text"
                     value={noticingSheetData.clause}
                     onChange={(e) => setNoticingSheetData({ ...noticingSheetData, clause: e.target.value })}
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                   />
                 </label>
 
                 <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                     Resolution Target Date
                   </span>
                   <input
                     type="date"
                     value={noticingSheetData.targetDate}
                     onChange={(e) => setNoticingSheetData({ ...noticingSheetData, targetDate: e.target.value })}
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                   />
                 </label>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-                <button type="button" className="secondary-button" onClick={() => setNoticingSheetAudit(null)} disabled={submitting}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+                <button type="button" className="secondary-button" onClick={() => setNoticingSheetAudit(null)} disabled={submitting} style={{ padding: "7px 14px", fontSize: "12.5px" }}>
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="primary-button btn-blue"
                   disabled={submitting || !noticingSheetData.summary.trim() || !noticingSheetData.ncDescription.trim()}
+                  style={{ padding: "7px 16px", fontSize: "12.5px" }}
                 >
                   <FileCheck2 size={14} style={{ marginRight: "4px" }} />
                   <span>{submitting ? "Submitting..." : "Submit to QMS Coordinator"}</span>
@@ -1170,31 +1066,30 @@ export default function InternalAudit() {
           title={`Review & Share NC Docs: ${ncDocsAudit.id}`}
           onClose={() => setNcDocsAudit(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ padding: "10px", background: "#fffbeb", borderRadius: "6px", border: "1px solid #fcd34d", fontSize: "12px", color: "#92400e" }}>
-              <strong>Auditor Findings:</strong>
-              <div>{ncDocsAudit.noticingSheet?.findings?.[0]?.description || ncDocsAudit.noticingSheet?.summary}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ padding: "8px 10px", background: "#fffbeb", borderRadius: "6px", border: "1px solid #fcd34d", fontSize: "12px", color: "#92400e" }}>
+              <strong>Auditor Findings:</strong> {ncDocsAudit.noticingSheet?.findings?.[0]?.description || ncDocsAudit.noticingSheet?.summary}
             </div>
 
             <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+              <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                 QMS Directive & CAPA Remarks for Auditee
               </span>
               <textarea
-                rows={3}
+                rows={2}
                 value={ncDocsRemarks}
                 onChange={(e) => setNcDocsRemarks(e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
               />
             </label>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-              <button type="button" className="secondary-button" onClick={() => setNcDocsAudit(null)} disabled={submitting}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+              <button type="button" className="secondary-button" onClick={() => setNcDocsAudit(null)} disabled={submitting} style={{ padding: "7px 14px", fontSize: "12.5px" }}>
                 Cancel
               </button>
-              <button type="button" className="primary-button btn-blue" onClick={handleShareNCDocsSubmit} disabled={submitting}>
+              <button type="button" className="primary-button btn-blue" onClick={handleShareNCDocsSubmit} disabled={submitting} style={{ padding: "7px 16px", fontSize: "12.5px" }}>
                 <Send size={14} style={{ marginRight: "4px" }} />
-                <span>{submitting ? "Sharing..." : "Share NC Docs to Auditor & Auditee"}</span>
+                <span>{submitting ? "Sharing..." : "Share NC Docs"}</span>
               </button>
             </div>
           </div>
@@ -1206,63 +1101,64 @@ export default function InternalAudit() {
           ========================================================================= */}
       {auditeeCloseAudit && (
         <Modal
-          title={`Submit Corrective Action & Close NC: ${auditeeCloseAudit.id}`}
+          title={`Close NC: ${auditeeCloseAudit.id}`}
           onClose={() => setAuditeeCloseAudit(null)}
         >
           <form onSubmit={handleAuditeeCloseSubmit}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <div style={{ padding: "8px 10px", background: "#fef3c7", borderRadius: "6px", border: "1px solid #fde68a", fontSize: "12px", color: "#92400e" }}>
-                <strong>Non-Conformance:</strong> {auditeeCloseAudit.noticingSheet?.findings?.[0]?.description || "Documentation record gap."}
+                <strong>NC:</strong> {auditeeCloseAudit.noticingSheet?.findings?.[0]?.description || "Documentation record gap."}
               </div>
 
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                   Root Cause Analysis <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Manual paper sign-off workflow delayed due to exam schedule..."
+                  placeholder="Root cause explanation..."
                   value={auditeeClosureData.rootCause}
                   onChange={(e) => setAuditeeClosureData({ ...auditeeClosureData, rootCause: e.target.value })}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                 />
               </label>
 
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                   Corrective Action Taken <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <textarea
                   rows={2}
                   required
-                  placeholder="e.g. All pending logbooks verified and signed off; instituted weekly digital checklist..."
+                  placeholder="Corrective actions completed..."
                   value={auditeeClosureData.correctiveAction}
                   onChange={(e) => setAuditeeClosureData({ ...auditeeClosureData, correctiveAction: e.target.value })}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                 />
               </label>
 
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                   Evidence Document Attached
                 </span>
                 <input
                   type="text"
                   readOnly
                   value={auditeeClosureData.evidenceFileName}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "12px" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "12px" }}
                 />
               </label>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-                <button type="button" className="secondary-button" onClick={() => setAuditeeCloseAudit(null)} disabled={submitting}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+                <button type="button" className="secondary-button" onClick={() => setAuditeeCloseAudit(null)} disabled={submitting} style={{ padding: "7px 14px", fontSize: "12.5px" }}>
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="primary-button btn-green"
                   disabled={submitting || !auditeeClosureData.rootCause.trim() || !auditeeClosureData.correctiveAction.trim()}
+                  style={{ padding: "7px 16px", fontSize: "12.5px" }}
                 >
                   <UploadCloud size={14} style={{ marginRight: "4px" }} />
                   <span>{submitting ? "Submitting..." : "Submit Closure to QMS"}</span>
@@ -1281,32 +1177,28 @@ export default function InternalAudit() {
           title={`Final Close Audit: ${finalCloseAuditItem.id}`}
           onClose={() => setFinalCloseAuditItem(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ padding: "10px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "12px", color: "#065f46" }}>
-              <strong>Auditee Action Taken:</strong>
-              <div>{finalCloseAuditItem.auditeeClosure?.correctiveAction}</div>
-              <div style={{ marginTop: "4px", fontSize: "11px", color: "#047857" }}>
-                Submitted by {finalCloseAuditItem.auditeeClosure?.closedBy} with evidence <code>{finalCloseAuditItem.auditeeClosure?.evidenceFileName}</code>.
-              </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ padding: "8px 10px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "12px", color: "#065f46" }}>
+              <strong>Auditee Action Taken:</strong> {finalCloseAuditItem.auditeeClosure?.correctiveAction}
             </div>
 
             <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+              <span style={{ display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "12px" }}>
                 Final QMS Verification & Closure Sign-off Remarks
               </span>
               <textarea
                 rows={2}
                 value={finalCloseRemarks}
                 onChange={(e) => setFinalCloseRemarks(e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
               />
             </label>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-              <button type="button" className="secondary-button" onClick={() => setFinalCloseAuditItem(null)} disabled={submitting}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+              <button type="button" className="secondary-button" onClick={() => setFinalCloseAuditItem(null)} disabled={submitting} style={{ padding: "7px 14px", fontSize: "12.5px" }}>
                 Cancel
               </button>
-              <button type="button" className="primary-button btn-green" onClick={handleFinalCloseSubmit} disabled={submitting}>
+              <button type="button" className="primary-button btn-green" onClick={handleFinalCloseSubmit} disabled={submitting} style={{ padding: "7px 16px", fontSize: "12.5px" }}>
                 <CheckCheck size={14} style={{ marginRight: "4px" }} />
                 <span>{submitting ? "Closing..." : "Close Entire Process"}</span>
               </button>
@@ -1323,35 +1215,35 @@ export default function InternalAudit() {
           title={`Audit Details: ${viewingAudit.id}`}
           onClose={() => setViewingAudit(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "70vh", overflowY: "auto" }}>
-            <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "65vh", overflowY: "auto" }}>
+            <div style={{ padding: "8px 10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <strong style={{ fontSize: "14px", color: "var(--navy)" }}>{viewingAudit.process}</strong>
+                <strong style={{ fontSize: "13px", color: "var(--navy)" }}>{viewingAudit.process}</strong>
                 {renderStatusBadge(viewingAudit)}
               </div>
-              <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+              <div style={{ fontSize: "11.5px", color: "#64748b", marginTop: "2px" }}>
                 Dates: <strong>{viewingAudit.scheduledDate}</strong>
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "12px" }}>
-              <div style={{ padding: "8px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "12px" }}>
+              <div style={{ padding: "6px 8px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
                 <strong>Auditor:</strong> {viewingAudit.internalAuditor?.name}
               </div>
-              <div style={{ padding: "8px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+              <div style={{ padding: "6px 8px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
                 <strong>Auditee:</strong> {viewingAudit.internalAuditee?.name}
               </div>
             </div>
 
             {viewingAudit.noticingSheet && (
-              <div style={{ padding: "10px", background: "#f5f3ff", borderRadius: "6px", border: "1px solid #ddd6fe", fontSize: "12px" }}>
+              <div style={{ padding: "8px 10px", background: "#f5f3ff", borderRadius: "6px", border: "1px solid #ddd6fe", fontSize: "12px" }}>
                 <strong style={{ color: "#6d28d9" }}>Noticing Sheet Finding:</strong>
                 <div style={{ marginTop: "2px" }}>{viewingAudit.noticingSheet.findings?.[0]?.description || viewingAudit.noticingSheet.summary}</div>
               </div>
             )}
 
             {viewingAudit.auditeeClosure && (
-              <div style={{ padding: "10px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "12px" }}>
+              <div style={{ padding: "8px 10px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "12px" }}>
                 <strong style={{ color: "#065f46" }}>Auditee Corrective Action:</strong>
                 <div style={{ marginTop: "2px" }}>{viewingAudit.auditeeClosure.correctiveAction}</div>
               </div>
@@ -1359,12 +1251,12 @@ export default function InternalAudit() {
 
             {/* Timeline */}
             <div>
-              <strong style={{ fontSize: "12px", color: "#0f172a", display: "block", marginBottom: "6px" }}>
+              <strong style={{ fontSize: "11.5px", color: "#0f172a", display: "block", marginBottom: "4px" }}>
                 Audit Timeline
               </strong>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 {(viewingAudit.timeline || []).map((t, idx) => (
-                  <div key={idx} style={{ padding: "6px 8px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "11px" }}>
+                  <div key={idx} style={{ padding: "5px 7px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "11px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "600", color: "#0f172a" }}>
                       <span>{t.action}</span>
                       <span style={{ color: "#64748b" }}>{t.timestamp}</span>
@@ -1375,8 +1267,8 @@ export default function InternalAudit() {
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
-              <button type="button" className="secondary-button" onClick={() => setViewingAudit(null)}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4px" }}>
+              <button type="button" className="secondary-button" onClick={() => setViewingAudit(null)} style={{ padding: "6px 14px", fontSize: "12px" }}>
                 Close
               </button>
             </div>
