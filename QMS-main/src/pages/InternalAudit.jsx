@@ -2,268 +2,166 @@ import React, { useState, useMemo } from "react";
 import {
   ClipboardCheck,
   Plus,
-  Share2,
   CheckCircle2,
   Clock,
   ShieldCheck,
   AlertCircle,
-  FileText,
-  UserCheck,
-  Award,
   Eye,
   Send,
-  Download,
   Calendar,
-  MapPin,
   Check,
-  Users,
-  Mail,
-  UploadCloud,
-  FileDown,
   FileCheck2,
-  Paperclip,
+  UploadCloud,
   CheckCheck,
-  ExternalLink,
   X,
-  ChevronRight,
-  Sparkles,
-  Info,
-  Layers,
-  ArrowRight
+  FileText,
+  User,
+  Users
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 import StatCard from "../components/common/StatCard";
-import StatusBadge from "../components/common/StatusBadge";
 import Modal from "../components/tasks/Modal";
-
-// Helper to determine stage color & label
-function getStageInfo(audit) {
-  switch (audit.stage) {
-    case 6:
-      return {
-        step: 6,
-        statusLabel: "Completed / Closed",
-        badgeText: "Audit Completed",
-        color: "#166534",
-        bg: "#dcfce7",
-        border: "#bbf7d0"
-      };
-    case 5:
-      return {
-        step: 5,
-        statusLabel: "Closed by Auditee",
-        badgeText: "Awaiting QMS Final Close",
-        color: "#92400e",
-        bg: "#fef3c7",
-        border: "#fde68a"
-      };
-    case 4:
-      return {
-        step: 4,
-        statusLabel: "NC Docs Shared",
-        badgeText: "Action Required by Auditee",
-        color: "#b45309",
-        bg: "#fffbeb",
-        border: "#fcd34d"
-      };
-    case 3:
-      return {
-        step: 3,
-        statusLabel: "Noticing Sheet Submitted",
-        badgeText: "Awaiting QMS NC Review",
-        color: "#6d28d9",
-        bg: "#f5f3ff",
-        border: "#ddd6fe"
-      };
-    case 2.5:
-      return {
-        step: 2.5,
-        statusLabel: "Schedule Confirmed",
-        badgeText: "Audit In Progress",
-        color: "#0369a1",
-        bg: "#f0f9ff",
-        border: "#bae6fd"
-      };
-    case 2:
-      return {
-        step: 2,
-        statusLabel: "Schedule Shared",
-        badgeText: "Awaiting Trust Head Confirmation",
-        color: "#1d4ed8",
-        bg: "#eff6ff",
-        border: "#bfdbfe"
-      };
-    case 1:
-    default:
-      return {
-        step: 1,
-        statusLabel: "Draft Scheduled",
-        badgeText: "Ready to Share Schedule",
-        color: "#475569",
-        bg: "#f1f5f9",
-        border: "#cbd5e1"
-      };
-  }
-}
 
 export default function InternalAudit() {
   const {
     currentUser,
     auditList = [],
     scheduleAudit,
-    shareAuditSchedule,
     confirmAuditSchedule,
     submitNoticingSheet,
     shareNCDocs,
     submitAuditeeClosure,
-    finalCloseAudit
+    finalCloseAudit,
+    pushNotification
   } = useApp();
 
-  // Active role testing override (defaults to current user role)
-  const [effectiveRole, setEffectiveRole] = useState(() => {
-    return currentUser?.role || "qm";
-  });
+  // Active testing role (defaults to logged-in user role: 'qm', 'Head', 'auditor', or 'owner')
+  const [activeRole, setActiveRole] = useState(() => currentUser?.role || "qm");
 
-  const isQMS = effectiveRole === "qm";
-  const isTrustHead = effectiveRole === "Head";
-  const isAuditor = effectiveRole === "auditor";
-  const isAuditee = effectiveRole === "owner";
+  const isQMS = activeRole === "qm";
+  const isTrustHead = activeRole === "Head";
+  const isAuditor = activeRole === "auditor";
+  const isAuditee = activeRole === "owner";
 
-  // Tab & search states
-  const [activeTab, setActiveTab] = useState("all");
+  // Filter & Search
+  const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [feedbackMsg, setFeedbackMsg] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Modals state
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(null);
-  const [showNoticingSheetModal, setShowNoticingSheetModal] = useState(null);
-  const [showNCDocsModal, setShowNCDocsModal] = useState(null);
-  const [showAuditeeCloseModal, setShowAuditeeCloseModal] = useState(null);
-  const [showFinalCloseModal, setShowFinalCloseModal] = useState(null);
+  const [confirmingAudit, setConfirmingAudit] = useState(null);
+  const [noticingSheetAudit, setNoticingSheetAudit] = useState(null);
+  const [ncDocsAudit, setNcDocsAudit] = useState(null);
+  const [auditeeCloseAudit, setAuditeeCloseAudit] = useState(null);
+  const [finalCloseAuditItem, setFinalCloseAuditItem] = useState(null);
   const [viewingAudit, setViewingAudit] = useState(null);
 
-  // Form states
+  // Form State for Schedule: NOT automatically filled, starts blank!
   const [scheduleForm, setScheduleForm] = useState({
-    title: "",
-    process: "Course Management",
-    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    auditorName: "Vikas Deshmukh",
-    auditorRole: "Internal Auditor",
-    auditorDept: "Internal Quality Audit Cell",
-    auditeeName: "Priya Sharma",
-    auditeeRole: "Course Coordinator",
-    auditeeDept: "Academic Division",
-    venue: "Academic Block - Room 204 & QMS Portal",
-    scope: "Verification of course delivery milestones, syllabus progress tracking, laboratory sessions, and compliance with ISO 9001:2015 Clause 8.5.",
-    notes: ""
+    startDate: "",
+    endDate: "",
+    process: "",
+    auditorName: "",
+    auditeeName: ""
   });
 
-  const [confirmRemarks, setConfirmRemarks] = useState(
-    "Audit plan and dates verified. Approved for execution across Academic Division."
-  );
-
-  const [noticingSheetForm, setNoticingSheetForm] = useState({
-    sheetNo: `NS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-    summary: "Audit completed successfully. Identified minor non-conformance regarding logbook maintenance.",
-    findingsCount: "1",
-    ncDescription: "Weekly practical lab attendance and syllabus delivery logbook was not signed by the Course Coordinator for weeks 4 and 5.",
+  // Action remarks/inputs
+  const [confirmRemarks, setConfirmRemarks] = useState("Audit schedule approved and authorized for execution.");
+  const [noticingSheetData, setNoticingSheetData] = useState({
+    summary: "",
     clause: "ISO 9001:2015 Clause 8.5.1",
-    targetDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    fileName: "Noticing_Sheet_Signed.pdf"
+    ncDescription: "",
+    targetDate: ""
   });
-
-  const [ncDocsForm, setNcDocsForm] = useState({
-    fileName: "NC_Formal_Notice_IQA.pdf",
-    remarks: "Noticing Sheet reviewed and validated. Formal Non-Conformance Notice issued. Auditee requested to submit Root Cause Analysis and Corrective Action Plan."
+  const [ncDocsRemarks, setNcDocsRemarks] = useState(
+    "Noticing Sheet reviewed. Formal Non-Conformance notice issued. Auditee requested to submit Root Cause Analysis and Corrective Action Plan."
+  );
+  const [auditeeClosureData, setAuditeeClosureData] = useState({
+    rootCause: "",
+    correctiveAction: "",
+    evidenceFileName: "CAPA_Evidence_Signed.pdf"
   });
-
-  const [auditeeCloseForm, setAuditeeCloseForm] = useState({
-    rootCause: "Manual paper sign-off workflow was delayed due to mid-semester exams and faculty travel schedule.",
-    correctiveAction: "All pending logbook entries for weeks 4 and 5 have been verified and signed off. Implemented weekly digital attendance sign-off reminder on ERP portal.",
-    evidenceFileName: "Signed_Lab_Logbooks_Evidence.pdf",
-    remarks: "Corrective actions completed. Evidence verified and submitted for QMS final sign-off."
-  });
-
   const [finalCloseRemarks, setFinalCloseRemarks] = useState(
-    "All corrective action evidences thoroughly reviewed, verified with process logs, and found fully conforming with ISO 9001:2015. Audit officially closed."
+    "Corrective action verified and found fully conforming with ISO 9001:2015. Audit officially closed."
   );
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Show transient feedback toast
-  const triggerToast = (msg, type = "success") => {
-    setFeedbackMsg({ text: msg, type });
-    setTimeout(() => setFeedbackMsg(null), 5000);
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4500);
   };
 
-  // Pre-calculated stats
+  // Stats
   const stats = useMemo(() => {
     const total = auditList.length;
+    const awaitingConfirmation = auditList.filter((a) => a.stage === 2).length;
+    const inProgress = auditList.filter((a) => a.stage >= 2.5 && a.stage < 6).length;
     const completed = auditList.filter((a) => a.stage === 6).length;
-    const inProgress = auditList.filter((a) => a.stage > 1 && a.stage < 6).length;
-    const scheduled = auditList.filter((a) => a.stage === 1).length;
-    return { total, completed, inProgress, scheduled };
+    return { total, awaitingConfirmation, inProgress, completed };
   }, [auditList]);
 
   // Filtered audits
   const filteredAudits = useMemo(() => {
     return auditList.filter((audit) => {
-      // Tab filter
-      if (activeTab === "pending_action") {
-        if (isQMS && (audit.stage === 1 || audit.stage === 3 || audit.stage === 5)) return true;
+      if (filterStatus === "pending") {
+        if (isQMS && (audit.stage === 3 || audit.stage === 5)) return true;
         if (isTrustHead && audit.stage === 2) return true;
         if (isAuditor && audit.stage === 2.5) return true;
         if (isAuditee && audit.stage === 4) return true;
         return false;
       }
-      if (activeTab === "in_progress" && (audit.stage < 2 || audit.stage >= 6)) return false;
-      if (activeTab === "completed" && audit.stage !== 6) return false;
+      if (filterStatus === "in_progress" && (audit.stage < 2 || audit.stage >= 6)) return false;
+      if (filterStatus === "completed" && audit.stage !== 6) return false;
 
-      // Search term filter
       if (searchTerm.trim()) {
-        const query = searchTerm.toLowerCase();
-        const matchTitle = audit.title?.toLowerCase().includes(query);
-        const matchId = audit.id?.toLowerCase().includes(query);
-        const matchProcess = audit.process?.toLowerCase().includes(query);
-        const matchAuditor = audit.internalAuditor?.name?.toLowerCase().includes(query);
-        const matchAuditee = audit.internalAuditee?.name?.toLowerCase().includes(query);
-        return matchTitle || matchId || matchProcess || matchAuditor || matchAuditee;
+        const q = searchTerm.toLowerCase();
+        return (
+          audit.id?.toLowerCase().includes(q) ||
+          audit.process?.toLowerCase().includes(q) ||
+          audit.internalAuditor?.name?.toLowerCase().includes(q) ||
+          audit.internalAuditee?.name?.toLowerCase().includes(q)
+        );
       }
       return true;
     });
-  }, [auditList, activeTab, searchTerm, isQMS, isTrustHead, isAuditor, isAuditee]);
+  }, [auditList, filterStatus, searchTerm, isQMS, isTrustHead, isAuditor, isAuditee]);
 
-  // Handlers
-  const handleCreateSchedule = async (e) => {
+  // =========================================================================
+  // HANDLERS
+  // =========================================================================
+
+  // 1. QMS Coordinator Schedules & Automatically Shares with Trust Head, Auditor & Auditee
+  const handleScheduleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!scheduleForm.startDate || !scheduleForm.endDate || !scheduleForm.process || !scheduleForm.auditorName.trim() || !scheduleForm.auditeeName.trim()) {
+      showToast("Please fill all required fields.", "error");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const payload = {
-        title: scheduleForm.title || `${scheduleForm.process} Internal Quality Audit`,
+        title: `${scheduleForm.process} Internal Quality Audit`,
         process: scheduleForm.process,
         startDate: scheduleForm.startDate,
         endDate: scheduleForm.endDate,
         internalAuditor: {
-          id: "IA001",
-          name: scheduleForm.auditorName,
-          role: scheduleForm.auditorRole,
-          department: scheduleForm.auditorDept,
-          email: `${scheduleForm.auditorName.toLowerCase().replace(/\s+/g, ".")}@cdac.in`
+          name: scheduleForm.auditorName.trim(),
+          role: "Internal Auditor",
+          department: "Internal Quality Audit Cell",
+          email: `${scheduleForm.auditorName.trim().toLowerCase().replace(/\s+/g, ".")}@cdac.in`
         },
         internalAuditee: {
-          id: "CC001",
-          name: scheduleForm.auditeeName,
-          role: scheduleForm.auditeeRole,
-          department: scheduleForm.auditeeDept,
-          email: `${scheduleForm.auditeeName.toLowerCase().replace(/\s+/g, ".")}@cdac.in`
+          name: scheduleForm.auditeeName.trim(),
+          role: "Course Coordinator",
+          department: "Academic Division",
+          email: `${scheduleForm.auditeeName.trim().toLowerCase().replace(/\s+/g, ".")}@cdac.in`
         },
-        venue: scheduleForm.venue,
-        scope: scheduleForm.scope,
-        notes: scheduleForm.notes,
+        venue: "Academic Block & QMS Portal",
+        scope: `Verification of operational procedures and ISO 9001:2015 compliance for ${scheduleForm.process}.`,
         scheduledBy: {
           name: currentUser?.name || "Rahul Kumar",
           role: currentUser?.roleTitle || "QMS Coordinator"
@@ -271,121 +169,251 @@ export default function InternalAudit() {
       };
 
       const created = await scheduleAudit(payload);
+
+      // Real-time automatic notifications
+      if (pushNotification) {
+        pushNotification(
+          "New Internal Audit Scheduled",
+          `Internal Audit (${created.id}) for ${created.process} scheduled (${created.scheduledDate}). Please confirm schedule.`,
+          "Head"
+        );
+        pushNotification(
+          "Internal Audit Assignment",
+          `You are assigned as Internal Auditor for ${created.process} (${created.id}) on ${created.scheduledDate}.`,
+          "auditor"
+        );
+        pushNotification(
+          "Internal Audit Announced",
+          `Internal Audit (${created.id}) for ${created.process} scheduled for ${created.scheduledDate}.`,
+          "owner"
+        );
+      }
+
       setShowScheduleModal(false);
-      triggerToast(`Internal Audit ${created?.id || ""} scheduled! You can now share the schedule docs.`);
+      setScheduleForm({
+        startDate: "",
+        endDate: "",
+        process: "",
+        auditorName: "",
+        auditeeName: ""
+      });
+      showToast(`Audit ${created.id} scheduled! Details automatically shared with Trust Head, Auditor, and Course Coordinators.`);
     } catch (err) {
-      triggerToast(err.message || "Failed to schedule audit", "error");
+      showToast(err.message || "Failed to schedule audit", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleShareSchedule = async (audit) => {
-    setIsSubmitting(true);
+  // 2. Trust Head Confirms Schedule -> Automatically notifies QMS Coordinator
+  const handleConfirmSubmit = async () => {
+    if (!confirmingAudit) return;
+    setSubmitting(true);
     try {
-      await shareAuditSchedule(audit.id);
-      setShowShareModal(null);
-      triggerToast(
-        `Schedule for ${audit.id} successfully shared to Course Coordinator (${audit.internalAuditee.name}), Trust Head, and Internal Auditor (${audit.internalAuditor.name})!`
-      );
+      await confirmAuditSchedule(confirmingAudit.id, confirmRemarks);
+
+      if (pushNotification) {
+        pushNotification(
+          "Audit Schedule Confirmed by Trust Head",
+          `Trust Head Anita Rao confirmed the audit schedule for ${confirmingAudit.process} (${confirmingAudit.id}). Auditing may proceed.`,
+          "qm"
+        );
+        pushNotification(
+          "Audit Schedule Confirmed",
+          `Schedule for ${confirmingAudit.process} (${confirmingAudit.id}) is confirmed by Trust Head. You can now conduct the audit.`,
+          "auditor"
+        );
+      }
+
+      setConfirmingAudit(null);
+      showToast(`Audit ${confirmingAudit.id} confirmed! Automated confirmation notification sent to QMS Coordinator.`);
     } catch (err) {
-      triggerToast(err.message || "Failed to share schedule", "error");
+      showToast(err.message || "Failed to confirm schedule", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleConfirmSchedule = async (audit) => {
-    setIsSubmitting(true);
-    try {
-      await confirmAuditSchedule(audit.id, confirmRemarks);
-      setShowConfirmModal(null);
-      triggerToast(`Schedule for ${audit.id} confirmed by Trust Head! Internal Auditor can now proceed.`);
-    } catch (err) {
-      triggerToast(err.message || "Failed to confirm schedule", "error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSubmitNoticingSheet = async (audit) => {
-    setIsSubmitting(true);
+  // 3. Internal Auditor Submits Noticing Sheet -> Shares to QMS Coordinator
+  const handleNoticingSheetSubmit = async (e) => {
+    e.preventDefault();
+    if (!noticingSheetAudit) return;
+    setSubmitting(true);
     try {
       const payload = {
-        sheetNo: noticingSheetForm.sheetNo,
-        summary: noticingSheetForm.summary,
-        fileName: noticingSheetForm.fileName,
-        submittedBy: `${currentUser?.name || audit.internalAuditor.name} (Internal Auditor)`,
+        sheetNo: `NS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+        summary: noticingSheetData.summary || "Audit concluded. Non-conformance items identified.",
+        fileName: "Noticing_Sheet_Signed.pdf",
+        submittedBy: `${currentUser?.name || noticingSheetAudit.internalAuditor?.name} (Internal Auditor)`,
         findings: [
           {
             id: "NC-01",
             type: "Minor NC",
-            clause: noticingSheetForm.clause,
-            description: noticingSheetForm.ncDescription,
-            targetDate: noticingSheetForm.targetDate
+            clause: noticingSheetData.clause,
+            description: noticingSheetData.ncDescription || "Process documentation record gap identified during sample verification.",
+            targetDate: noticingSheetData.targetDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
           }
         ]
       };
-      await submitNoticingSheet(audit.id, payload);
-      setShowNoticingSheetModal(null);
-      triggerToast(`Noticing Sheet (${payload.sheetNo}) shared with QMS Coordinator for review!`);
+
+      await submitNoticingSheet(noticingSheetAudit.id, payload);
+
+      if (pushNotification) {
+        pushNotification(
+          "Noticing Sheet Submitted by Auditor",
+          `Internal Auditor submitted Noticing Sheet for ${noticingSheetAudit.process} (${noticingSheetAudit.id}). Please review and share NC Docs.`,
+          "qm"
+        );
+      }
+
+      setNoticingSheetAudit(null);
+      setNoticingSheetData({
+        summary: "",
+        clause: "ISO 9001:2015 Clause 8.5.1",
+        ncDescription: "",
+        targetDate: ""
+      });
+      showToast(`Noticing Sheet submitted and shared with QMS Coordinator for review!`);
     } catch (err) {
-      triggerToast(err.message || "Failed to submit noticing sheet", "error");
+      showToast(err.message || "Failed to submit noticing sheet", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleShareNCDocs = async (audit) => {
-    setIsSubmitting(true);
+  // 4. QMS Coordinator Shares NC Docs to Auditor & Auditee
+  const handleShareNCDocsSubmit = async () => {
+    if (!ncDocsAudit) return;
+    setSubmitting(true);
     try {
-      await shareNCDocs(audit.id, ncDocsForm);
-      setShowNCDocsModal(null);
-      triggerToast(`NC Docs for ${audit.id} reviewed and shared to Internal Auditor & Auditee!`);
+      await shareNCDocs(ncDocsAudit.id, { remarks: ncDocsRemarks });
+
+      if (pushNotification) {
+        pushNotification(
+          "NC Docs Issued - Corrective Action Required",
+          `QMS Coordinator has issued NC Docs for ${ncDocsAudit.process} (${ncDocsAudit.id}). Please review findings, take corrective action, and close the NC.`,
+          "owner"
+        );
+        pushNotification(
+          "NC Docs Distributed to Auditee",
+          `NC Docs for ${ncDocsAudit.process} (${ncDocsAudit.id}) distributed to Auditee.`,
+          "auditor"
+        );
+      }
+
+      setNcDocsAudit(null);
+      showToast(`NC Docs shared to Internal Auditor and Auditee (${ncDocsAudit.internalAuditee?.name})!`);
     } catch (err) {
-      triggerToast(err.message || "Failed to share NC docs", "error");
+      showToast(err.message || "Failed to share NC docs", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleSubmitAuditeeClose = async (audit) => {
-    setIsSubmitting(true);
+  // 5. Auditee Closes Process & Passes to QMS Coordinator
+  const handleAuditeeCloseSubmit = async (e) => {
+    e.preventDefault();
+    if (!auditeeCloseAudit) return;
+    setSubmitting(true);
     try {
       const payload = {
-        rootCause: auditeeCloseForm.rootCause,
-        correctiveAction: auditeeCloseForm.correctiveAction,
-        evidenceFileName: auditeeCloseForm.evidenceFileName,
-        remarks: auditeeCloseForm.remarks,
-        closedBy: `${currentUser?.name || audit.internalAuditee.name} (Course Coordinator)`
+        rootCause: auditeeClosureData.rootCause || "Operational procedure delay during peak academic cycle.",
+        correctiveAction: auditeeClosureData.correctiveAction,
+        evidenceFileName: auditeeClosureData.evidenceFileName || "CAPA_Evidence_Signed.pdf",
+        closedBy: `${currentUser?.name || auditeeCloseAudit.internalAuditee?.name} (Course Coordinator)`
       };
-      await submitAuditeeClosure(audit.id, payload);
-      setShowAuditeeCloseModal(null);
-      triggerToast(`Auditee closure & evidence submitted for ${audit.id}! Awaiting QMS Coordinator final closure.`);
+
+      await submitAuditeeClosure(auditeeCloseAudit.id, payload);
+
+      if (pushNotification) {
+        pushNotification(
+          "Auditee Corrective Action Submitted",
+          `Auditee (${payload.closedBy}) submitted corrective action for ${auditeeCloseAudit.process} (${auditeeCloseAudit.id}). Ready for final QMS closure.`,
+          "qm"
+        );
+      }
+
+      setAuditeeCloseAudit(null);
+      setAuditeeClosureData({ rootCause: "", correctiveAction: "", evidenceFileName: "CAPA_Evidence_Signed.pdf" });
+      showToast(`Auditee closure submitted! Passed to QMS Coordinator for final close.`);
     } catch (err) {
-      triggerToast(err.message || "Failed to submit auditee closure", "error");
+      showToast(err.message || "Failed to submit closure", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleFinalClose = async (audit) => {
-    setIsSubmitting(true);
+  // 6. QMS Coordinator Final Close -> Whole Process is Completed!
+  const handleFinalCloseSubmit = async () => {
+    if (!finalCloseAuditItem) return;
+    setSubmitting(true);
     try {
-      await finalCloseAudit(audit.id, finalCloseRemarks);
-      setShowFinalCloseModal(null);
-      triggerToast(`Internal Audit ${audit.id} officially closed! Entire audit process is completed.`);
+      await finalCloseAudit(finalCloseAuditItem.id, finalCloseRemarks);
+
+      if (pushNotification) {
+        pushNotification(
+          "Internal Audit Completed & Officially Closed",
+          `Internal Audit (${finalCloseAuditItem.id}) for ${finalCloseAuditItem.process} is 100% complete and closed.`,
+          "all"
+        );
+      }
+
+      setFinalCloseAuditItem(null);
+      showToast(`Internal Audit ${finalCloseAuditItem.id} officially closed! The whole process is now completed.`);
     } catch (err) {
-      triggerToast(err.message || "Failed to close audit", "error");
+      showToast(err.message || "Failed to finalize audit closure", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
+    }
+  };
+
+  // Status Badge styling helper
+  const renderStatusBadge = (audit) => {
+    switch (audit.stage) {
+      case 6:
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0" }}>
+            <CheckCircle2 size={13} /> Completed
+          </span>
+        );
+      case 5:
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#92400e", background: "#fef3c7", border: "1px solid #fde68a" }}>
+            <Clock size={13} /> Closed by Auditee
+          </span>
+        );
+      case 4:
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#b45309", background: "#fffbeb", border: "1px solid #fcd34d" }}>
+            <Clock size={13} /> NC Docs Shared
+          </span>
+        );
+      case 3:
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#6d28d9", background: "#f5f3ff", border: "1px solid #ddd6fe" }}>
+            <Clock size={13} /> Noticing Sheet Submitted
+          </span>
+        );
+      case 2.5:
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#0369a1", background: "#f0f9ff", border: "1px solid #bae6fd" }}>
+            <Clock size={13} /> Schedule Confirmed
+          </span>
+        );
+      case 2:
+      default:
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe" }}>
+            <Clock size={13} /> Awaiting Trust Head
+          </span>
+        );
     }
   };
 
   return (
     <div className="page-container internal-audit-page">
       {/* Toast Notification */}
-      {feedbackMsg && (
+      {toast && (
         <div
           style={{
             position: "fixed",
@@ -394,197 +422,114 @@ export default function InternalAudit() {
             zIndex: 9999,
             padding: "12px 18px",
             borderRadius: "8px",
-            background: feedbackMsg.type === "error" ? "#ef4444" : "#166534",
+            background: toast.type === "error" ? "#ef4444" : "#166534",
             color: "#ffffff",
             boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            fontSize: "14px",
-            fontWeight: "600",
-            animation: "slideDown 0.3s ease"
+            fontSize: "13px",
+            fontWeight: "600"
           }}
         >
-          {feedbackMsg.type === "error" ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
-          <span>{feedbackMsg.text}</span>
-          <button
-            onClick={() => setFeedbackMsg(null)}
-            style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer" }}
-          >
-            <X size={15} />
+          {toast.type === "error" ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+          <span>{toast.message}</span>
+          <button onClick={() => setToast(null)} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", marginLeft: "6px" }}>
+            <X size={14} />
           </button>
         </div>
       )}
 
-      {/* Header & Page Intro */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "16px" }}>
-        <PageIntro
-          title="Internal Quality Audit (IQA)"
-          description="ISO 9001:2015 Clause 9.2 compliant audit lifecycle management: schedule, trust head confirmation, noticing sheet audit findings, NC document distribution, auditee CAPA closure, and final QMS sign-off."
-        />
-
-        {/* Schedule Auditing Button (for QMS Coordinator) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button
-            type="button"
-            className="primary-button btn-blue"
-            onClick={() => setShowScheduleModal(true)}
-            style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 18px" }}
-          >
-            <Plus size={18} />
-            <span>Schedule Auditing</span>
-          </button>
+      {/* Clean Header Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px", marginBottom: "20px" }}>
+        <div>
+          <h1 style={{ margin: "0 0 4px 0", fontSize: "22px", fontWeight: "700", color: "#0f2233" }}>
+            Internal Quality Audit
+          </h1>
+          <p style={{ margin: 0, fontSize: "13px", color: "#5d7182" }}>
+            Real-time ISO 9001:2015 audit lifecycle: scheduling, confirmation, noticing sheets, NC corrective actions, and completion.
+          </p>
         </div>
-      </div>
 
-      {/* Role Testing Bar */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #0b3457 0%, #041c30 100%)",
-          borderRadius: "10px",
-          padding: "14px 18px",
-          color: "#ffffff",
-          marginBottom: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "12px",
-          boxShadow: "0 4px 14px rgba(4, 28, 48, 0.15)"
-        }}
-      >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <ShieldCheck size={20} color="#79b4e4" />
-          <div>
-            <div style={{ fontSize: "14px", fontWeight: "700", letterSpacing: "0.2px" }}>
-              Active Audit Role View: <span style={{ color: "#79b4e4" }}>
-                {effectiveRole === "qm" && "QMS Coordinator (Plan, Review & Final Close)"}
-                {effectiveRole === "Head" && "Trust Head (Schedule Confirmation)"}
-                {effectiveRole === "auditor" && "Internal Auditor (Conduct Audit & Noticing Sheet)"}
-                {effectiveRole === "owner" && "Course Coordinator / Auditee (CAPA & Auditee Close)"}
-              </span>
-            </div>
-            <div style={{ fontSize: "12px", color: "#cbd5e1" }}>
-              Switch perspectives below to test each action in the 6-stage audit lifecycle:
-            </div>
+          {/* Subtle Role Toggle so user can test all roles effortlessly */}
+          <div style={{ display: "inline-flex", alignItems: "center", background: "#f1f5f9", padding: "3px 4px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+            <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", padding: "0 6px" }}>Role:</span>
+            {[
+              { key: "qm", label: "QMS Coord" },
+              { key: "Head", label: "Trust Head" },
+              { key: "auditor", label: "Auditor" },
+              { key: "owner", label: "Auditee" }
+            ].map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => setActiveRole(r.key)}
+                style={{
+                  border: "none",
+                  padding: "5px 9px",
+                  borderRadius: "5px",
+                  fontSize: "11px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  background: activeRole === r.key ? "var(--navy)" : "transparent",
+                  color: activeRole === r.key ? "#ffffff" : "#475569"
+                }}
+              >
+                {r.label}
+              </button>
+            ))}
           </div>
-        </div>
 
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {[
-            { role: "qm", label: "QMS Coordinator" },
-            { role: "Head", label: "Trust Head" },
-            { role: "auditor", label: "Internal Auditor" },
-            { role: "owner", label: "Course Coordinator (Auditee)" }
-          ].map((r) => (
+          {/* Schedule Auditing Button (visible to QMS Coordinator) */}
+          {isQMS && (
             <button
-              key={r.role}
-              onClick={() => setEffectiveRole(r.role)}
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: effectiveRole === r.role ? "1px solid #79b4e4" : "1px solid rgba(255,255,255,0.2)",
-                background: effectiveRole === r.role ? "rgba(121, 180, 228, 0.2)" : "rgba(255,255,255,0.05)",
-                color: effectiveRole === r.role ? "#79b4e4" : "#e2e8f0",
-                cursor: "pointer",
-                transition: "all 0.15s ease"
+              type="button"
+              className="primary-button btn-blue"
+              onClick={() => {
+                // Ensure form starts clean and blank
+                setScheduleForm({ startDate: "", endDate: "", process: "", auditorName: "", auditeeName: "" });
+                setShowScheduleModal(true);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px" }}
             >
-              {effectiveRole === r.role && <Check size={12} style={{ display: "inline", marginRight: "4px" }} />}
-              {r.label}
+              <Plus size={16} />
+              <span>Schedule Audit</span>
             </button>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* 6-Step Workflow Guide Banner */}
-      <div
-        style={{
-          background: "#ffffff",
-          border: "1px solid #e2e8f0",
-          borderRadius: "10px",
-          padding: "16px 20px",
-          marginBottom: "22px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-          <strong style={{ fontSize: "13px", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px" }}>
-            <Layers size={16} color="var(--navy)" />
-            Standard 6-Stage Internal Quality Audit Lifecycle
-          </strong>
-          <span style={{ fontSize: "11px", color: "#64748b", background: "#f8fafc", padding: "3px 8px", borderRadius: "4px" }}>
-            ISO 9001:2015 Clause 9.2
-          </span>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px" }}>
-          {[
-            { step: "1", title: "Schedule Auditing", role: "QMS Coordinator", desc: "Select dates, process, auditor & auditee" },
-            { step: "2", title: "Share Schedule", role: "QMS Coordinator", desc: "Dispatched to Auditee, Head & Auditor" },
-            { step: "3", title: "Confirm Schedule", role: "Trust Head", desc: "Authorizes and ratifies audit schedule" },
-            { step: "4", title: "Noticing Sheet", role: "Internal Auditor", desc: "Uploads audit findings & NC observations" },
-            { step: "5", title: "NC Docs Shared", role: "QMS Coordinator", desc: "Communicates official NCs to Auditee" },
-            { step: "6", title: "Auditee & Final Close", role: "Auditee & QMS", desc: "Auditee closes CAPA -> QMS final close completes process" }
-          ].map((st, i) => (
-            <div
-              key={st.step}
-              style={{
-                padding: "10px 12px",
-                borderRadius: "8px",
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-                position: "relative"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--navy)", background: "#e0f2fe", width: "20px", height: "20px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {st.step}
-                </span>
-                <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "600" }}>{st.role}</span>
-              </div>
-              <strong style={{ fontSize: "12px", color: "#0f172a", marginTop: "2px" }}>{st.title}</strong>
-              <span style={{ fontSize: "11px", color: "#64748b", lineHeight: "1.3" }}>{st.desc}</span>
-            </div>
-          ))}
-        </div>
+      {/* 4 Compact Stat Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", marginBottom: "20px" }}>
+        <StatCard title="Total Audits" value={stats.total} icon={ClipboardCheck} variant="default" subtitle="Logged in system" />
+        <StatCard title="Awaiting Confirmation" value={stats.awaitingConfirmation} icon={Clock} variant="blue" subtitle="Trust Head action" />
+        <StatCard title="In Progress" value={stats.inProgress} icon={Clock} variant="amber" subtitle="Auditing & NC resolution" />
+        <StatCard title="Completed" value={stats.completed} icon={CheckCircle2} variant="green" subtitle="100% closed & certified" />
       </div>
 
-      {/* Stat Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "16px", marginBottom: "22px" }}>
-        <StatCard title="Total Audits" value={stats.total} icon={ClipboardCheck} variant="default" subtitle="Logged in registry" />
-        <StatCard title="Audit In Progress" value={stats.inProgress} icon={Clock} variant="amber" subtitle="Active field reviews" />
-        <StatCard title="Scheduled / Pending" value={stats.scheduled} icon={Calendar} variant="blue" subtitle="Awaiting sharing" />
-        <StatCard title="Closed & Completed" value={stats.completed} icon={CheckCircle2} variant="green" subtitle="100% rectified & closed" />
-      </div>
-
-      {/* Tab Filter & Search */}
+      {/* Filter Tabs & Search */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "6px" }}>
           {[
-            { key: "all", label: `All Audits (${stats.total})` },
-            { key: "pending_action", label: "Action Required by Me" },
+            { key: "all", label: `All (${stats.total})` },
+            { key: "pending", label: "My Actions" },
             { key: "in_progress", label: `In Progress (${stats.inProgress})` },
-            { key: "completed", label: `Closed (${stats.completed})` }
+            { key: "completed", label: `Completed (${stats.completed})` }
           ].map((t) => (
             <button
               key={t.key}
-              onClick={() => setActiveTab(t.key)}
+              type="button"
+              onClick={() => setFilterStatus(t.key)}
               style={{
-                padding: "8px 14px",
+                padding: "7px 12px",
                 borderRadius: "6px",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 cursor: "pointer",
-                border: activeTab === t.key ? "1px solid var(--navy)" : "1px solid #cbd5e1",
-                background: activeTab === t.key ? "var(--navy)" : "#ffffff",
-                color: activeTab === t.key ? "#ffffff" : "#475569",
-                transition: "all 0.15s ease"
+                border: filterStatus === t.key ? "1px solid var(--navy)" : "1px solid #cbd5e1",
+                background: filterStatus === t.key ? "var(--navy)" : "#ffffff",
+                color: filterStatus === t.key ? "#ffffff" : "#475569"
               }}
             >
               {t.label}
@@ -592,221 +537,161 @@ export default function InternalAudit() {
           ))}
         </div>
 
-        <div style={{ position: "relative", minWidth: "260px" }}>
-          <input
-            type="text"
-            placeholder="Search by ID, process, auditor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              paddingLeft: "32px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              fontSize: "13px"
-            }}
-          />
-          <span style={{ position: "absolute", left: "10px", top: "9px", color: "#94a3b8" }}>🔍</span>
-        </div>
+        <input
+          type="text"
+          placeholder="Search by ID, process, auditor..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: "7px 12px",
+            borderRadius: "6px",
+            border: "1px solid #cbd5e1",
+            fontSize: "12px",
+            minWidth: "240px"
+          }}
+        />
       </div>
 
-      {/* Audit List Table / Cards */}
-      <div style={{ background: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      {/* Clean Table of Audits */}
+      <div style={{ background: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600" }}>
-                <th style={{ padding: "12px 16px" }}>Audit Ref & Title</th>
-                <th style={{ padding: "12px 16px" }}>Process</th>
+                <th style={{ padding: "12px 16px" }}>Audit Ref & Process</th>
                 <th style={{ padding: "12px 16px" }}>Audit Dates</th>
-                <th style={{ padding: "12px 16px" }}>Auditor & Auditee</th>
-                <th style={{ padding: "12px 16px" }}>Lifecycle Stage</th>
-                <th style={{ padding: "12px 16px", textAlign: "right" }}>Actions</th>
+                <th style={{ padding: "12px 16px" }}>Internal Auditor</th>
+                <th style={{ padding: "12px 16px" }}>Internal Auditee</th>
+                <th style={{ padding: "12px 16px" }}>Status</th>
+                <th style={{ padding: "12px 16px", textAlign: "right" }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredAudits.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: "36px", textAlign: "center", color: "#64748b" }}>
-                    No audits found matching the selected filter or search term.
+                  <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>
+                    No audits found.
                   </td>
                 </tr>
               ) : (
                 filteredAudits.map((audit) => {
-                  const stageInfo = getStageInfo(audit);
-
-                  // Determine available primary action for the active role
-                  let primaryAction = null;
-
-                  if (audit.stage === 1 && isQMS) {
-                    primaryAction = {
-                      label: "Share Schedule",
-                      icon: Share2,
-                      btnClass: "primary-button btn-blue",
-                      onClick: () => setShowShareModal(audit)
-                    };
-                  } else if (audit.stage === 2 && (isTrustHead || isQMS)) {
-                    primaryAction = {
-                      label: "Confirm Schedule",
-                      icon: Award,
-                      btnClass: "primary-button btn-green",
-                      onClick: () => setShowConfirmModal(audit)
-                    };
-                  } else if (audit.stage === 2.5 && (isAuditor || isQMS)) {
-                    primaryAction = {
-                      label: "Submit Noticing Sheet",
-                      icon: FileCheck2,
-                      btnClass: "primary-button btn-blue",
-                      onClick: () => setShowNoticingSheetModal(audit)
-                    };
-                  } else if (audit.stage === 3 && isQMS) {
-                    primaryAction = {
-                      label: "Review & Share NC Docs",
-                      icon: Send,
-                      btnClass: "primary-button btn-blue",
-                      onClick: () => setShowNCDocsModal(audit)
-                    };
-                  } else if (audit.stage === 4 && (isAuditee || isQMS)) {
-                    primaryAction = {
-                      label: "Submit Auditee Closure",
-                      icon: UploadCloud,
-                      btnClass: "primary-button btn-green",
-                      onClick: () => setShowAuditeeCloseModal(audit)
-                    };
-                  } else if (audit.stage === 5 && isQMS) {
-                    primaryAction = {
-                      label: "Final Close Audit",
-                      icon: CheckCheck,
-                      btnClass: "primary-button btn-green",
-                      onClick: () => setShowFinalCloseModal(audit)
-                    };
-                  }
-
                   return (
                     <tr
                       key={audit.id}
-                      style={{
-                        borderBottom: "1px solid #f1f5f9",
-                        transition: "background 0.15s ease"
-                      }}
+                      style={{ borderBottom: "1px solid #f1f5f9" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      {/* 1. Audit Ref & Title */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span
-                            style={{
-                              fontFamily: "monospace",
-                              fontWeight: "700",
-                              fontSize: "12px",
-                              color: "var(--navy)",
-                              background: "#edf4fa",
-                              padding: "2px 7px",
-                              borderRadius: "4px"
-                            }}
-                          >
-                            {audit.id}
-                          </span>
-                        </div>
-                        <strong style={{ display: "block", color: "#0f172a", marginTop: "4px", fontSize: "13px" }}>
-                          {audit.title}
-                        </strong>
-                        <span style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
-                          <MapPin size={11} /> {audit.venue || "Academic Campus"}
+                      {/* 1. Audit Ref & Process */}
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{ fontFamily: "monospace", fontWeight: "700", fontSize: "11px", color: "var(--navy)", background: "#edf4fa", padding: "2px 6px", borderRadius: "4px" }}>
+                          {audit.id}
                         </span>
-                      </td>
-
-                      {/* 2. Process */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <span
-                          style={{
-                            fontWeight: "600",
-                            color: "#1e293b",
-                            background: "#f1f5f9",
-                            padding: "4px 9px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            display: "inline-block"
-                          }}
-                        >
+                        <strong style={{ display: "block", color: "#0f172a", marginTop: "3px", fontSize: "13px" }}>
                           {audit.process}
-                        </span>
+                        </strong>
                       </td>
 
-                      {/* 3. Dates */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "#334155", fontWeight: "500" }}>
+                      {/* 2. Audit Dates */}
+                      <td style={{ padding: "12px 16px", color: "#334155" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                           <Calendar size={13} color="#64748b" />
                           <span>{audit.scheduledDate}</span>
                         </div>
                       </td>
 
-                      {/* 4. Auditor & Auditee */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontSize: "12px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#0f172a" }}>
-                            <span style={{ color: "#64748b", fontWeight: "600" }}>Auditor:</span>
-                            <span style={{ fontWeight: "600" }}>{audit.internalAuditor?.name}</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#0f172a", marginTop: "3px" }}>
-                            <span style={{ color: "#64748b", fontWeight: "600" }}>Auditee:</span>
-                            <span style={{ fontWeight: "600" }}>{audit.internalAuditee?.name}</span>
-                          </div>
-                        </div>
+                      {/* 3. Internal Auditor */}
+                      <td style={{ padding: "12px 16px", color: "#0f172a", fontWeight: "500" }}>
+                        {audit.internalAuditor?.name}
                       </td>
 
-                      {/* 5. Stage Badge */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            padding: "4px 9px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                            color: stageInfo.color,
-                            background: stageInfo.bg,
-                            border: `1px solid ${stageInfo.border}`
-                          }}
-                        >
-                          {audit.stage === 6 ? <CheckCircle2 size={13} /> : <Clock size={13} />}
-                          Stage {audit.stage}/6: {stageInfo.badgeText}
-                        </span>
+                      {/* 4. Internal Auditee */}
+                      <td style={{ padding: "12px 16px", color: "#0f172a", fontWeight: "500" }}>
+                        {audit.internalAuditee?.name}
                       </td>
 
-                      {/* 6. Actions */}
-                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                      {/* 5. Status Badge */}
+                      <td style={{ padding: "12px 16px" }}>
+                        {renderStatusBadge(audit)}
+                      </td>
+
+                      {/* 6. Contextual Action Button */}
+                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
-                          {primaryAction && (
+                          {/* Trust Head Confirm Action */}
+                          {audit.stage === 2 && isTrustHead && (
                             <button
                               type="button"
-                              className={primaryAction.btnClass}
-                              onClick={primaryAction.onClick}
-                              style={{
-                                padding: "6px 12px",
-                                fontSize: "12px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "5px"
-                              }}
+                              className="primary-button btn-green"
+                              onClick={() => setConfirmingAudit(audit)}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
                             >
-                              <primaryAction.icon size={13} />
-                              <span>{primaryAction.label}</span>
+                              <Check size={13} style={{ marginRight: "4px" }} />
+                              Confirm Schedule
                             </button>
                           )}
 
+                          {/* Internal Auditor Noticing Sheet Action */}
+                          {audit.stage === 2.5 && isAuditor && (
+                            <button
+                              type="button"
+                              className="primary-button btn-blue"
+                              onClick={() => setNoticingSheetAudit(audit)}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                            >
+                              <FileCheck2 size={13} style={{ marginRight: "4px" }} />
+                              Submit Noticing Sheet
+                            </button>
+                          )}
+
+                          {/* QMS Coordinator Share NC Docs Action */}
+                          {audit.stage === 3 && isQMS && (
+                            <button
+                              type="button"
+                              className="primary-button btn-blue"
+                              onClick={() => setNcDocsAudit(audit)}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                            >
+                              <Send size={13} style={{ marginRight: "4px" }} />
+                              Share NC Docs
+                            </button>
+                          )}
+
+                          {/* Auditee Close Action */}
+                          {audit.stage === 4 && isAuditee && (
+                            <button
+                              type="button"
+                              className="primary-button btn-green"
+                              onClick={() => setAuditeeCloseAudit(audit)}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                            >
+                              <UploadCloud size={13} style={{ marginRight: "4px" }} />
+                              Close NC
+                            </button>
+                          )}
+
+                          {/* QMS Coordinator Final Close Action */}
+                          {audit.stage === 5 && isQMS && (
+                            <button
+                              type="button"
+                              className="primary-button btn-green"
+                              onClick={() => setFinalCloseAuditItem(audit)}
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                            >
+                              <CheckCheck size={14} style={{ marginRight: "4px" }} />
+                              Close Audit
+                            </button>
+                          )}
+
+                          {/* View details */}
                           <button
                             type="button"
                             className="secondary-button"
                             onClick={() => setViewingAudit(audit)}
-                            style={{ padding: "6px 10px", fontSize: "12px" }}
-                            title="View Full Audit Details & History"
+                            style={{ padding: "6px 8px", fontSize: "12px" }}
+                            title="View Audit Details & Timeline"
                           >
-                            <Eye size={14} />
+                            <Eye size={13} />
                           </button>
                         </div>
                       </td>
@@ -820,149 +705,100 @@ export default function InternalAudit() {
       </div>
 
       {/* =========================================================================
-          MODAL 1: SCHEDULE AUDITING MODAL (QMS Coordinator)
-          Contains: Dates, Process, Internal Auditor, Internal Auditee, Submit Button
+          SCHEDULE AUDITING MODAL (Empty inputs filled by QMS Coordinator)
           ========================================================================= */}
       {showScheduleModal && (
         <Modal
-          title="Schedule Internal Quality Audit (IQA)"
+          title="Schedule Internal Audit"
           onClose={() => setShowScheduleModal(false)}
         >
-          <form onSubmit={handleCreateSchedule}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ padding: "10px", background: "#f0f9ff", borderRadius: "6px", border: "1px solid #bae6fd", fontSize: "12px", color: "#0369a1", display: "flex", alignItems: "center", gap: "6px" }}>
-                <Info size={16} />
-                <span>
-                  As QMS Coordinator, define the audit dates, process scope, and assign the Internal Auditor and Auditee. Once scheduled, you can share the schedule documents.
-                </span>
-              </div>
+          <form onSubmit={handleScheduleSubmit}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#64748b" }}>
+                Fill the audit details. Once submitted, the schedule will be automatically distributed to the Trust Head, Internal Auditor, and Course Coordinators.
+              </p>
 
-              {/* 1. Dates (Start & End) */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              {/* Dates */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                    Audit Start Date <span style={{ color: "#ef4444" }}>*</span>
+                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                    Start Date <span style={{ color: "#ef4444" }}>*</span>
                   </span>
                   <input
                     type="date"
                     required
                     value={scheduleForm.startDate}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, startDate: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
                   />
                 </label>
 
                 <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                    Audit End Date <span style={{ color: "#ef4444" }}>*</span>
+                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                    End Date <span style={{ color: "#ef4444" }}>*</span>
                   </span>
                   <input
                     type="date"
                     required
                     value={scheduleForm.endDate}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, endDate: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
                   />
                 </label>
               </div>
 
-              {/* 2. Process */}
+              {/* Process */}
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
                   Process to be Audited <span style={{ color: "#ef4444" }}>*</span>
                 </span>
-                <select
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Course Management, Examination & Evaluation, Admissions..."
                   value={scheduleForm.process}
                   onChange={(e) => setScheduleForm({ ...scheduleForm, process: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff" }}
-                >
-                  <option value="Course Management">Course Management (Academic Delivery & Syllabus)</option>
-                  <option value="Admissions & Enrollment">Admissions & Enrollment (Eligibility & Registration)</option>
-                  <option value="Examination & Evaluation">Examination & Evaluation (Moderation & Marks Tabulation)</option>
-                  <option value="Curriculum Design & Review">Curriculum Design & Review (Industry Advisory Board)</option>
-                  <option value="Student Feedback & Continual Improvement">Student Feedback & Continual Improvement</option>
-                  <option value="Faculty Development">Faculty Development & Competency</option>
-                  <option value="Infrastructure & IT Services">Infrastructure & IT Services</option>
-                </select>
-              </label>
-
-              {/* 3. Internal Auditor */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                    Internal Auditor Name <span style={{ color: "#ef4444" }}>*</span>
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Vikas Deshmukh"
-                    value={scheduleForm.auditorName}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, auditorName: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                  />
-                </label>
-
-                <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                    Auditor Department
-                  </span>
-                  <input
-                    type="text"
-                    value={scheduleForm.auditorDept}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, auditorDept: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                  />
-                </label>
-              </div>
-
-              {/* 4. Internal Auditee */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                    Internal Auditee (Course Coordinator) <span style={{ color: "#ef4444" }}>*</span>
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Priya Sharma"
-                    value={scheduleForm.auditeeName}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, auditeeName: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                  />
-                </label>
-
-                <label>
-                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                    Auditee Department
-                  </span>
-                  <input
-                    type="text"
-                    value={scheduleForm.auditeeDept}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, auditeeDept: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                  />
-                </label>
-              </div>
-
-              {/* Scope & Venue */}
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Audit Scope & ISO Clause Criteria
-                </span>
-                <textarea
-                  rows={2}
-                  value={scheduleForm.scope}
-                  onChange={(e) => setScheduleForm({ ...scheduleForm, scope: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
                 />
               </label>
 
+              {/* Internal Auditor */}
+              <label>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Internal Auditor <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Vikas Deshmukh or Suresh Menon"
+                  value={scheduleForm.auditorName}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, auditorName: e.target.value })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                />
+              </label>
+
+              {/* Internal Auditee */}
+              <label>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Internal Auditee (Course Coordinator) <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Priya Sharma or Dr. Rajesh Verma"
+                  value={scheduleForm.auditeeName}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, auditeeName: e.target.value })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                />
+              </label>
+
+              {/* Submit Button (enabled once data is filled) */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                 <button
                   type="button"
                   className="secondary-button"
                   onClick={() => setShowScheduleModal(false)}
-                  disabled={isSubmitting}
+                  disabled={submitting}
                 >
                   Cancel
                 </button>
@@ -970,16 +806,15 @@ export default function InternalAudit() {
                   type="submit"
                   className="primary-button btn-blue"
                   disabled={
-                    isSubmitting ||
+                    submitting ||
                     !scheduleForm.startDate ||
                     !scheduleForm.endDate ||
-                    !scheduleForm.process ||
+                    !scheduleForm.process.trim() ||
                     !scheduleForm.auditorName.trim() ||
                     !scheduleForm.auditeeName.trim()
                   }
                 >
-                  <Calendar size={15} />
-                  <span>{isSubmitting ? "Scheduling..." : "Submit Audit Schedule"}</span>
+                  <span>{submitting ? "Scheduling & Sharing..." : "Submit & Share Schedule"}</span>
                 </button>
               </div>
             </div>
@@ -988,108 +823,37 @@ export default function InternalAudit() {
       )}
 
       {/* =========================================================================
-          MODAL 2: SHARE SCHEDULE TO AUDITEE, TRUST HEAD & AUDITOR
+          TRUST HEAD CONFIRM MODAL
           ========================================================================= */}
-      {showShareModal && (
+      {confirmingAudit && (
         <Modal
-          title={`Share Schedule Documents: ${showShareModal.id}`}
-          onClose={() => setShowShareModal(null)}
+          title={`Confirm Audit Schedule: ${confirmingAudit.id}`}
+          onClose={() => setConfirmingAudit(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "12px", background: "#f0fdf4", borderRadius: "6px", border: "1px solid #bbf7d0", fontSize: "13px", color: "#166534" }}>
-              <strong>Official Dispatch Preview:</strong>
-              <div style={{ marginTop: "4px" }}>
-                This will share the scheduled audit notification and timetable to:
-                <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
-                  <li><strong>Course Coordinator (Auditee):</strong> {showShareModal.internalAuditee?.name} (<code>{showShareModal.internalAuditee?.email}</code>)</li>
-                  <li><strong>Trust Head:</strong> Anita Rao (<code>trusthead@cdac.in</code>)</li>
-                  <li><strong>Internal Auditor:</strong> {showShareModal.internalAuditor?.name} (<code>{showShareModal.internalAuditor?.email}</code>)</li>
-                </ul>
-              </div>
-            </div>
-
-            <div style={{ padding: "12px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-              <div><strong>Audit Title:</strong> {showShareModal.title}</div>
-              <div><strong>Process:</strong> {showShareModal.process}</div>
-              <div><strong>Scheduled Dates:</strong> {showShareModal.scheduledDate}</div>
-              <div><strong>Venue:</strong> {showShareModal.venue}</div>
-              <div><strong>Attached File:</strong> <code>Internal_Audit_Schedule_{showShareModal.id}.pdf</code></div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowShareModal(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button btn-blue"
-                onClick={() => handleShareSchedule(showShareModal)}
-                disabled={isSubmitting}
-              >
-                <Share2 size={15} />
-                <span>{isSubmitting ? "Sharing..." : "Confirm & Share Schedule"}</span>
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* =========================================================================
-          MODAL 3: TRUST HEAD CONFIRM SCHEDULE
-          ========================================================================= */}
-      {showConfirmModal && (
-        <Modal
-          title={`Trust Head - Confirm Audit Schedule: ${showConfirmModal.id}`}
-          onClose={() => setShowConfirmModal(null)}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "12px", background: "#f0f9ff", borderRadius: "6px", border: "1px solid #bae6fd", fontSize: "13px", color: "#0369a1" }}>
-              <strong>Executive Ratification:</strong>
-              <div style={{ marginTop: "4px" }}>
-                As Trust Head, confirm the scheduled dates and scope for <strong>{showConfirmModal.process}</strong>. Once confirmed, the Internal Auditor is authorized to initiate field review.
-              </div>
-            </div>
-
-            <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-              <div><strong>Scheduled Dates:</strong> {showConfirmModal.scheduledDate}</div>
-              <div><strong>Auditor:</strong> {showConfirmModal.internalAuditor?.name}</div>
-              <div><strong>Auditee:</strong> {showConfirmModal.internalAuditee?.name}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ padding: "10px", background: "#f0f9ff", borderRadius: "6px", border: "1px solid #bae6fd", fontSize: "12px", color: "#0369a1" }}>
+              As Trust Head, confirm the schedule for <strong>{confirmingAudit.process}</strong> ({confirmingAudit.scheduledDate}). An automated confirmation message will be dispatched to the QMS Coordinator.
             </div>
 
             <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                Trust Head Remarks / Authorization Notes
+              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                Remarks / Authorization Notes
               </span>
               <textarea
-                rows={3}
+                rows={2}
                 value={confirmRemarks}
                 onChange={(e) => setConfirmRemarks(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
               />
             </label>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowConfirmModal(null)}
-                disabled={isSubmitting}
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
+              <button type="button" className="secondary-button" onClick={() => setConfirmingAudit(null)} disabled={submitting}>
                 Cancel
               </button>
-              <button
-                type="button"
-                className="primary-button btn-green"
-                onClick={() => handleConfirmSchedule(showConfirmModal)}
-                disabled={isSubmitting}
-              >
-                <Award size={15} />
-                <span>{isSubmitting ? "Confirming..." : "Confirm & Authorize Schedule"}</span>
+              <button type="button" className="primary-button btn-green" onClick={handleConfirmSubmit} disabled={submitting}>
+                <Check size={14} style={{ marginRight: "4px" }} />
+                <span>{submitting ? "Confirming..." : "Confirm Schedule"}</span>
               </button>
             </div>
           </div>
@@ -1097,309 +861,238 @@ export default function InternalAudit() {
       )}
 
       {/* =========================================================================
-          MODAL 4: INTERNAL AUDITOR SUBMIT NOTICING SHEET TO QMS COORDINATOR
+          INTERNAL AUDITOR SUBMIT NOTICING SHEET MODAL
           ========================================================================= */}
-      {showNoticingSheetModal && (
+      {noticingSheetAudit && (
         <Modal
-          title={`Internal Auditor: Submit Noticing Sheet for ${showNoticingSheetModal.id}`}
-          onClose={() => setShowNoticingSheetModal(null)}
+          title={`Submit Noticing Sheet: ${noticingSheetAudit.id}`}
+          onClose={() => setNoticingSheetAudit(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "10px", background: "#f5f3ff", borderRadius: "6px", border: "1px solid #ddd6fe", fontSize: "12px", color: "#6d28d9" }}>
-              Auditing has concluded for <strong>{showNoticingSheetModal.process}</strong>. Fill the audit findings and upload the signed Noticing Sheet to dispatch to the QMS Coordinator.
+          <form onSubmit={handleNoticingSheetSubmit}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <p style={{ margin: "0", fontSize: "12px", color: "#64748b" }}>
+                Auditing completed for <strong>{noticingSheetAudit.process}</strong>. Fill the observations to submit to the QMS Coordinator.
+              </p>
+
+              <label>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Audit Observations Summary <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="e.g. Audit concluded across lectures and lab tracking. Found 1 minor non-conformance..."
+                  value={noticingSheetData.summary}
+                  onChange={(e) => setNoticingSheetData({ ...noticingSheetData, summary: e.target.value })}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                />
+              </label>
+
+              <label>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Non-Conformance (NC) Finding Description <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="e.g. Practical lab attendance logbook lacked weekly coordinator signatures..."
+                  value={noticingSheetData.ncDescription}
+                  onChange={(e) => setNoticingSheetData({ ...noticingSheetData, ncDescription: e.target.value })}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                />
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <label>
+                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                    ISO 9001 Clause
+                  </span>
+                  <input
+                    type="text"
+                    value={noticingSheetData.clause}
+                    onChange={(e) => setNoticingSheetData({ ...noticingSheetData, clause: e.target.value })}
+                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  />
+                </label>
+
+                <label>
+                  <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                    Resolution Target Date
+                  </span>
+                  <input
+                    type="date"
+                    value={noticingSheetData.targetDate}
+                    onChange={(e) => setNoticingSheetData({ ...noticingSheetData, targetDate: e.target.value })}
+                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
+                <button type="button" className="secondary-button" onClick={() => setNoticingSheetAudit(null)} disabled={submitting}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="primary-button btn-blue"
+                  disabled={submitting || !noticingSheetData.summary.trim() || !noticingSheetData.ncDescription.trim()}
+                >
+                  <FileCheck2 size={14} style={{ marginRight: "4px" }} />
+                  <span>{submitting ? "Submitting..." : "Submit to QMS Coordinator"}</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* =========================================================================
+          QMS COORDINATOR SHARE NC DOCS MODAL
+          ========================================================================= */}
+      {ncDocsAudit && (
+        <Modal
+          title={`Review & Share NC Docs: ${ncDocsAudit.id}`}
+          onClose={() => setNcDocsAudit(null)}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ padding: "10px", background: "#fffbeb", borderRadius: "6px", border: "1px solid #fcd34d", fontSize: "12px", color: "#92400e" }}>
+              <strong>Auditor Findings:</strong>
+              <div>{ncDocsAudit.noticingSheet?.findings?.[0]?.description || ncDocsAudit.noticingSheet?.summary}</div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <label>
+              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                QMS Directive & CAPA Remarks for Auditee
+              </span>
+              <textarea
+                rows={3}
+                value={ncDocsRemarks}
+                onChange={(e) => setNcDocsRemarks(e.target.value)}
+                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+              />
+            </label>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
+              <button type="button" className="secondary-button" onClick={() => setNcDocsAudit(null)} disabled={submitting}>
+                Cancel
+              </button>
+              <button type="button" className="primary-button btn-blue" onClick={handleShareNCDocsSubmit} disabled={submitting}>
+                <Send size={14} style={{ marginRight: "4px" }} />
+                <span>{submitting ? "Sharing..." : "Share NC Docs to Auditor & Auditee"}</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* =========================================================================
+          AUDITEE CLOSE NC MODAL
+          ========================================================================= */}
+      {auditeeCloseAudit && (
+        <Modal
+          title={`Submit Corrective Action & Close NC: ${auditeeCloseAudit.id}`}
+          onClose={() => setAuditeeCloseAudit(null)}
+        >
+          <form onSubmit={handleAuditeeCloseSubmit}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ padding: "8px 10px", background: "#fef3c7", borderRadius: "6px", border: "1px solid #fde68a", fontSize: "12px", color: "#92400e" }}>
+                <strong>Non-Conformance:</strong> {auditeeCloseAudit.noticingSheet?.findings?.[0]?.description || "Documentation record gap."}
+              </div>
+
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Noticing Sheet Ref No. <span style={{ color: "#ef4444" }}>*</span>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Root Cause Analysis <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
                   required
-                  value={noticingSheetForm.sheetNo}
-                  onChange={(e) => setNoticingSheetForm({ ...noticingSheetForm, sheetNo: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  placeholder="e.g. Manual paper sign-off workflow delayed due to exam schedule..."
+                  value={auditeeClosureData.rootCause}
+                  onChange={(e) => setAuditeeClosureData({ ...auditeeClosureData, rootCause: e.target.value })}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
                 />
               </label>
 
               <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  ISO 9001 Clause Reference
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Corrective Action Taken <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="e.g. All pending logbooks verified and signed off; instituted weekly digital checklist..."
+                  value={auditeeClosureData.correctiveAction}
+                  onChange={(e) => setAuditeeClosureData({ ...auditeeClosureData, correctiveAction: e.target.value })}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
+                />
+              </label>
+
+              <label>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
+                  Evidence Document Attached
                 </span>
                 <input
                   type="text"
-                  value={noticingSheetForm.clause}
-                  onChange={(e) => setNoticingSheetForm({ ...noticingSheetForm, clause: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
-            </div>
-
-            <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                Audit Observations Summary
-              </span>
-              <textarea
-                rows={2}
-                value={noticingSheetForm.summary}
-                onChange={(e) => setNoticingSheetForm({ ...noticingSheetForm, summary: e.target.value })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
-              />
-            </label>
-
-            <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                Non-Conformance (NC) Finding Description <span style={{ color: "#ef4444" }}>*</span>
-              </span>
-              <textarea
-                rows={2}
-                required
-                value={noticingSheetForm.ncDescription}
-                onChange={(e) => setNoticingSheetForm({ ...noticingSheetForm, ncDescription: e.target.value })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
-              />
-            </label>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Target Resolution Date
-                </span>
-                <input
-                  type="date"
-                  value={noticingSheetForm.targetDate}
-                  onChange={(e) => setNoticingSheetForm({ ...noticingSheetForm, targetDate: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  readOnly
+                  value={auditeeClosureData.evidenceFileName}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "12px" }}
                 />
               </label>
 
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Noticing Sheet Document File
-                </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <input
-                    type="text"
-                    readOnly
-                    value={noticingSheetForm.fileName}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc" }}
-                  />
-                </div>
-              </label>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
+                <button type="button" className="secondary-button" onClick={() => setAuditeeCloseAudit(null)} disabled={submitting}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="primary-button btn-green"
+                  disabled={submitting || !auditeeClosureData.rootCause.trim() || !auditeeClosureData.correctiveAction.trim()}
+                >
+                  <UploadCloud size={14} style={{ marginRight: "4px" }} />
+                  <span>{submitting ? "Submitting..." : "Submit Closure to QMS"}</span>
+                </button>
+              </div>
             </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowNoticingSheetModal(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button btn-blue"
-                onClick={() => handleSubmitNoticingSheet(showNoticingSheetModal)}
-                disabled={isSubmitting || !noticingSheetForm.ncDescription.trim()}
-              >
-                <FileCheck2 size={15} />
-                <span>{isSubmitting ? "Submitting..." : "Share Noticing Sheet to QMS"}</span>
-              </button>
-            </div>
-          </div>
+          </form>
         </Modal>
       )}
 
       {/* =========================================================================
-          MODAL 5: QMS COORDINATOR REVIEW & SHARE NC DOCS TO AUDITOR & AUDITEE
+          QMS COORDINATOR FINAL CLOSE MODAL (Completes entire process)
           ========================================================================= */}
-      {showNCDocsModal && (
+      {finalCloseAuditItem && (
         <Modal
-          title={`QMS Coordinator: Review & Share NC Docs for ${showNCDocsModal.id}`}
-          onClose={() => setShowNCDocsModal(null)}
+          title={`Final Close Audit: ${finalCloseAuditItem.id}`}
+          onClose={() => setFinalCloseAuditItem(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "12px", background: "#fffbeb", borderRadius: "6px", border: "1px solid #fcd34d", fontSize: "12px", color: "#92400e" }}>
-              <strong>Noticing Sheet Observations Received from Auditor:</strong>
-              <div style={{ marginTop: "4px", color: "#78350f" }}>
-                {showNCDocsModal.noticingSheet?.summary}
-              </div>
-              <div style={{ marginTop: "6px", fontWeight: "600" }}>
-                Finding: {showNCDocsModal.noticingSheet?.findings?.[0]?.description}
-              </div>
-            </div>
-
-            <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-              <div><strong>Auditor:</strong> {showNCDocsModal.internalAuditor?.name}</div>
-              <div><strong>Auditee to Rectify:</strong> {showNCDocsModal.internalAuditee?.name} (Course Coordinator)</div>
-              <div><strong>Document:</strong> <code>{ncDocsForm.fileName}</code></div>
-            </div>
-
-            <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                QMS Formal NC Directive & CAPA Timeline Remarks
-              </span>
-              <textarea
-                rows={3}
-                value={ncDocsForm.remarks}
-                onChange={(e) => setNcDocsForm({ ...ncDocsForm, remarks: e.target.value })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
-              />
-            </label>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowNCDocsModal(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button btn-blue"
-                onClick={() => handleShareNCDocs(showNCDocsModal)}
-                disabled={isSubmitting}
-              >
-                <Send size={15} />
-                <span>{isSubmitting ? "Sharing..." : "Share NC Docs to Auditor & Auditee"}</span>
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* =========================================================================
-          MODAL 6: AUDITEE CLOSE (COURSE COORDINATOR)
-          ========================================================================= */}
-      {showAuditeeCloseModal && (
-        <Modal
-          title={`Auditee: Submit Corrective Action & Close NC for ${showAuditeeCloseModal.id}`}
-          onClose={() => setShowAuditeeCloseModal(null)}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "10px", background: "#fef3c7", borderRadius: "6px", border: "1px solid #fde68a", fontSize: "12px", color: "#92400e" }}>
-              <strong>Non-Conformance to Resolve:</strong>
-              <div style={{ marginTop: "4px" }}>
-                {showAuditeeCloseModal.noticingSheet?.findings?.[0]?.description || "Documentation record signature gap."}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ padding: "10px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "12px", color: "#065f46" }}>
+              <strong>Auditee Action Taken:</strong>
+              <div>{finalCloseAuditItem.auditeeClosure?.correctiveAction}</div>
+              <div style={{ marginTop: "4px", fontSize: "11px", color: "#047857" }}>
+                Submitted by {finalCloseAuditItem.auditeeClosure?.closedBy} with evidence <code>{finalCloseAuditItem.auditeeClosure?.evidenceFileName}</code>.
               </div>
             </div>
 
             <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                Root Cause Analysis (Why did this occur?) <span style={{ color: "#ef4444" }}>*</span>
-              </span>
-              <textarea
-                rows={2}
-                required
-                value={auditeeCloseForm.rootCause}
-                onChange={(e) => setAuditeeCloseForm({ ...auditeeCloseForm, rootCause: e.target.value })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
-              />
-            </label>
-
-            <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                Corrective Action Taken & Prevention Plan <span style={{ color: "#ef4444" }}>*</span>
-              </span>
-              <textarea
-                rows={3}
-                required
-                value={auditeeCloseForm.correctiveAction}
-                onChange={(e) => setAuditeeCloseForm({ ...auditeeCloseForm, correctiveAction: e.target.value })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
-              />
-            </label>
-
-            <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                Evidence File Attached
-              </span>
-              <input
-                type="text"
-                readOnly
-                value={auditeeCloseForm.evidenceFileName}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "12px" }}
-              />
-            </label>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowAuditeeCloseModal(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button btn-green"
-                onClick={() => handleSubmitAuditeeClose(showAuditeeCloseModal)}
-                disabled={isSubmitting || !auditeeCloseForm.correctiveAction.trim()}
-              >
-                <CheckCircle2 size={15} />
-                <span>{isSubmitting ? "Submitting..." : "Submit Auditee Closure"}</span>
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* =========================================================================
-          MODAL 7: QMS COORDINATOR FINAL CLOSE (Entire Process Completed)
-          ========================================================================= */}
-      {showFinalCloseModal && (
-        <Modal
-          title={`QMS Coordinator: Final Close for ${showFinalCloseModal.id}`}
-          onClose={() => setShowFinalCloseModal(null)}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "12px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "13px", color: "#065f46" }}>
-              <strong>Final Process Completion:</strong>
-              <div style={{ marginTop: "4px" }}>
-                The Auditee has submitted the corrective action and evidence. Closing this audit will complete the entire ISO 9001:2015 audit lifecycle and mark the record as <strong>Closed & Certified</strong>.
-              </div>
-            </div>
-
-            <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-              <div><strong>Auditee Corrective Action:</strong> {showFinalCloseModal.auditeeClosure?.correctiveAction}</div>
-              <div style={{ marginTop: "4px" }}><strong>Evidence:</strong> <code>{showFinalCloseModal.auditeeClosure?.evidenceFileName}</code></div>
-              <div style={{ marginTop: "4px" }}><strong>Submitted By:</strong> {showFinalCloseModal.auditeeClosure?.closedBy} on {showFinalCloseModal.auditeeClosure?.closedAt}</div>
-            </div>
-
-            <label>
-              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+              <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "12px" }}>
                 Final QMS Verification & Closure Sign-off Remarks
               </span>
               <textarea
-                rows={3}
+                rows={2}
                 value={finalCloseRemarks}
                 onChange={(e) => setFinalCloseRemarks(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px" }}
               />
             </label>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowFinalCloseModal(null)}
-                disabled={isSubmitting}
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
+              <button type="button" className="secondary-button" onClick={() => setFinalCloseAuditItem(null)} disabled={submitting}>
                 Cancel
               </button>
-              <button
-                type="button"
-                className="primary-button btn-green"
-                onClick={() => handleFinalClose(showFinalCloseModal)}
-                disabled={isSubmitting}
-              >
-                <CheckCheck size={16} />
-                <span>{isSubmitting ? "Closing..." : "Close Entire Audit Process"}</span>
+              <button type="button" className="primary-button btn-green" onClick={handleFinalCloseSubmit} disabled={submitting}>
+                <CheckCheck size={14} style={{ marginRight: "4px" }} />
+                <span>{submitting ? "Closing..." : "Close Entire Process"}</span>
               </button>
             </div>
           </div>
@@ -1407,170 +1100,67 @@ export default function InternalAudit() {
       )}
 
       {/* =========================================================================
-          VIEW AUDIT DETAILS & AUDIT TRAIL MODAL
+          VIEW AUDIT DETAILS MODAL
           ========================================================================= */}
       {viewingAudit && (
         <Modal
-          title={`Audit Record: ${viewingAudit.id} - ${viewingAudit.process}`}
+          title={`Audit Details: ${viewingAudit.id}`}
           onClose={() => setViewingAudit(null)}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px", maxHeight: "75vh", overflowY: "auto", paddingRight: "4px" }}>
-            {/* Header info */}
-            <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
-                <div>
-                  <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", color: "var(--navy)" }}>{viewingAudit.title}</h3>
-                  <div style={{ fontSize: "12px", color: "#64748b" }}>
-                    Audit Reference: <strong>{viewingAudit.id}</strong> | Process: <strong>{viewingAudit.process}</strong>
-                  </div>
-                </div>
-                <a
-                  href={`/api/audit/${viewingAudit.id}/download/full`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    background: "var(--navy)",
-                    color: "#ffffff",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    textDecoration: "none"
-                  }}
-                >
-                  <Download size={13} />
-                  <span>Download Report</span>
-                </a>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "70vh", overflowY: "auto" }}>
+            <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <strong style={{ fontSize: "14px", color: "var(--navy)" }}>{viewingAudit.process}</strong>
+                {renderStatusBadge(viewingAudit)}
+              </div>
+              <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+                Dates: <strong>{viewingAudit.scheduledDate}</strong>
               </div>
             </div>
 
-            {/* Stepper Status */}
-            <div>
-              <strong style={{ fontSize: "13px", color: "#0f172a", display: "block", marginBottom: "8px" }}>
-                Audit Stage Progression (Stage {viewingAudit.stage}/6)
-              </strong>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "6px" }}>
-                {[
-                  { n: 1, label: "Scheduled" },
-                  { n: 2, label: "Shared" },
-                  { n: 2.5, label: "Confirmed" },
-                  { n: 3, label: "Noticing Sheet" },
-                  { n: 4, label: "NC Docs" },
-                  { n: 6, label: "Closed" }
-                ].map((s, idx) => {
-                  const isDone = viewingAudit.stage >= (s.n === 2.5 ? 2.5 : s.n);
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: "6px",
-                        textAlign: "center",
-                        borderRadius: "6px",
-                        background: isDone ? "#dcfce7" : "#f1f5f9",
-                        border: isDone ? "1px solid #86efac" : "1px solid #cbd5e1",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        color: isDone ? "#166534" : "#64748b"
-                      }}
-                    >
-                      <div>Step {idx + 1}</div>
-                      <div style={{ fontSize: "10px" }}>{s.label}</div>
-                    </div>
-                  );
-                })}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "12px" }}>
+              <div style={{ padding: "8px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                <strong>Auditor:</strong> {viewingAudit.internalAuditor?.name}
+              </div>
+              <div style={{ padding: "8px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                <strong>Auditee:</strong> {viewingAudit.internalAuditee?.name}
               </div>
             </div>
 
-            {/* Stakeholders */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-                <strong>Assigned Auditor:</strong>
-                <div>{viewingAudit.internalAuditor?.name} ({viewingAudit.internalAuditor?.role})</div>
-                <div style={{ color: "#64748b" }}>{viewingAudit.internalAuditor?.department}</div>
-              </div>
-              <div style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-                <strong>Assigned Auditee:</strong>
-                <div>{viewingAudit.internalAuditee?.name} ({viewingAudit.internalAuditee?.role})</div>
-                <div style={{ color: "#64748b" }}>{viewingAudit.internalAuditee?.department}</div>
-              </div>
-            </div>
-
-            {/* Noticing Sheet findings if available */}
             {viewingAudit.noticingSheet && (
-              <div style={{ padding: "12px", background: "#f5f3ff", borderRadius: "8px", border: "1px solid #ddd6fe" }}>
-                <strong style={{ fontSize: "13px", color: "#5b21b6", display: "block", marginBottom: "6px" }}>
-                  Noticing Sheet Findings ({viewingAudit.noticingSheet.sheetNo})
-                </strong>
-                <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#4c1d95" }}>
-                  {viewingAudit.noticingSheet.summary}
-                </p>
-                {(viewingAudit.noticingSheet.findings || []).map((f) => (
-                  <div key={f.id} style={{ background: "#ffffff", padding: "8px", borderRadius: "6px", border: "1px solid #c4b5fd", fontSize: "12px", marginTop: "4px" }}>
-                    <div style={{ fontWeight: "700", color: "#6d28d9" }}>{f.id} ({f.type}) - {f.clause}</div>
-                    <div style={{ color: "#1e293b", marginTop: "2px" }}>{f.description}</div>
-                  </div>
-                ))}
+              <div style={{ padding: "10px", background: "#f5f3ff", borderRadius: "6px", border: "1px solid #ddd6fe", fontSize: "12px" }}>
+                <strong style={{ color: "#6d28d9" }}>Noticing Sheet Finding:</strong>
+                <div style={{ marginTop: "2px" }}>{viewingAudit.noticingSheet.findings?.[0]?.description || viewingAudit.noticingSheet.summary}</div>
               </div>
             )}
 
-            {/* Auditee CAPA Closure if available */}
             {viewingAudit.auditeeClosure && (
-              <div style={{ padding: "12px", background: "#ecfdf5", borderRadius: "8px", border: "1px solid #a7f3d0" }}>
-                <strong style={{ fontSize: "13px", color: "#065f46", display: "block", marginBottom: "6px" }}>
-                  Auditee Corrective Action (CAPA) Submission
-                </strong>
-                <div style={{ fontSize: "12px", color: "#064e3b" }}>
-                  <div><strong>Root Cause:</strong> {viewingAudit.auditeeClosure.rootCause}</div>
-                  <div style={{ marginTop: "4px" }}><strong>Action Taken:</strong> {viewingAudit.auditeeClosure.correctiveAction}</div>
-                  <div style={{ marginTop: "4px" }}><strong>Evidence:</strong> <code>{viewingAudit.auditeeClosure.evidenceFileName}</code></div>
-                  <div style={{ marginTop: "4px" }}><strong>Closed By:</strong> {viewingAudit.auditeeClosure.closedBy} on {viewingAudit.auditeeClosure.closedAt}</div>
-                </div>
+              <div style={{ padding: "10px", background: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0", fontSize: "12px" }}>
+                <strong style={{ color: "#065f46" }}>Auditee Corrective Action:</strong>
+                <div style={{ marginTop: "2px" }}>{viewingAudit.auditeeClosure.correctiveAction}</div>
               </div>
             )}
 
             {/* Timeline */}
             <div>
-              <strong style={{ fontSize: "13px", color: "#0f172a", display: "block", marginBottom: "8px" }}>
-                Complete Audit Trail ({viewingAudit.timeline?.length || 0} Events)
+              <strong style={{ fontSize: "12px", color: "#0f172a", display: "block", marginBottom: "6px" }}>
+                Audit Timeline
               </strong>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {(viewingAudit.timeline || []).map((t, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      fontSize: "12px"
-                    }}
-                  >
-                    <CheckCircle2 size={15} color="#16a34a" style={{ marginTop: "2px", flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <strong style={{ color: "#0f172a" }}>{t.action}</strong>
-                        <span style={{ fontSize: "11px", color: "#64748b" }}>{t.timestamp}</span>
-                      </div>
-                      <div style={{ color: "#475569", marginTop: "2px" }}>{t.actor}</div>
-                      <div style={{ color: "#64748b", marginTop: "2px", fontSize: "11px" }}>{t.details}</div>
+                  <div key={idx} style={{ padding: "6px 8px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "11px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "600", color: "#0f172a" }}>
+                      <span>{t.action}</span>
+                      <span style={{ color: "#64748b" }}>{t.timestamp}</span>
                     </div>
+                    <div style={{ color: "#475569" }}>{t.details}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setViewingAudit(null)}
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+              <button type="button" className="secondary-button" onClick={() => setViewingAudit(null)}>
                 Close
               </button>
             </div>

@@ -59,10 +59,20 @@ export const auditService = {
         id,
         scheduledDate: scheduledDateStr,
         auditDates: { startDate, endDate },
-        status: "Scheduled",
-        stage: 1,
-        stageLabel: "Draft Scheduled (Ready to Share)",
-        scheduleShared: null,
+        status: "Awaiting Confirmation",
+        stage: 2,
+        stageLabel: "Schedule Shared (Awaiting Trust Head Confirmation)",
+        scheduleShared: {
+          shared: true,
+          sharedAt: formatNow(),
+          sharedBy: payload.scheduledBy?.name || "Rahul Kumar (QMS Coordinator)",
+          docTitle: `Internal_Audit_Schedule_${id}.pdf`,
+          recipients: [
+            { role: "Course Coordinator", name: payload.internalAuditee?.name, email: payload.internalAuditee?.email },
+            { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
+            { role: "Internal Auditor", name: payload.internalAuditor?.name, email: payload.internalAuditor?.email }
+          ]
+        },
         trustHeadConfirmation: null,
         noticingSheet: null,
         ncDocs: null,
@@ -70,10 +80,10 @@ export const auditService = {
         qmsFinalClosure: null,
         timeline: [
           {
-            action: "Audit Scheduled",
+            action: "Audit Scheduled & Shared",
             actor: payload.scheduledBy?.name || "Rahul Kumar (QMS Coordinator)",
             timestamp: formatNow(),
-            details: `Scheduled ${payload.process} audit for ${scheduledDateStr}. Assigned Auditor: ${payload.internalAuditor?.name}, Auditee: ${payload.internalAuditee?.name}.`
+            details: `Scheduled ${payload.process} audit for ${scheduledDateStr}. Automatically dispatched schedule to Trust Head, Auditor, and Auditee.`
           }
         ]
       };

@@ -942,6 +942,18 @@ export function AppProvider({ children }) {
     }
   };
 
+  const pushNotification = (title, text, targetRole = "all") => {
+    const notif = {
+      id: Date.now(),
+      title,
+      text,
+      time: "Just now",
+      read: false,
+      targetRole
+    };
+    setNotifications((prev) => [notif, ...prev]);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -998,6 +1010,7 @@ export function AppProvider({ children }) {
         downloadDocument,
         markNotificationRead,
         markAllNotificationsRead,
+        pushNotification,
         refreshData,
         silentRefresh,
         isRealtimeConnected,
