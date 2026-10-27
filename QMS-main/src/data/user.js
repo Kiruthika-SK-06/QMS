@@ -31,5 +31,16 @@ export const users = [
     employeeId: "TH001",
     department: "Trust Governance & Executive Board",
     process: "Trust Governance"
+  },
+  {
+    id: 4,
+    username: "internalauditor",
+    password: "1234",
+    name: "Vikas Deshmukh",
+    role: "Internal Auditor",
+    roleKey: "auditor",
+    employeeId: "IA001",
+    department: "Internal Quality Audit Cell",
+    process: "Quality Audits & Compliance"
   }
 ];
