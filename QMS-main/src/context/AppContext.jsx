@@ -8,6 +8,7 @@ import {
   employees as initialEmployees,
   initialUsersList,
   initialMRMList,
+  initialAuditList,
   activities as initialActivities
 } from "../data/mockData";
 import { authService } from "../services/authService";
@@ -17,6 +18,7 @@ import { notificationService } from "../services/notificationService";
 import { processService } from "../services/processService";
 import { userService } from "../services/userService";
 import { mrmService } from "../services/mrmService";
+import { auditService } from "../services/auditService";
 
 const AppContext = createContext(null);
 
@@ -46,6 +48,7 @@ export function AppProvider({ children }) {
   const [employees, setEmployees] = useState(initialEmployees);
   const [usersList, setUsersList] = useState(initialUsersList);
   const [mrmList, setMrmList] = useState(initialMRMList);
+  const [auditList, setAuditList] = useState(initialAuditList);
   const [activities, setActivities] = useState(initialActivities);
   const [headOverview, setHeadOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +58,7 @@ export function AppProvider({ children }) {
   // Silent background fetch that updates live data without full-page loading indicators
   const silentRefresh = useCallback(async () => {
     try {
-      const [docs, tsks, notifs, procs, emps, acts, headData, liveUsers, liveMRMs] = await Promise.allSettled([
+      const [docs, tsks, notifs, procs, emps, acts, headData, liveUsers, liveMRMs, liveAudits] = await Promise.allSettled([
         documentService.fetchDocuments(),
         taskService.fetchTasks(),
         notificationService.fetchNotifications(token),
@@ -64,7 +67,8 @@ export function AppProvider({ children }) {
         processService.fetchActivities(),
         processService.fetchHeadOverview(),
         userService.fetchUsers(),
-        mrmService.fetchMRMs()
+        mrmService.fetchMRMs(),
+        auditService.fetchAudits()
       ]);
 
       if (docs.status === "fulfilled" && Array.isArray(docs.value)) {
@@ -93,6 +97,9 @@ export function AppProvider({ children }) {
       }
       if (liveMRMs.status === "fulfilled" && Array.isArray(liveMRMs.value)) {
         setMrmList(liveMRMs.value);
+      }
+      if (liveAudits.status === "fulfilled" && Array.isArray(liveAudits.value)) {
+        setAuditList(liveAudits.value);
       }
       setLastSyncTime(new Date());
     } catch (err) {
@@ -684,6 +691,91 @@ export function AppProvider({ children }) {
     }
   };
 
+  // ==================== INTERNAL QUALITY AUDIT ACTIONS ====================
+  const scheduleAudit = async (payload) => {
+    try {
+      const created = await auditService.createAudit(payload, token);
+      setAuditList((prev) => [created, ...prev.filter((a) => a.id !== created.id)]);
+      refreshData();
+      return created;
+    } catch (err) {
+      console.error("scheduleAudit error:", err);
+      throw err;
+    }
+  };
+
+  const shareAuditSchedule = async (id) => {
+    try {
+      const updated = await auditService.shareSchedule(id, token);
+      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("shareAuditSchedule error:", err);
+      throw err;
+    }
+  };
+
+  const confirmAuditSchedule = async (id, remarks) => {
+    try {
+      const updated = await auditService.confirmSchedule(id, remarks, token);
+      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("confirmAuditSchedule error:", err);
+      throw err;
+    }
+  };
+
+  const submitNoticingSheet = async (id, payload) => {
+    try {
+      const updated = await auditService.submitNoticingSheet(id, payload, token);
+      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("submitNoticingSheet error:", err);
+      throw err;
+    }
+  };
+
+  const shareNCDocs = async (id, payload) => {
+    try {
+      const updated = await auditService.shareNCDocs(id, payload, token);
+      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("shareNCDocs error:", err);
+      throw err;
+    }
+  };
+
+  const submitAuditeeClosure = async (id, payload) => {
+    try {
+      const updated = await auditService.auditeeClose(id, payload, token);
+      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("submitAuditeeClosure error:", err);
+      throw err;
+    }
+  };
+
+  const finalCloseAudit = async (id, remarks) => {
+    try {
+      const updated = await auditService.finalCloseAudit(id, remarks, token);
+      setAuditList((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+      refreshData();
+      return updated;
+    } catch (err) {
+      console.error("finalCloseAudit error:", err);
+      throw err;
+    }
+  };
+
   // ==================== TASK & DOCUMENT ACTIONS ====================
   const addTask = async (taskData) => {
     try {
@@ -862,6 +954,14 @@ export function AppProvider({ children }) {
         employees,
         usersList,
         mrmList,
+        auditList,
+        scheduleAudit,
+        shareAuditSchedule,
+        confirmAuditSchedule,
+        submitNoticingSheet,
+        shareNCDocs,
+        submitAuditeeClosure,
+        finalCloseAudit,
         activities,
         headOverview,
         loading,

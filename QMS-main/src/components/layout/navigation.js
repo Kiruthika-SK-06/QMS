@@ -10,7 +10,8 @@ import {
   FileCheck2,
   CalendarCheck,
   UserCheck,
-  ShieldCheck
+  ShieldCheck,
+  ClipboardCheck
 } from "lucide-react";
 
 // Each role's nav is a list of groups: [groupLabel, [ [label, path, Icon], ... ] ]
@@ -23,6 +24,7 @@ export const navByRole = {
       ["Documents", "/documents", FileText],
       ["My Processes", "/processes", BookOpen],
       ["Management Review Meeting", "/mrm", CalendarCheck],
+      ["Internal Audit", "/internal-audit", ClipboardCheck],
       ["Tasks", "/tasks", ClipboardList]
     ]],
     ["MONITORING", [
@@ -42,6 +44,7 @@ export const navByRole = {
       ["Document Management", "/documents", FileText],
       ["Document Review Queue", "/reviews", FileCheck2],
       ["User Management", "/user-management", UserCheck],
+      ["Internal Audit", "/internal-audit", ClipboardCheck],
       ["Management Review Meeting", "/mrm", CalendarCheck],
       ["Processes", "/processes", BookOpen],
       ["Tasks", "/tasks", ClipboardList]
@@ -60,6 +63,7 @@ export const navByRole = {
       ["Dashboard", "/Head/dashboard", LayoutDashboard]
     ]],
     ["EXECUTIVE OVERSIGHT", [
+      ["Internal Audit", "/internal-audit", ClipboardCheck],
       ["MRM Approvals", "/mrm", ShieldCheck],
       ["Approval History", "/mrm?filter=Approved", History],
       ["User Management", "/user-management", UserCheck],
@@ -79,6 +83,7 @@ export const navByRole = {
       ["Dashboard", "/Head/dashboard", LayoutDashboard]
     ]],
     ["QUALITY AUDIT & MRM", [
+      ["Internal Audit", "/internal-audit", ClipboardCheck],
       ["MRM Reviews & Approvals", "/mrm", ShieldCheck],
       ["Approval History", "/mrm?filter=Approved", History],
       ["User Management", "/user-management", UserCheck],

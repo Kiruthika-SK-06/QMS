@@ -11,6 +11,7 @@ import activityRoutes from "./routes/activityRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import mrmRoutes from "./routes/mrmRoutes.js";
+import auditRoutes from "./routes/auditRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +44,7 @@ app.get("/", (req, res) => {
       activities: "/api/activities",
       users: "/api/users",
       mrm: "/api/mrm",
+      audit: "/api/audit",
       employees: "/api/employees"
     },
     note: "To access the QMS Web Application UI, please open http://localhost:5173 in your browser."
@@ -72,6 +74,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mrm", mrmRoutes);
+app.use("/api/audit", auditRoutes);
+app.use("/api/internal-audit", auditRoutes);
 app.use("/api/employees", employeeRoutes);
 
 // 404 Fallback
