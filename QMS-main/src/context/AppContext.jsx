@@ -18,7 +18,7 @@ import { notificationService } from "../services/notificationService";
 import { processService } from "../services/processService";
 import { userService } from "../services/userService";
 import { mrmService } from "../services/mrmService";
-import { auditService } from "../services/auditService";
+import { auditService, getStoredAudits, saveStoredAudits } from "../services/auditService";
 
 const AppContext = createContext(null);
 
@@ -48,7 +48,7 @@ export function AppProvider({ children }) {
   const [employees, setEmployees] = useState(initialEmployees);
   const [usersList, setUsersList] = useState(initialUsersList);
   const [mrmList, setMrmList] = useState(initialMRMList);
-  const [auditList, setAuditList] = useState(() => auditService.getStoredAudits());
+  const [auditList, setAuditList] = useState(() => getStoredAudits());
   const [activities, setActivities] = useState(initialActivities);
   const [headOverview, setHeadOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -732,7 +732,7 @@ export function AppProvider({ children }) {
       const created = await auditService.createAudit(payload, token);
       setAuditList((prev) => {
         const next = [created, ...prev.filter((a) => a.id !== created.id)];
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();
@@ -748,7 +748,7 @@ export function AppProvider({ children }) {
       const updated = await auditService.shareSchedule(id, token);
       setAuditList((prev) => {
         const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();
@@ -764,7 +764,7 @@ export function AppProvider({ children }) {
       const updated = await auditService.confirmSchedule(id, remarks, token);
       setAuditList((prev) => {
         const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();
@@ -780,7 +780,7 @@ export function AppProvider({ children }) {
       const updated = await auditService.submitNoticingSheet(id, payload, token);
       setAuditList((prev) => {
         const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();
@@ -796,7 +796,7 @@ export function AppProvider({ children }) {
       const updated = await auditService.shareNCDocs(id, payload, token);
       setAuditList((prev) => {
         const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();
@@ -812,7 +812,7 @@ export function AppProvider({ children }) {
       const updated = await auditService.auditeeClose(id, payload, token);
       setAuditList((prev) => {
         const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();
@@ -828,7 +828,7 @@ export function AppProvider({ children }) {
       const updated = await auditService.finalCloseAudit(id, remarks, token);
       setAuditList((prev) => {
         const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
-        auditService.saveStoredAudits(next);
+        saveStoredAudits(next);
         return next;
       });
       refreshData();

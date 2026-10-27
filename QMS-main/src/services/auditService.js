@@ -40,6 +40,8 @@ export function saveStoredAudits(audits) {
 }
 
 export const auditService = {
+  getStoredAudits,
+  saveStoredAudits,
   async fetchAudits() {
     try {
       const res = await fetch(API_BASE);
