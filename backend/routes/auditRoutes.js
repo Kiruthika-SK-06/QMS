@@ -3,6 +3,7 @@ import {
   getAllAudits,
   getAuditById,
   createAudit,
+  syncAudits,
   shareSchedule,
   confirmSchedule,
   submitNoticingSheet,
@@ -16,6 +17,7 @@ import { authenticateToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.get("/", getAllAudits);
+router.post("/sync", syncAudits);
 router.get("/:id", getAuditById);
 router.post("/", authenticateToken, createAudit);
 

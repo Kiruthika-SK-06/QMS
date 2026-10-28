@@ -67,8 +67,8 @@ export function AppProvider({ children }) {
         processService.fetchActivities(),
         processService.fetchHeadOverview(),
         userService.fetchUsers(),
-        mrmService.fetchMRMs(),
-        auditService.fetchAudits()
+        mrmService.fetchMRMs(token),
+        auditService.fetchAudits(token)
       ]);
 
       if (docs.status === "fulfilled" && Array.isArray(docs.value)) {
@@ -166,10 +166,12 @@ export function AppProvider({ children }) {
       setIsRealtimeConnected(false);
     }
 
-    // High-performance real-time 4-second sync heartbeat backup
+    // Real-time sync heartbeat backup (throttled to 15s to preserve serverless state)
     heartbeat = setInterval(() => {
-      silentRefresh();
-    }, 4000);
+      if (!document.hidden) {
+        silentRefresh();
+      }
+    }, 15000);
 
     const handleFocus = () => silentRefresh();
     window.addEventListener("focus", handleFocus);
@@ -181,15 +183,23 @@ export function AppProvider({ children }) {
     };
   }, [silentRefresh]);
 
-  // Instant Cross-Tab Audit Synchronizer (BroadcastChannel + LocalStorage Event)
+  // Instant Cross-Tab Audit & MRM Synchronizer (BroadcastChannel + LocalStorage Event)
   useEffect(() => {
     let auditChannel = null;
+    let mrmChannel = null;
     try {
       if (typeof BroadcastChannel !== "undefined") {
         auditChannel = new BroadcastChannel("qms_audit_channel");
         auditChannel.onmessage = (event) => {
           if (event.data?.type === "AUDIT_UPDATE" && Array.isArray(event.data.audits)) {
             setAuditList(event.data.audits);
+          }
+        };
+
+        mrmChannel = new BroadcastChannel("qms_mrm_channel");
+        mrmChannel.onmessage = (event) => {
+          if (event.data?.type === "MRM_UPDATE" && Array.isArray(event.data.mrms)) {
+            setMrmList(event.data.mrms);
           }
         };
       }
@@ -205,6 +215,13 @@ export function AppProvider({ children }) {
             setAuditList(parsed);
           }
         } catch {}
+      } else if (e.key === "qms_mrms" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMrmList(parsed);
+          }
+        } catch {}
       }
     };
 
@@ -212,6 +229,7 @@ export function AppProvider({ children }) {
 
     return () => {
       if (auditChannel) auditChannel.close();
+      if (mrmChannel) mrmChannel.close();
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
@@ -735,7 +753,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return created;
     } catch (err) {
       console.error("scheduleAudit error:", err);
@@ -751,7 +768,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return updated;
     } catch (err) {
       console.error("shareAuditSchedule error:", err);
@@ -767,7 +783,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return updated;
     } catch (err) {
       console.error("confirmAuditSchedule error:", err);
@@ -783,7 +798,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return updated;
     } catch (err) {
       console.error("submitNoticingSheet error:", err);
@@ -799,7 +813,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return updated;
     } catch (err) {
       console.error("shareNCDocs error:", err);
@@ -815,7 +828,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return updated;
     } catch (err) {
       console.error("submitAuditeeClosure error:", err);
@@ -831,7 +843,6 @@ export function AppProvider({ children }) {
         saveStoredAudits(next);
         return next;
       });
-      refreshData();
       return updated;
     } catch (err) {
       console.error("finalCloseAudit error:", err);

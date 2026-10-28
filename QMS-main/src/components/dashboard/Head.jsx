@@ -1,22 +1,20 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import StatCard from "../common/StatCard";
-import StatusBadge from "../common/StatusBadge";
 import {
-  Layers,
-  CheckCircle2,
-  Clock3,
-  AlertCircle,
+  BookOpen,
   CalendarCheck,
   Check,
-  ArrowRight,
+  FileText,
   ShieldCheck,
-  ClipboardCheck,
-  FileCheck2
+  ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import PageIntro from "../common/PageIntro";
+import SectionHeader from "../common/SectionHeader";
+import ActivityCard from "./ActivityCard";
+import ProcessTable from "../tables/ProcessTable";
 
-const processData = [
+const defaultProcessData = [
   {
     name: "Course Administration",
     owner: "Course Coordinator (Priya Sharma)",
@@ -54,402 +52,267 @@ const processData = [
   },
 ];
 
-const timelineData = [
-  {
-    date: "01 Sep",
-    title: "Course Administration",
-    description: "Curriculum review started",
-    status: "completed",
-  },
-  {
-    date: "05 Sep",
-    title: "Training Management",
-    description: "Process documentation under review",
-    status: "completed",
-  },
-  {
-    date: "15 Sep",
-    title: "IT Support Management",
-    description: "Lab infrastructure upgrade in progress",
-    status: "active",
-  },
-  {
-    date: "20 Sep",
-    title: "AI Course Management",
-    description: "Syllabus revision completed",
-    status: "completed",
-  },
-  {
-    date: "25 Sep",
-    title: "Quality Review & MRM",
-    description: "Management Review Meeting scheduled with Trust Head",
-    status: "upcoming",
-  },
-];
-
 export default function Head() {
-  const { headOverview, processes, mrmList, auditList = [], approveMRM, currentUser } = useApp();
+  const { headOverview, processes = [], documents = [], mrmList = [], auditList = [], currentUser } = useApp();
   const isAuditor = currentUser?.role === "auditor";
   const isTrustHead = currentUser?.role === "Head";
 
-  const list = headOverview?.processData || (processes?.length ? processes : processData);
-  const timeline = headOverview?.timelineData || timelineData;
+  const list = headOverview?.processData || (processes?.length ? processes : defaultProcessData);
 
   const totalProcesses = list.length;
   const completedProcesses = list.filter((p) => p.status === "Completed").length;
   const inProgressProcesses = list.filter((p) => p.status === "In Progress" || p.status === "Active").length;
-  const pendingProcesses = list.filter((p) => p.status === "Pending").length;
 
   const pendingApprovalMRMs = (mrmList || []).filter(
     (m) => m.status === "Pending Trust Head Approval" || m.status === "Submitted for Approval"
   );
 
-  // Trust Head: audits awaiting schedule ratification
   const pendingAuditApprovals = (auditList || []).filter((a) => a.stage === 2);
-
-  // Auditor: audits with schedule shared, ready for inspection
   const auditsAwaitingNoticing = (auditList || []).filter((a) => a.stage === 3);
-  const publishedMRMs = (mrmList || []).filter((m) => m.momFile || m.status === "MoM Uploaded" || m.status === "Notification Sent");
+  const publishedMRMs = (mrmList || []).filter((m) => !!m.momFile || m.status === "MoM Uploaded" || m.status === "Notification Sent");
 
   const overallProgress = Math.round(
     list.reduce((total, process) => total + (process.progress || 0), 0) / (list.length || 1)
   );
 
   return (
-    <div>
-      {/* Page Intro */}
-      <div className="page-intro">
-        <div>
-          <span className="eyebrow">{isAuditor ? "INTERNAL QUALITY AUDIT OVERSIGHT" : "TRUST EXECUTIVE OVERVIEW"}</span>
-          <h1>{isAuditor ? "Auditor Quality & Compliance Oversight" : "Trust Head Executive Overview"}</h1>
-          <p>
-            {isAuditor
-              ? "Review academic process performance, verified non-conformances, and published Management Review Meetings."
-              : "Monitor Trust-wide quality objectives, academic process performance, and Management Review Meeting (MRM) approvals."}
-          </p>
-        </div>
+    <>
+      <PageIntro
+        eyebrow={isAuditor ? "INTERNAL AUDITOR WORKSPACE" : "TRUST EXECUTIVE WORKSPACE"}
+        title={isAuditor ? "Internal Auditor Workspace" : "Trust Head Workspace"}
+        description={
+          isAuditor
+            ? "Quality assurance oversight, internal audit inspections, and compliance verification."
+            : "Executive governance, institutional quality performance, and review meeting ratification."
+        }
+      />
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-          {isTrustHead && (
-            <NavLink
-              to="/internal-audit"
-              className={pendingAuditApprovals.length > 0 ? "primary-button btn-blue" : "secondary-button"}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <ShieldCheck size={16} />
-              <span>Internal Audits {pendingAuditApprovals.length > 0 && `(${pendingAuditApprovals.length} Pending)`}</span>
-            </NavLink>
-          )}
-          <NavLink
-            to={isAuditor ? "/internal-audit" : "/mrm"}
-            className="primary-button btn-blue"
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-          >
-            <CalendarCheck size={16} />
-            <span>{isAuditor ? "Open Internal Audits" : "Review MRM Meetings"}</span>
-          </NavLink>
-        </div>
-      </div>
-
-      {/* Trust Head Pending Audit Approval Banner */}
-      {isTrustHead && pendingAuditApprovals.length > 0 && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "16px 20px",
-            background: "#eff6ff",
-            border: "1px solid #bfdbfe",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px",
-            boxShadow: "0 2px 6px rgba(29, 78, 216, 0.08)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "#dbeafe",
-                color: "#1d4ed8",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}
-            >
-              <CalendarCheck size={20} />
+      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
+      <div className="overview-cards-grid">
+        {/* Card 1: MRM */}
+        <NavLink to="/mrm" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon purple">
+              <CalendarCheck size={22} />
             </div>
-            <div>
-              <strong style={{ display: "block", color: "#1e40af", fontSize: "15px" }}>
-                {pendingAuditApprovals.length} Internal Audit Schedule{pendingAuditApprovals.length > 1 ? "s" : ""} Awaiting Your Approval
-              </strong>
-              <span style={{ color: "#2563eb", fontSize: "13px" }}>
-                QMS Coordinator scheduled "{pendingAuditApprovals[0]?.process}" ({pendingAuditApprovals[0]?.id}) for {pendingAuditApprovals[0]?.scheduledDate}. Please confirm schedule.
+            <div className="overview-card-title-group">
+              <h3>MRM</h3>
+              <span>Management Review Meetings</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {mrmList.length} <small>Total Meetings</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Next Session:</span>
+              <span className="detail-val">{mrmList[0]?.scheduledDate || "None upcoming"}</span>
+            </li>
+            <li>
+              <span className="detail-label">Status:</span>
+              <span className="detail-val" style={{ color: isTrustHead && pendingApprovalMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {isTrustHead ? (pendingApprovalMRMs.length > 0 ? `${pendingApprovalMRMs.length} Pending Approval` : "All Ratified") : `${publishedMRMs.length} MoMs Released`}
               </span>
+            </li>
+            <li>
+              <span className="detail-label">Governance:</span>
+              <span className="detail-val">Executive Oversight</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>View MRM Schedule</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
+
+        {/* Card 2: Process Overview */}
+        <NavLink to="/processes" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon teal">
+              <BookOpen size={22} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>Process Overview</h3>
+              <span>Institutional Quality SOPs</span>
             </div>
           </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <NavLink
-              to="/internal-audit"
-              className="primary-button btn-blue"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <ShieldCheck size={16} />
-              <span>Review & Confirm Schedule</span>
-            </NavLink>
+          <div className="overview-card-metric">
+            {totalProcesses} <small>Monitored Processes</small>
           </div>
-        </div>
-      )}
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Adherence Rate:</span>
+              <span className="detail-val" style={{ color: "var(--status-green)" }}>{overallProgress}% Overall Progress</span>
+            </li>
+            <li>
+              <span className="detail-label">Active / In Progress:</span>
+              <span className="detail-val">{inProgressProcesses} Processes</span>
+            </li>
+            <li>
+              <span className="detail-label">Completed:</span>
+              <span className="detail-val">{completedProcesses} Processes</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>Explore Processes</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
 
-      {/* Trust Head Pending MRM Approval Banner */}
-      {isTrustHead && pendingApprovalMRMs.length > 0 && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "16px 20px",
-            background: "#fffbeb",
-            border: "1px solid #fde68a",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "#fef3c7",
-                color: "#d97706",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}
-            >
-              <CalendarCheck size={20} />
+        {/* Card 3: Docs Management */}
+        <NavLink to="/documents" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon blue">
+              <FileText size={22} />
             </div>
-            <div>
-              <strong style={{ display: "block", color: "#92400e", fontSize: "15px" }}>
-                {pendingApprovalMRMs.length} MRM Meeting MoM Awaiting Your Formal Approval
-              </strong>
-              <span style={{ color: "#b45309", fontSize: "13px" }}>
-                QMS Coordinator submitted "{pendingApprovalMRMs[0]?.title}" for Trust Head ratification and sign-off.
+            <div className="overview-card-title-group">
+              <h3>Docs Management</h3>
+              <span>Controlled Library</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {documents.length || 12} <small>Controlled Docs</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Quality Policy:</span>
+              <span className="detail-val">ISO 9001:2015 Approved</span>
+            </li>
+            <li>
+              <span className="detail-label">Authority:</span>
+              <span className="detail-val">Trust & QMS Cell</span>
+            </li>
+            <li>
+              <span className="detail-label">Status:</span>
+              <span className="detail-val" style={{ color: "var(--status-green)" }}>Active & Released</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>Open Document Library</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
+
+        {/* Card 4: Internal Quality Audit */}
+        <NavLink to="/internal-audit" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon green">
+              <ShieldCheck size={22} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>Internal Audit</h3>
+              <span>{isAuditor ? "Inspections & Noticing" : "Schedule Ratification"}</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {auditList.length} <small>Total Audits</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Action Required:</span>
+              <span className="detail-val" style={{ color: (isTrustHead ? pendingAuditApprovals.length : auditsAwaitingNoticing.length) > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {isTrustHead ? `${pendingAuditApprovals.length} Awaiting Approval` : `${auditsAwaitingNoticing.length} Awaiting Inspection`}
               </span>
-            </div>
+            </li>
+            <li>
+              <span className="detail-label">In Progress:</span>
+              <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} Active Stages</span>
+            </li>
+            <li>
+              <span className="detail-label">Concluded:</span>
+              <span className="detail-val">{auditList.filter((a) => a.stage === 7).length} Completed</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>Open Internal Audit</span>
+            <ArrowRight size={14} />
           </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <NavLink
-              to="/mrm"
-              className="primary-button btn-green"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <ShieldCheck size={16} />
-              <span>Review & Approve in MRM</span>
-            </NavLink>
-          </div>
-        </div>
-      )}
-
-      {/* Internal Auditor Inspection Banner */}
-      {isAuditor && auditsAwaitingNoticing.length > 0 && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "16px 20px",
-            background: "#f0fdf4",
-            border: "1px solid #bbf7d0",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "#dcfce7",
-                color: "#166534",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}
-            >
-              <ClipboardCheck size={20} />
-            </div>
-            <div>
-              <strong style={{ display: "block", color: "#166534", fontSize: "15px" }}>
-                {auditsAwaitingNoticing.length} Confirmed Internal Audit{auditsAwaitingNoticing.length > 1 ? "s" : ""} Ready for Inspection
-              </strong>
-              <span style={{ color: "#15803d", fontSize: "13px" }}>
-                Audit schedule confirmed by Trust Head. Conduct audit inspection and submit Noticing Sheets.
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <NavLink
-              to="/internal-audit"
-              className="primary-button btn-green"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <ClipboardCheck size={16} />
-              <span>Conduct Audit & Submit Sheet</span>
-            </NavLink>
-          </div>
-        </div>
-      )}
-
-      {/* Summary Statistics */}
-      <div className="stats-grid">
-        <StatCard label="Total Processes" value={totalProcesses} icon={Layers} tone="blue" />
-        <StatCard label="Completed" value={completedProcesses} icon={CheckCircle2} tone="green" />
-        <StatCard label="In Progress" value={inProgressProcesses} icon={Clock3} tone="yellow" hint="Currently active" />
-        <StatCard
-          label={isAuditor ? "Published MRMs" : "MRM Reviews"}
-          value={isAuditor ? publishedMRMs.length : (mrmList?.length || 3)}
-          icon={CalendarCheck}
-          tone="blue"
-          hint={isAuditor ? "Official minutes" : "Review meetings"}
-        />
+        </NavLink>
       </div>
 
-      {/* Overall Progress */}
-      <div className="panel">
-        <div className="section-header">
-          <div>
-            <h2>Overall Trust QMS Progress</h2>
-            <p>High-level compliance across all academic and quality management processes.</p>
+      {/* Row: Institutional Process and Scheduled MRM */}
+      <div className="dashboard-two-col">
+        {/* Left: Processes */}
+        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+          <SectionHeader
+            title="Institutional Processes"
+            action={<NavLink className="text-link" to="/processes">View all processes →</NavLink>}
+          />
+          <div style={{ flex: 1 }}>
+            <ProcessTable items={list.slice(0, 4)} />
           </div>
-          <strong className="progress-value">{overallProgress}%</strong>
-        </div>
+        </section>
 
-        <div className="progress-bar">
-          <div className="progress-bar-fill" style={{ width: `${overallProgress}%` }} />
-        </div>
-
-        <div className="progress-info">
-          <span>Overall process completion</span>
-          <span>{overallProgress}% completed</span>
-        </div>
+        {/* Right: Scheduled MRMs */}
+        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+          <SectionHeader
+            title="Scheduled MRM"
+            action={<NavLink className="text-link" to="/mrm">View all MRMs →</NavLink>}
+          />
+          <div className="table-wrap" style={{ flex: 1 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Meeting Title</th>
+                  <th>Scheduled Date</th>
+                  <th>MoM Document</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mrmList.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
+                      No review meetings currently scheduled.
+                    </td>
+                  </tr>
+                ) : (
+                  mrmList.slice(0, 4).map((mrm) => {
+                    const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
+                    return (
+                      <tr key={mrm.id}>
+                        <td>
+                          <NavLink to="/mrm" className="table-link">
+                            <strong>{mrm.title}</strong>
+                          </NavLink>
+                        </td>
+                        <td>{mrm.scheduledDate}</td>
+                        <td>
+                          {hasMoM ? (
+                            <span style={{ color: "var(--status-green)", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                              <Check size={14} /> MoM Published
+                            </span>
+                          ) : (
+                            <span style={{ color: "var(--muted)", fontSize: "12px" }}>Pending Meeting</span>
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "9999px",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              background: hasMoM ? "var(--status-green-bg)" : "var(--status-blue-bg)",
+                              color: hasMoM ? "var(--status-green)" : "var(--status-blue)",
+                              border: `1px solid ${hasMoM ? "var(--status-green-border)" : "var(--status-blue-border)"}`
+                            }}
+                          >
+                            {mrm.status || "Planned"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-      {/* Process Overview + Overall Status */}
-      <div className="dashboard-grid">
-        {/* Process Overview */}
-        <div className="panel">
-          <div className="section-header">
-            <div>
-              <h2>Process Overview</h2>
-              <p>Current status of all QMS processes and assigned Course Coordinators.</p>
-            </div>
-          </div>
-
-          <div className="process-overview-list">
-            {list.map((process) => (
-              <div className="process-overview-item" key={process.name}>
-                <div className="process-overview-top">
-                  <div>
-                    <strong>{process.name}</strong>
-                    <span>{process.owner}</span>
-                  </div>
-                  <strong>{process.progress}%</strong>
-                </div>
-
-                <div className="progress-bar small">
-                  <div className="progress-bar-fill" style={{ width: `${process.progress}%` }} />
-                </div>
-
-                <div className="process-overview-bottom">
-                  <StatusBadge status={process.status} />
-                  <span>Target: {process.target}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Overall Status */}
-        <div className="panel">
-          <div className="section-header">
-            <div>
-              <h2>Overall Status</h2>
-              <p>Current QMS process status distribution.</p>
-            </div>
-          </div>
-
-          <div className="overall-progress">
-            <div className="progress-circle">
-              <div className="progress-circle-content">
-                <strong>{overallProgress}%</strong>
-                <span>Overall Progress</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="status-summary">
-            <div>
-              <span className="status-dot completed" />
-              <span>Completed</span>
-              <strong>{completedProcesses}</strong>
-            </div>
-            <div>
-              <span className="status-dot in-progress" />
-              <span>In Progress</span>
-              <strong>{inProgressProcesses}</strong>
-            </div>
-            <div>
-              <span className="status-dot pending" />
-              <span>Pending</span>
-              <strong>{pendingProcesses}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Process Timeline */}
-      <div className="panel timeline-panel">
-        <div className="section-header">
-          <div>
-            <h2>Process Timeline</h2>
-            <p>High-level timeline of major QMS activities.</p>
-          </div>
-          <span className="timeline-period">September 2026</span>
-        </div>
-
-        <div className="head-timeline">
-          {timeline.map((item, index) => (
-            <div className={`head-timeline-item ${item.status}`} key={`${item.title}-${index}`}>
-              <div className="head-timeline-date">{item.date}</div>
-              <div className="head-timeline-line">
-                <span className="head-timeline-dot" />
-                {index !== timeline.length - 1 && <span className="head-timeline-connector" />}
-              </div>
-              <div className="head-timeline-content">
-                <strong>{item.title}</strong>
-                <p>{item.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+      {/* Recent Activity Timeline */}
+      <ActivityCard />
+    </>
   );
 }

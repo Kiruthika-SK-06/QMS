@@ -1,17 +1,88 @@
-// Frontend service for Management Review Meeting (MRM) API
+// Frontend service for Management Review Meeting (MRM) API with cross-tab real-time sync and localStorage persistence
 import { initialMRMList } from "../data/mockData";
 
 const API_BASE = "/api/mrm";
 
-export const mrmService = {
-  async fetchMRMs() {
+// Helper to read cached MRMs from localStorage
+export function getStoredMRMs() {
+  try {
+    const saved = localStorage.getItem("qms_mrms");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("Error reading qms_mrms from localStorage", e);
+  }
+  return initialMRMList;
+}
+
+// Helper to save MRMs and broadcast to other open tabs
+export function saveStoredMRMs(mrms) {
+  try {
+    localStorage.setItem("qms_mrms", JSON.stringify(mrms));
     try {
-      const res = await fetch(API_BASE);
+      const channel = new BroadcastChannel("qms_mrm_channel");
+      channel.postMessage({ type: "MRM_UPDATE", mrms });
+      channel.close();
+    } catch {}
+  } catch (e) {
+    console.warn("Error saving qms_mrms to localStorage", e);
+  }
+}
+
+// Helper to reconcile server data with local cache without deleting locally planned MRMs
+export function mergeMRMs(serverList, localList) {
+  if (!Array.isArray(localList) || localList.length === 0) return Array.isArray(serverList) ? serverList : [];
+  if (!Array.isArray(serverList) || serverList.length === 0) return localList;
+
+  const map = new Map();
+  for (const item of serverList) {
+    if (item && item.id) map.set(item.id, item);
+  }
+
+  for (const local of localList) {
+    if (!local || !local.id) continue;
+    const serverItem = map.get(local.id);
+    if (!serverItem) {
+      map.set(local.id, local);
+    } else {
+      const localStage = typeof local.stage === "number" ? local.stage : 1;
+      const serverStage = typeof serverItem.stage === "number" ? serverItem.stage : 1;
+      if (localStage >= serverStage) {
+        map.set(local.id, {
+          ...serverItem,
+          ...local,
+          stage: Math.max(localStage, serverStage)
+        });
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+export const mrmService = {
+  getStoredMRMs,
+  saveStoredMRMs,
+  mergeMRMs,
+
+  async fetchMRMs(token) {
+    const cached = getStoredMRMs();
+    try {
+      const res = await fetch(API_BASE, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (!res.ok) throw new Error("Failed to load MRM list");
       const data = await res.json();
-      return data.data || initialMRMList;
+      if (Array.isArray(data.data) && data.data.length > 0) {
+        const merged = mergeMRMs(data.data, cached);
+        saveStoredMRMs(merged);
+        return merged;
+      }
+      return cached;
     } catch {
-      return initialMRMList;
+      return cached;
     }
   },
 
@@ -22,7 +93,7 @@ export const mrmService = {
       const data = await res.json();
       return data.data;
     } catch (err) {
-      const local = initialMRMList.find((m) => m.id === id);
+      const local = getStoredMRMs().find((m) => m.id === id);
       if (local) return local;
       throw err;
     }

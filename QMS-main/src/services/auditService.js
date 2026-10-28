@@ -39,21 +39,88 @@ export function saveStoredAudits(audits) {
   }
 }
 
+// Helper to reconcile server data with local cache without deleting locally created or progressed audits
+export function mergeAudits(serverList, localList) {
+  if (!Array.isArray(localList) || localList.length === 0) return Array.isArray(serverList) ? serverList : [];
+  if (!Array.isArray(serverList) || serverList.length === 0) return localList;
+
+  const map = new Map();
+
+  // First seed map with server audits
+  for (const item of serverList) {
+    if (item && item.id) {
+      map.set(item.id, item);
+    }
+  }
+
+  // Next reconcile local audits
+  for (const local of localList) {
+    if (!local || !local.id) continue;
+    const serverItem = map.get(local.id);
+    if (!serverItem) {
+      // Retain locally created audit that a cold serverless container does not have yet!
+      map.set(local.id, local);
+    } else {
+      // Reconcile whichever has the higher stage or more complete timeline/closure
+      const localStage = typeof local.stage === "number" ? local.stage : 1;
+      const serverStage = typeof serverItem.stage === "number" ? serverItem.stage : 1;
+      if (localStage >= serverStage) {
+        map.set(local.id, {
+          ...serverItem,
+          ...local,
+          stage: Math.max(localStage, serverStage),
+          timeline:
+            (local.timeline?.length || 0) >= (serverItem.timeline?.length || 0)
+              ? local.timeline
+              : serverItem.timeline
+        });
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 export const auditService = {
   getStoredAudits,
   saveStoredAudits,
-  async fetchAudits() {
+  mergeAudits,
+
+  async syncAuditsToServer(audits, token) {
     try {
-      const res = await fetch(API_BASE);
+      if (!Array.isArray(audits) || audits.length === 0) return;
+      await fetch(`${API_BASE}/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ audits })
+      });
+    } catch {
+      // ignore
+    }
+  },
+
+  async fetchAudits(token) {
+    const cached = getStoredAudits();
+    try {
+      const res = await fetch(API_BASE, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (!res.ok) throw new Error("Failed to load audit list");
       const data = await res.json();
       if (Array.isArray(data.data) && data.data.length > 0) {
-        saveStoredAudits(data.data);
-        return data.data;
+        const merged = mergeAudits(data.data, cached);
+        saveStoredAudits(merged);
+        if (merged.length > data.data.length) {
+          auditService.syncAuditsToServer(merged, token);
+        }
+        return merged;
       }
-      return getStoredAudits();
+      return cached;
     } catch {
-      return getStoredAudits();
+      return cached;
     }
   },
 

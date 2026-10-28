@@ -3452,3 +3452,174 @@ textarea:focus {
   transform: translateY(-2.5px);
   box-shadow: 0 8px 20px -4px rgba(11, 52, 87, 0.12);
 }
+
+/* =========================================================
+   EXECUTIVE OVERVIEW CONTEXT CARDS & TWO-COL DASHBOARD
+   ========================================================= */
+.overview-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.overview-context-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+.overview-context-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--navy-accent);
+}
+
+.overview-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.overview-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.overview-card-icon.blue {
+  background: #edf4fa;
+  color: #0b3457;
+}
+
+.overview-card-icon.teal {
+  background: #f0fdfa;
+  color: #0f766e;
+}
+
+.overview-card-icon.purple {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.overview-card-icon.amber {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.overview-card-icon.green {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.overview-card-title-group h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 2px 0;
+  letter-spacing: -0.01em;
+}
+
+.overview-card-title-group span {
+  font-size: 11.5px;
+  color: var(--muted);
+  display: block;
+}
+
+.overview-card-metric {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.overview-card-metric small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.overview-card-details {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.overview-card-details li {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+.overview-card-details li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.overview-card-details li .detail-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.overview-card-details li .detail-val {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 12px;
+  text-align: right;
+}
+
+.overview-card-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy-light);
+  transition: color 0.15s ease;
+}
+
+.overview-context-card:hover .overview-card-footer {
+  color: var(--navy);
+}
+
+.dashboard-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1080px) {
+  .dashboard-two-col {
+    grid-template-columns: 1fr;
+  }
+}

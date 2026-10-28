@@ -1,7 +1,42 @@
 import jwt from "jsonwebtoken";
+import fs from "fs";
+import path from "path";
+import os from "os";
 import { auditData } from "../data/audits.js";
 import { notificationsData } from "../data/notifications.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+
+const TMP_STORE_PATH = path.join(os.tmpdir(), "qms_audits_store.json");
+
+const loadAuditsFromDisk = () => {
+  try {
+    if (fs.existsSync(TMP_STORE_PATH)) {
+      const content = fs.readFileSync(TMP_STORE_PATH, "utf-8");
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const map = new Map();
+        parsed.forEach((a) => a && a.id && map.set(a.id, a));
+        auditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
+        const merged = Array.from(map.values());
+        auditData.length = 0;
+        auditData.push(...merged);
+      }
+    }
+  } catch (e) {
+    // Ignore tmp read errors
+  }
+};
+
+const saveAuditsToDisk = () => {
+  try {
+    fs.writeFileSync(TMP_STORE_PATH, JSON.stringify(auditData), "utf-8");
+  } catch (e) {
+    // Ignore tmp write errors
+  }
+};
+
+// Initial load on container initialization
+loadAuditsFromDisk();
 
 const formatNow = () => {
   const d = new Date();
@@ -25,9 +60,41 @@ const pushNotification = (title, text, targetRole = "all") => {
   return notif;
 };
 
+// POST /api/audit/sync - Client-driven sync to ensure serverless containers never lose newly scheduled audits
+export const syncAudits = (req, res) => {
+  try {
+    const { audits } = req.body;
+    if (Array.isArray(audits) && audits.length > 0) {
+      loadAuditsFromDisk();
+      const map = new Map();
+      auditData.forEach((a) => a && a.id && map.set(a.id, a));
+      audits.forEach((clientAudit) => {
+        if (!clientAudit || !clientAudit.id) return;
+        const existing = map.get(clientAudit.id);
+        if (!existing) {
+          map.set(clientAudit.id, clientAudit);
+        } else {
+          const clientStage = Number(clientAudit.stage) || 1;
+          const existingStage = Number(existing.stage) || 1;
+          if (clientStage >= existingStage) {
+            map.set(clientAudit.id, { ...existing, ...clientAudit });
+          }
+        }
+      });
+      auditData.length = 0;
+      auditData.push(...Array.from(map.values()));
+      saveAuditsToDisk();
+    }
+    res.json({ success: true, count: auditData.length, data: auditData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // GET /api/audit (Role-filtered)
 export const getAllAudits = (req, res) => {
   try {
+    loadAuditsFromDisk();
     const { role } = req.query;
     let userRole = role;
     let userName = req.user?.name;
@@ -177,6 +244,7 @@ export const createAudit = (req, res) => {
     };
 
     auditData.unshift(newAudit);
+    saveAuditsToDisk();
 
     // Push automatic notification to Trust Head (Action Required: Confirm Schedule)
     pushNotification(
@@ -240,6 +308,7 @@ export const confirmSchedule = (req, res) => {
       timestamp: formatNow(),
       details: `Trust Head ratified the audit schedule. Automated approval notification dispatched to QMS Coordinator to distribute schedule.`
     });
+    saveAuditsToDisk();
 
     // Automatically send message / notification to QMS Coordinator ONLY
     pushNotification(
@@ -297,6 +366,7 @@ export const shareSchedule = (req, res) => {
       timestamp: formatNow(),
       details: `QMS Coordinator officially dispatched confirmed audit schedule to Course Coordinator (${audit.internalAuditee?.name}), Trust Head (Anita Rao), and Internal Auditor (${audit.internalAuditor?.name}).`
     });
+    saveAuditsToDisk();
 
     // Notify Course Coordinator (Auditee)
     pushNotification(
@@ -391,6 +461,7 @@ export const submitNoticingSheet = (req, res) => {
       timestamp: formatNow(),
       details: `Internal Auditor submitted Noticing Sheet (${audit.noticingSheet.sheetNo}) to QMS Coordinator only.`
     });
+    saveAuditsToDisk();
 
     // Automatically send notification to QMS Coordinator ONLY
     pushNotification(
@@ -449,6 +520,7 @@ export const shareNCDocs = (req, res) => {
       timestamp: formatNow(),
       details: `QMS Coordinator reviewed Noticing Sheet and shared official NC Docs with ${audit.internalAuditee.name} (Auditee) and ${audit.internalAuditor.name} (Auditor).`
     });
+    saveAuditsToDisk();
 
     // Notify Auditee (Course Coordinator) to take corrective action and close
     pushNotification(
@@ -521,6 +593,7 @@ export const auditeeClose = (req, res) => {
       timestamp: formatNow(),
       details: `Auditee submitted Corrective Action Plan & Evidence. Passed to QMS Coordinator for final close.`
     });
+    saveAuditsToDisk();
 
     // Notify QMS Coordinator ONLY that auditee has closed and it is ready for final sign-off
     pushNotification(
@@ -575,6 +648,7 @@ export const finalCloseAudit = (req, res) => {
       timestamp: formatNow(),
       details: `QMS Coordinator verified CAPA effectiveness and closed the entire audit process.`
     });
+    saveAuditsToDisk();
 
     // Notify all stakeholders that the audit is officially completed
     pushNotification(

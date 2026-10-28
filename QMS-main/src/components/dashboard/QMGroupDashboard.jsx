@@ -1,54 +1,28 @@
-import React, { useState } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   BookOpen,
-  Check,
-  ClipboardList,
-  Clock3,
-  FileCheck2,
-  FileText,
-  Users,
-  Edit,
-  Download,
-  Layers,
-  Trash2,
-  AlertTriangle,
-  UserCheck,
   CalendarCheck,
-  Share2,
+  Check,
+  FileText,
+  ShieldCheck,
   ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
-import StatCard from "../common/StatCard";
-import StatusBadge from "../common/StatusBadge";
-import TemplateEditModal from "../common/TemplateEditModal";
-import Modal from "../tasks/Modal";
 import ActivityCard from "./ActivityCard";
-import DocumentTable from "../tables/DocumentTable";
 import ProcessTable from "../tables/ProcessTable";
 
 export default function QMGroupDashboard() {
   const {
-    tasks,
-    documents,
-    processes,
-    employees,
-    usersList,
-    mrmList,
-    auditList = [],
-    shareMRM,
-    downloadDocument,
-    deleteDocument
+    documents = [],
+    processes = [],
+    employees = [],
+    usersList = [],
+    mrmList = [],
+    auditList = []
   } = useApp();
-
-  const [editingTemplate, setEditingTemplate] = useState(null);
-  const [tplToDelete, setTplToDelete] = useState(null);
-  const [deletingTpl, setDeletingTpl] = useState(false);
-  const [sharingMRMId, setSharingMRMId] = useState(null);
-
-  const templates = (documents || []).filter((d) => d.type === "Templates");
 
   const courseCoordinatorsCount = (usersList || employees || []).filter(
     (e) => e.role === "owner"
@@ -65,598 +39,244 @@ export default function QMGroupDashboard() {
   );
 
   const readyToShareAudits = (auditList || []).filter((a) => a.stage === 2.5);
-  const pendingNCAudits = (auditList || []).filter((a) => a.stage === 4);
   const readyToCloseAudits = (auditList || []).filter((a) => a.stage === 6);
-
-  const activeTasks = tasks.filter((t) => t.status === "In Progress").length;
-  const completedTasks = tasks.filter((t) => t.status === "Completed").length;
-  const pendingTasks = tasks.filter((t) => t.status === "Pending").length;
-
-  const totalTasks = tasks.length || 1;
-  const completedPct = Math.round((completedTasks / totalTasks) * 100);
-  const activePct = Math.round((activeTasks / totalTasks) * 100);
-  const pendingPct = Math.round((pendingTasks / totalTasks) * 100);
-
-  const handleQuickShareMRM = async (id) => {
-    setSharingMRMId(id);
-    try {
-      await shareMRM(id);
-      alert("Management Review Meeting has been shared with all Course Coordinators!");
-    } catch (err) {
-      alert(err.message || "Failed to share MRM");
-    } finally {
-      setSharingMRMId(null);
-    }
-  };
 
   return (
     <>
       <PageIntro
-        eyebrow="QMS Coordinator Workspace"
-        title="QMS Coordinator Command View"
-        description="Monitor quality system compliance, review queue, user privileges, and Management Review Meeting distribution."
-        action={
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <NavLink
-              to="/user-management"
-              className="secondary-button"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <UserCheck size={16} /> User Management
-            </NavLink>
-            <NavLink
-              to="/internal-audit"
-              className="secondary-button"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <CalendarCheck size={16} /> Internal Audit {readyToShareAudits.length > 0 && `(${readyToShareAudits.length} Ready)`}
-            </NavLink>
-            <NavLink
-              to="/mrm"
-              className="primary-button"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <CalendarCheck size={16} /> MRM Workflow
-            </NavLink>
-          </div>
-        }
+        eyebrow="QMS COORDINATOR WORKSPACE"
+        title="QMS Coordinator Workspace"
+        description="Oversee quality governance, process monitoring, Management Review Meetings, and compliance oversight."
       />
 
-      {/* Action Banner for Ready-to-Share Internal Audit Schedules */}
-      {readyToShareAudits.length > 0 && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "16px 20px",
-            background: "#eff6ff",
-            border: "1px solid #bfdbfe",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px",
-            boxShadow: "0 2px 6px rgba(29, 78, 216, 0.08)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "#dbeafe",
-                color: "#1d4ed8",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}
-            >
-              <Share2 size={20} />
+      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
+      <div className="overview-cards-grid">
+        {/* Card 1: MRM */}
+        <NavLink to="/mrm" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon purple">
+              <CalendarCheck size={22} />
             </div>
-            <div>
-              <strong style={{ display: "block", color: "#1e40af", fontSize: "15px" }}>
-                {readyToShareAudits.length} Audit Schedule{readyToShareAudits.length > 1 ? "s" : ""} Approved by Trust Head & Ready to Share!
-              </strong>
-              <span style={{ color: "#2563eb", fontSize: "13px" }}>
-                Trust Head Anita Rao approved the schedule for "{readyToShareAudits[0]?.process}" ({readyToShareAudits[0]?.id}). Please share the schedule with Course Coordinators and Auditors.
+            <div className="overview-card-title-group">
+              <h3>MRM</h3>
+              <span>Management Review Meetings</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {mrmList.length} <small>Total Meetings</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Next Session:</span>
+              <span className="detail-val">{mrmList[0]?.scheduledDate || "None upcoming"}</span>
+            </li>
+            <li>
+              <span className="detail-label">Ready to Share:</span>
+              <span className="detail-val" style={{ color: readyToShareMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {readyToShareMRMs.length} Pending Distribution
               </span>
+            </li>
+            <li>
+              <span className="detail-label">MoM Released:</span>
+              <span className="detail-val">{mrmList.filter((m) => !!m.momFile || m.status === "MoM Uploaded").length} Published</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>View MRM Schedule</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
+
+        {/* Card 2: Process Overview */}
+        <NavLink to="/processes" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon teal">
+              <BookOpen size={22} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>Process Overview</h3>
+              <span>Institutional Quality SOPs</span>
             </div>
           </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <NavLink
-              to="/internal-audit"
-              className="primary-button btn-blue"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <Share2 size={16} />
-              <span>Share Schedule in Internal Audit</span>
-            </NavLink>
+          <div className="overview-card-metric">
+            {processes.length} <small>Monitored Processes</small>
           </div>
-        </div>
-      )}
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Course Coordinators:</span>
+              <span className="detail-val">{courseCoordinatorsCount} Assigned</span>
+            </li>
+            <li>
+              <span className="detail-label">Active Status:</span>
+              <span className="detail-val" style={{ color: "var(--status-green)" }}>100% Operational</span>
+            </li>
+            <li>
+              <span className="detail-label">Adherence Rate:</span>
+              <span className="detail-val">98% Target Met</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>Explore Processes</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
 
-      {/* Action Banner for Ready-to-Share MRM */}
-      {readyToShareMRMs.length > 0 && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "16px 20px",
-            background: "#f0fdf4",
-            border: "1px solid #86efac",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "#dcfce7",
-                color: "#16a34a",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}
-            >
-              <Share2 size={20} />
+        {/* Card 3: Docs Management */}
+        <NavLink to="/documents" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon blue">
+              <FileText size={22} />
             </div>
-            <div>
-              <strong style={{ display: "block", color: "#166534", fontSize: "15px" }}>
-                {readyToShareMRMs.length} MRM Approved by Trust Head & Ready to Share!
-              </strong>
-              <span style={{ color: "#15803d", fontSize: "13px" }}>
-                Trust Head has approved {readyToShareMRMs[0]?.title}. You can now share it with all Course Coordinators.
+            <div className="overview-card-title-group">
+              <h3>Docs Management</h3>
+              <span>Controlled Library</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {documents.length} <small>Controlled Docs</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Live & Approved:</span>
+              <span className="detail-val">{documents.length - pendingReviews} Active</span>
+            </li>
+            <li>
+              <span className="detail-label">Under Review:</span>
+              <span className="detail-val" style={{ color: pendingReviews > 0 ? "var(--status-amber)" : "var(--muted)" }}>
+                {pendingReviews} in queue
               </span>
+            </li>
+            <li>
+              <span className="detail-label">Compliance:</span>
+              <span className="detail-val">ISO 9001:2015 Compliant</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>Open Document Library</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
+
+        {/* Card 4: Internal Quality Audit */}
+        <NavLink to="/internal-audit" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon green">
+              <ShieldCheck size={22} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>Internal Audit</h3>
+              <span>IQA Cycle Governance</span>
             </div>
           </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="button"
-              className="primary-button btn-green"
-              disabled={sharingMRMId === readyToShareMRMs[0]?.id}
-              onClick={() => handleQuickShareMRM(readyToShareMRMs[0]?.id)}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <Share2 size={15} />
-              <span>{sharingMRMId === readyToShareMRMs[0]?.id ? "Distributing..." : "Share with All Coordinators"}</span>
-            </button>
-            <NavLink to="/mrm" className="secondary-button" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-              <span>View All</span>
-              <ArrowRight size={14} />
-            </NavLink>
+          <div className="overview-card-metric">
+            {auditList.length} <small>Total Audits</small>
           </div>
-        </div>
-      )}
-
-      <div className="stats-grid seven">
-        <StatCard label="Processes" value={processes.length} icon={BookOpen} />
-        <StatCard label="Course coordinators" value={courseCoordinatorsCount || 3} icon={Users} tone="teal" />
-        <StatCard label="User accounts" value={usersList?.length || 5} icon={UserCheck} />
-        <StatCard label="MRM meetings" value={mrmList?.length || 3} icon={CalendarCheck} tone="teal" />
-        <StatCard label="Documents" value={documents.length} icon={FileText} tone="teal" />
-        <StatCard label="Pending reviews" value={pendingReviews} icon={FileCheck2} tone="amber" />
-        <StatCard label="Completed tasks" value={completedTasks} icon={Check} tone="green" />
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Active Stages:</span>
+              <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} In Progress</span>
+            </li>
+            <li>
+              <span className="detail-label">Pending Action:</span>
+              <span className="detail-val" style={{ color: readyToShareAudits.length + readyToCloseAudits.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {readyToShareAudits.length + readyToCloseAudits.length} Awaiting QMS
+              </span>
+            </li>
+            <li>
+              <span className="detail-label">Completed:</span>
+              <span className="detail-val">{auditList.filter((a) => a.stage === 7).length} Closed</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>Open Internal Audit</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
       </div>
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <SectionHeader title="Task completion" />
-          <div className="chart">
-            <div className="chart-bar">
-              <span style={{ height: `${Math.max(completedPct, 8)}%` }} />
-              <small>Completed</small>
-              <strong>{completedPct}%</strong>
-            </div>
-            <div className="chart-bar">
-              <span style={{ height: `${Math.max(activePct, 8)}%` }} />
-              <small>In progress</small>
-              <strong>{activePct}%</strong>
-            </div>
-            <div className="chart-bar">
-              <span style={{ height: `${Math.max(pendingPct, 8)}%` }} />
-              <small>Pending</small>
-              <strong>{pendingPct}%</strong>
-            </div>
+      {/* Row: My Process and Scheduled MRM */}
+      <div className="dashboard-two-col">
+        {/* Left: Quality Processes */}
+        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+          <SectionHeader
+            title="Monitored Processes"
+            action={<NavLink className="text-link" to="/processes">View all processes →</NavLink>}
+          />
+          <div style={{ flex: 1 }}>
+            <ProcessTable items={processes.slice(0, 4)} />
           </div>
         </section>
-        <ActivityCard />
-      </div>
 
-      {/* MRM Sequential Workflow Control Center */}
-      <section className="panel">
-        <SectionHeader
-          title="Management Review Meeting (MRM)"
-          action={
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <NavLink className="primary-button" to="/mrm" style={{ fontSize: "12px", padding: "5px 12px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                <CalendarCheck size={14} /> Open Full MRM Console
-              </NavLink>
-            </div>
-          }
-        />
-
-        {/* 4-Stage Workflow Progress Cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: "10px",
-            marginBottom: "18px",
-            padding: "12px 14px",
-            background: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid var(--line)",
-            boxShadow: "var(--shadow-xs)"
-          }}
-        >
-          <div style={{ textAlign: "center", padding: "8px", background: "var(--navy-subtle)", borderRadius: "8px", border: "1px solid var(--navy-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--navy)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>1. Planned</span>
-            <strong style={{ fontSize: "20px", color: "var(--navy)", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => m.status === "Planned").length}
-            </strong>
-          </div>
-          <div style={{ textAlign: "center", padding: "8px", background: "var(--status-amber-bg)", borderRadius: "8px", border: "1px solid var(--status-amber-border)" }}>
-            <span style={{ fontSize: "11px", color: "var(--status-amber)", fontWeight: "700", textTransform: "uppercase", display: "block" }}>2. Pending Approval</span>
-            <strong style={{ fontSize: "20px", color: "var(--status-amber)", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => m.status === "Submitted for Approval" || m.status === "Pending Trust Head Approval").length}
-            </strong>
-          </div>
-          <div style={{ textAlign: "center", padding: "8px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
-            <span style={{ fontSize: "11px", color: "#166534", fontWeight: "700", textTransform: "uppercase", display: "block" }}>3. Email Stage</span>
-            <strong style={{ fontSize: "20px", color: "#166534", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => (m.status === "Approved" || m.status === "Approved by Trust Head") && !m.emailNotification?.sent).length}
-            </strong>
-          </div>
-          <div style={{ textAlign: "center", padding: "8px", background: "#eff6ff", borderRadius: "8px", border: "1px solid #bfdbfe" }}>
-            <span style={{ fontSize: "11px", color: "#1e40af", fontWeight: "700", textTransform: "uppercase", display: "block" }}>4. MoM Published</span>
-            <strong style={{ fontSize: "20px", color: "#1e40af", fontFamily: "Space Grotesk, sans-serif" }}>
-              {(mrmList || []).filter((m) => m.momFile || m.status === "MoM Recorded" || m.status === "Shared").length}
-            </strong>
-          </div>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Meeting Title</th>
-                <th>Stage & Status</th>
-                <th>Schedule</th>
-                <th>Minutes (MoM)</th>
-                <th>Trust Head Decision</th>
-                <th style={{ textAlign: "right" }}>Next Workflow Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(mrmList || []).slice(0, 5).map((mrm) => {
-                const isApproved =
-                  mrm.status === "Approved" ||
-                  mrm.status === "Approved by Trust Head" ||
-                  mrm.trustHeadApproval?.approved;
-                const isPending =
-                  mrm.status === "Submitted for Approval" ||
-                  mrm.status === "Pending Trust Head Approval";
-
-                return (
-                  <tr key={mrm.id}>
-                    <td>
-                      <NavLink to="/mrm" className="table-link">
-                        <strong style={{ fontSize: "13px" }}>{mrm.title}</strong>
-                      </NavLink>
-                    </td>
-                    <td>
-                      <StatusBadge status={mrm.status} />
-                    </td>
-                    <td>
-                      {mrm.scheduledDate ? (
-                        <div style={{ fontSize: "12px" }}>
-                          <span style={{ fontWeight: "600", color: "#0f172a" }}>{mrm.scheduledDate}</span>
-                          <small style={{ display: "block", color: "#64748b" }}>{mrm.scheduledTime || "11:00 AM"}</small>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: "11px", color: "var(--navy)", background: "var(--navy-subtle)", padding: "2px 6px", borderRadius: "4px" }}>
-                          Needs Scheduling
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {mrm.mom ? (
-                        <span style={{ color: "var(--navy)", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "3px" }}>
-                          <Check size={13} /> Recorded ({mrm.mom.actionItems?.length || 0} items)
-                        </span>
-                      ) : (
-                        <span style={{ color: "#94a3b8", fontSize: "11px" }}>Pending MoM</span>
-                      )}
-                    </td>
-                    <td>
-                      {isApproved ? (
-                        <span style={{ color: "#16a34a", fontWeight: "600", fontSize: "12px" }}>
-                          ✓ Approved by Trust Head
-                        </span>
-                      ) : isPending ? (
-                        <span style={{ color: "#d97706", fontWeight: "600", fontSize: "12px" }}>
-                          ⏳ In Review
-                        </span>
-                      ) : mrm.status === "Changes Requested" ? (
-                        <span style={{ color: "#dc2626", fontWeight: "600", fontSize: "12px" }}>
-                          Revisions Requested
-                        </span>
-                      ) : (
-                        <span style={{ color: "#64748b", fontSize: "11px" }}>Not Submitted</span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {/* Direct Next Action Button based on lifecycle */}
-                      {isApproved && !mrm.sharedWithAll ? (
-                        <button
-                          type="button"
-                          className="primary-button btn-green"
-                          onClick={() => handleQuickShareMRM(mrm.id)}
-                          disabled={sharingMRMId === mrm.id}
-                          style={{
-                            fontSize: "12px",
-                            padding: "4px 10px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px"
-                          }}
-                        >
-                          <Share2 size={13} />
-                          <span>{sharingMRMId === mrm.id ? "Sharing..." : "Share with All"}</span>
-                        </button>
-                      ) : mrm.sharedWithAll ? (
-                        <span style={{ color: "#16a34a", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "3px" }}>
-                          ✓ Distributed ({mrm.acknowledgements?.length || 0} Acks)
-                        </span>
-                      ) : mrm.status === "Planned" ? (
-                        <NavLink
-                          to={`/mrm?mrmId=${mrm.id}`}
-                          className="secondary-button"
-                          style={{ fontSize: "12px", padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                        >
-                          <CalendarCheck size={12} />
-                          <span>Continue (Schedule)</span>
-                        </NavLink>
-                      ) : mrm.status === "Scheduled" ? (
-                        <NavLink
-                          to={`/mrm?mrmId=${mrm.id}`}
-                          className="secondary-button"
-                          style={{ fontSize: "12px", padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                        >
-                          <Edit size={12} />
-                          <span>Continue (MoM)</span>
-                        </NavLink>
-                      ) : mrm.status === "MoM Recorded" ? (
-                        <NavLink
-                          to={`/mrm?mrmId=${mrm.id}`}
-                          className="primary-button btn-amber"
-                          style={{ fontSize: "12px", padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                        >
-                          <Send size={12} />
-                          <span>Review & Submit</span>
-                        </NavLink>
-                      ) : (
-                        <NavLink
-                          to={`/mrm?mrmId=${mrm.id}`}
-                          className="row-action"
-                          style={{ color: "var(--navy)", fontSize: "12px", fontWeight: "600" }}
-                        >
-                          View Details
-                        </NavLink>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="panel">
-        <SectionHeader
-          title="Document review queue"
-          action={<NavLink className="text-link" to="/reviews">Open review queue</NavLink>}
-        />
-        <DocumentTable
-          items={documents.filter(
-            (document) => document.status === "Under Review" || document.status === "Changes Requested"
-          )}
-          review
-        />
-      </section>
-
-      <section className="panel">
-        <SectionHeader
-          title="Controlled templates & standard formats"
-          action={
-            <NavLink className="text-link" to="/documents?type=Templates">
-              View all in library
-            </NavLink>
-          }
-        />
-        {templates.length === 0 ? (
-          <div style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
-            <p>No standard templates registered yet.</p>
-          </div>
-        ) : (
-          <div className="table-wrap">
+        {/* Right: Scheduled MRMs */}
+        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+          <SectionHeader
+            title="Scheduled MRM"
+            action={<NavLink className="text-link" to="/mrm">View all MRMs →</NavLink>}
+          />
+          <div className="table-wrap" style={{ flex: 1 }}>
             <table>
               <thead>
                 <tr>
-                  <th>Template</th>
-                  <th>Process</th>
-                  <th>Version</th>
-                  <th>Last updated</th>
+                  <th>Meeting Title</th>
+                  <th>Scheduled Date</th>
+                  <th>MoM Document</th>
                   <th>Status</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {templates.map((tpl) => (
-                  <tr key={tpl.id}>
-                    <td>
-                      <NavLink className="table-link" to={`/documents/${tpl.id}`}>
-                        <strong>{tpl.name}</strong>
-                        <small>{tpl.id}</small>
-                      </NavLink>
-                    </td>
-                    <td>{tpl.process}</td>
-                    <td>
-                      <b>v{tpl.version}</b>
-                    </td>
-                    <td>{tpl.updated}</td>
-                    <td>
-                      <StatusBadge status={tpl.status} />
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button
-                          type="button"
-                          className="row-action"
-                          onClick={() => setEditingTemplate(tpl)}
-                          style={{
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            fontWeight: "600",
-                            color: "var(--navy)"
-                          }}
-                        >
-                          <Edit size={14} /> Edit template
-                        </button>
-                        <button
-                          type="button"
-                          className="row-action"
-                          onClick={() => downloadDocument(tpl.id)}
-                          style={{
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px"
-                          }}
-                        >
-                          <Download size={14} /> View
-                        </button>
-                        <button
-                          type="button"
-                          className="row-action"
-                          onClick={() => setTplToDelete(tpl)}
-                          style={{
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            color: "#ef4444"
-                          }}
-                          title={`Delete template ${tpl.name}`}
-                        >
-                          <Trash2 size={14} /> Delete
-                        </button>
-                      </div>
+                {mrmList.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
+                      No review meetings currently scheduled.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  mrmList.slice(0, 4).map((mrm) => {
+                    const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
+                    return (
+                      <tr key={mrm.id}>
+                        <td>
+                          <NavLink to="/mrm" className="table-link">
+                            <strong>{mrm.title}</strong>
+                          </NavLink>
+                        </td>
+                        <td>{mrm.scheduledDate}</td>
+                        <td>
+                          {hasMoM ? (
+                            <span style={{ color: "var(--status-green)", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                              <Check size={14} /> MoM Published
+                            </span>
+                          ) : (
+                            <span style={{ color: "var(--muted)", fontSize: "12px" }}>Pending Meeting</span>
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "9999px",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              background: hasMoM ? "var(--status-green-bg)" : "var(--status-blue-bg)",
+                              color: hasMoM ? "var(--status-green)" : "var(--status-blue)",
+                              border: `1px solid ${hasMoM ? "var(--status-green-border)" : "var(--status-blue-border)"}`
+                            }}
+                          >
+                            {mrm.status || "Planned"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
-        )}
-      </section>
+        </section>
+      </div>
 
-      <section className="panel">
-        <SectionHeader
-          title="Process overview"
-          action={<NavLink className="text-link" to="/processes">View all processes</NavLink>}
-        />
-        <ProcessTable items={processes} />
-      </section>
-
-      {editingTemplate && (
-        <TemplateEditModal
-          template={editingTemplate}
-          onClose={() => setEditingTemplate(null)}
-          onSave={() => setEditingTemplate(null)}
-        />
-      )}
-
-      {tplToDelete && (
-        <Modal
-          title="Delete Controlled Template"
-          onClose={() => setTplToDelete(null)}
-        >
-          <div style={{ padding: "6px 0" }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "16px" }}>
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  background: "#fee2e2",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#dc2626",
-                  flexShrink: 0
-                }}
-              >
-                <AlertTriangle size={22} />
-              </div>
-              <div>
-                <h4 style={{ margin: "0 0 6px 0", fontSize: "15px", color: "#0f172a" }}>
-                  Confirm Permanent Deletion
-                </h4>
-                <p style={{ margin: 0, fontSize: "14px", color: "#475569", lineHeight: "1.5" }}>
-                  Are you sure you want to delete template <strong>{tplToDelete.name}</strong> ({tplToDelete.id})? This will permanently remove it from the system and log an audit trail entry.
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="modal-actions"
-              style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}
-            >
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setTplToDelete(null)}
-                disabled={deletingTpl}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button btn-red"
-                disabled={deletingTpl}
-                onClick={async () => {
-                  setDeletingTpl(true);
-                  try {
-                    await deleteDocument(tplToDelete.id);
-                    setTplToDelete(null);
-                  } catch (err) {
-                    alert(err.message || "Failed to delete template");
-                  } finally {
-                    setDeletingTpl(false);
-                  }
-                }}
-              >
-                <span>{deletingTpl ? "Deleting..." : "Delete Permanently"}</span>
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      {/* Recent Activity Timeline */}
+      <ActivityCard />
     </>
   );
 }

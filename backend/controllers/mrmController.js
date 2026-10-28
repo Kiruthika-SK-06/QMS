@@ -1,12 +1,43 @@
+import fs from "fs";
+import path from "path";
+import os from "os";
 import { mrmData } from "../data/mrm.js";
 import { notificationsData } from "../data/notifications.js";
 import { activitiesData } from "../data/activities.js";
 import { dummyUsers } from "../data/users.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
+const TMP_MRM_STORE = path.join(os.tmpdir(), "qms_mrm_store.json");
+
+const loadMRMFromDisk = () => {
+  try {
+    if (fs.existsSync(TMP_MRM_STORE)) {
+      const content = fs.readFileSync(TMP_MRM_STORE, "utf-8");
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const map = new Map();
+        parsed.forEach((m) => m && m.id && map.set(m.id, m));
+        mrmData.forEach((m) => m && m.id && !map.has(m.id) && map.set(m.id, m));
+        const merged = Array.from(map.values());
+        mrmData.length = 0;
+        mrmData.push(...merged);
+      }
+    }
+  } catch {}
+};
+
+const saveMRMToDisk = () => {
+  try {
+    fs.writeFileSync(TMP_MRM_STORE, JSON.stringify(mrmData), "utf-8");
+  } catch {}
+};
+
+loadMRMFromDisk();
+
 // Helper to notify all real-time listeners
 const notifyMRMChange = (action, mrm) => {
   try {
+    saveMRMToDisk();
     broadcastRealtimeEvent("MRM_UPDATED", { action, mrm });
   } catch (err) {
     console.error("Real-time MRM broadcast error:", err);
@@ -26,6 +57,7 @@ const formatNow = () =>
 // GET /api/mrm - List all MRM meetings (Role-filtered)
 export const getAllMRMs = (req, res) => {
   try {
+    loadMRMFromDisk();
     const { status, stage, role } = req.query;
     const userRole = req.user?.role || role;
     let list = [...mrmData];
