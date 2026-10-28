@@ -179,7 +179,7 @@ export const forgotPassword = (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: `No QMS user account found matching "${cleanId}". Available demo accounts: coursecoordinator, qmcoordinator, trusthead.`
+        message: "No account found matching this email address. Please check and try again."
       });
     }
 

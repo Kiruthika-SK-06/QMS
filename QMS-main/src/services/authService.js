@@ -189,13 +189,13 @@ export const authService = {
       );
 
       if (!user) {
-        throw new Error(`No QMS user account found matching "${identifier}".`);
+        throw new Error("No account found matching this email address. Please check and try again.");
       }
 
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       return {
         success: true,
-        message: `Verification code generated for ${user.name}`,
+        message: "Password reset instructions sent successfully.",
         email: user.email,
         username: user.username,
         role: user.role,

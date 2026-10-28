@@ -211,22 +211,28 @@ export default function LoginForm() {
         </small>
       </div>
 
-      {/* Forgot Password Interactive Modal */}
+      {/* Forgot Password Modal */}
       {showForgotPassword && (
         <ForgotPasswordModal
           initialIdentifier={email}
           onClose={() => setShowForgotPassword(false)}
-          onSuccess={({ identifier, newPassword, role: updatedRole }) => {
-            setEmail(identifier);
-            setPassword(newPassword);
-            if (updatedRole) {
-              setRole(updatedRole);
-            }
+          onSuccess={(result) => {
             setShowForgotPassword(false);
             setError("");
-            setSuccessMessage(
-              `Password reset successfully for "${identifier}"! Click "Sign in to Workspace" to continue.`
-            );
+            if (result && typeof result === "object" && result.newPassword) {
+              if (result.identifier) setEmail(result.identifier);
+              setPassword(result.newPassword);
+              if (result.role) {
+                setRole(result.role);
+              }
+              setSuccessMessage(
+                `Password reset successfully for "${result.identifier}". You can now sign in.`
+              );
+            } else if (typeof result === "string" && result.trim()) {
+              setSuccessMessage(
+                `Password reset instructions have been sent to ${result}. Please check your email.`
+              );
+            }
           }}
         />
       )}
