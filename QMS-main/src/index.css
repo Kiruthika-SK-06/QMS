@@ -605,8 +605,9 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
 
 .header {
   height: 68px;
+  min-height: 68px;
   flex: none;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid rgba(200, 217, 230, 0.65);
@@ -614,29 +615,53 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 28px;
   position: sticky;
   top: 0;
   z-index: 15;
-  gap: 20px;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .header-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-width: 0;
 }
 
-.header-title span {
+.header-title-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.header-brand-tag {
   display: block;
   color: var(--navy);
   font-size: 10px;
   letter-spacing: 0.14em;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.header-title strong {
+.header-workspace-title {
   font-family: "Space Grotesk", sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--ink);
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 /* Real-Time Live Status Telemetry Pill */
@@ -3043,18 +3068,42 @@ textarea:focus {
 }
 
 @media (max-width: 900px) {
+  .app-shell {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   .sidebar {
     transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 270px;
+    max-width: 85vw;
+    z-index: 1000;
   }
 
   .sidebar.sidebar-open {
-    transform: translateX(0);
-    box-shadow: var(--shadow-lg);
+    transform: translateX(0) !important;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 22, 39, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
   }
 
   .main-shell {
-    margin-left: 0;
-    width: 100%;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .menu-button,
@@ -3063,7 +3112,28 @@ textarea:focus {
   }
 
   .header {
-    padding: 0 18px;
+    padding: 0 16px;
+    height: 62px;
+    min-height: 62px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .header-brand-tag {
+    display: none !important;
+  }
+
+  .realtime-pill-iso {
+    display: none !important;
+  }
+
+  .header-workspace-title {
+    font-size: 13.5px !important;
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .header-search,
@@ -3073,7 +3143,10 @@ textarea:focus {
   }
 
   .page-content {
-    padding: 22px 16px 44px;
+    padding: 18px 14px 44px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .dashboard-grid,
@@ -3695,17 +3768,21 @@ html, body {
 @media (max-width: 768px) {
   .overview-cards-grid,
   .overview-cards-grid.four-col {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
   .page-content {
-    padding: 18px 14px 40px;
+    padding: 16px 14px 40px !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .header {
-    padding: 0 16px;
-    height: 60px;
+    padding: 0 14px !important;
+    height: auto !important;
+    min-height: 58px !important;
+    width: 100% !important;
   }
 
   .modal {
@@ -3746,7 +3823,18 @@ html, body {
   .page-intro {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .page-intro h1 {
+    font-size: 21px !important;
+    line-height: 1.25 !important;
+  }
+
+  .page-intro p {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
   }
 
   .stat-card {
@@ -3754,8 +3842,8 @@ html, body {
   }
 
   .avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     font-size: 10px;
   }
 
@@ -3763,5 +3851,19 @@ html, body {
   input, select, textarea {
     max-width: 100%;
     box-sizing: border-box;
+  }
+}
+
+@media (max-width: 540px) {
+  .header-workspace-title {
+    display: none !important;
+  }
+
+  .header-title-tags {
+    margin: 0 !important;
+  }
+
+  .header-actions {
+    gap: 8px !important;
   }
 }

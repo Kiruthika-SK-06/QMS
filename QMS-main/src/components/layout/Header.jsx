@@ -20,28 +20,30 @@ export default function Header({ openMenu }) {
 
   return (
     <header className="header">
-      <button className="menu-button" onClick={openMenu}><Menu size={22} /></button>
-      <div className="header-title">
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <span>QMS DIGITALIZATION</span>
-          <button
-            type="button"
-            className={`realtime-status-pill ${isRealtimeConnected ? "connected" : "reconnecting"}`}
-            onClick={() => silentRefresh && silentRefresh()}
-            title={
-              isRealtimeConnected
-                ? `Live QMS Sync Active (ISO 9001:2015). Last sync: ${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString() : "just now"}. Click to refresh manually.`
-                : "Real-time sync reconnecting... Click to force refresh."
-            }
-          >
-            <span className={`realtime-pulse-dot ${isRealtimeConnected ? "connected" : "reconnecting"}`} />
-            <span className="realtime-pill-label">
-              {isRealtimeConnected ? "Live QMS Sync" : "Syncing..."}
-            </span>
-            <span className="realtime-pill-iso">ISO 9001:2015</span>
-          </button>
+      <div className="header-left">
+        <button className="menu-button" onClick={openMenu} aria-label="Toggle Navigation"><Menu size={22} /></button>
+        <div className="header-title">
+          <div className="header-title-tags">
+            <span className="header-brand-tag">QMS DIGITALIZATION</span>
+            <button
+              type="button"
+              className={`realtime-status-pill ${isRealtimeConnected ? "connected" : "reconnecting"}`}
+              onClick={() => silentRefresh && silentRefresh()}
+              title={
+                isRealtimeConnected
+                  ? `Live QMS Sync Active (ISO 9001:2015). Last sync: ${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString() : "just now"}. Click to refresh manually.`
+                  : "Real-time sync reconnecting... Click to force refresh."
+              }
+            >
+              <span className={`realtime-pulse-dot ${isRealtimeConnected ? "connected" : "reconnecting"}`} />
+              <span className="realtime-pill-label">
+                {isRealtimeConnected ? "Live QMS Sync" : "Syncing..."}
+              </span>
+              <span className="realtime-pill-iso">ISO 9001:2015</span>
+            </button>
+          </div>
+          <strong className="header-workspace-title">Quality workspace</strong>
         </div>
-        <strong>Quality workspace</strong>
       </div>
       <div className="header-actions">
         {!isProfilePage && (

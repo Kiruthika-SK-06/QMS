@@ -12,6 +12,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="app-shell">
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
       <Sidebar open={sidebarOpen} close={() => setSidebarOpen(false)} />
       <div className="main-shell">
         <Header openMenu={() => setSidebarOpen(true)} />
