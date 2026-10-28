@@ -31,8 +31,8 @@ export let auditData = [
     },
     scope: "Evaluation of course delivery milestones, syllabus progress tracking, laboratory sessions, and compliance with ISO 9001:2015 Clause 8.5.",
     venue: "Academic Block - Room 204 & QMS Portal",
-    status: "Closed",
-    stage: 6,
+    status: "Completed",
+    stage: 7,
     stageLabel: "Completed / Closed",
 
     scheduleShared: {
@@ -145,8 +145,8 @@ export let auditData = [
     scope: "Review of student admission eligibility verification, fee receipts, registration registers, and ISO 9001:2015 Clause 8.2 conformity.",
     venue: "Admissions Center & Online ERP",
     status: "Closed by Auditee",
-    stage: 5,
-    stageLabel: "Closed by Auditee (Pending QMS Final Close)",
+    stage: 6,
+    stageLabel: "Closed by Auditee (Pending QMS Final Sign-off)",
 
     scheduleShared: {
       shared: true,
@@ -251,8 +251,8 @@ export let auditData = [
     scope: "Verification of question paper moderation protocol, answer script double evaluation records, and marks tabulation security under ISO 9001:2015 Clause 9.1.",
     venue: "Confidential Examination Section",
     status: "NC Docs Shared",
-    stage: 4,
-    stageLabel: "NC Docs Shared (Action Required by Auditee)",
+    stage: 5,
+    stageLabel: "NC Docs Shared (Action Required: Auditee CAPA)",
 
     scheduleShared: {
       shared: true,
@@ -347,8 +347,8 @@ export let auditData = [
     scope: "Review of latest industry-aligned syllabus modules, GPU lab cluster availability, and software license records under ISO 9001 Clause 7.1.3.",
     venue: "High Performance Computing Lab",
     status: "Noticing Sheet Submitted",
-    stage: 3,
-    stageLabel: "Noticing Sheet Submitted (Pending QMS Review)",
+    stage: 4,
+    stageLabel: "Noticing Sheet Submitted (Under QMS Review)",
 
     scheduleShared: {
       shared: true,
@@ -430,22 +430,11 @@ export let auditData = [
     },
     scope: "Verification of student grievance redressal records, mid-term course feedback surveys, and corrective actions under ISO 9001 Clause 9.1.2.",
     venue: "Quality Management Group Office",
-    status: "Schedule Shared",
+    status: "Awaiting Trust Head Approval",
     stage: 2,
-    stageLabel: "Schedule Shared (Awaiting Trust Head Confirmation)",
+    stageLabel: "Awaiting Trust Head Approval",
 
-    scheduleShared: {
-      shared: true,
-      sharedAt: "2026-10-26 03:45 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
-      docTitle: "Internal_Audit_Schedule_IA-2026-005.pdf",
-      recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "priya.sharma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Vikas Deshmukh", email: "vikas.deshmukh@cdac.in" }
-      ]
-    },
-
+    scheduleShared: null,
     trustHeadConfirmation: null,
     noticingSheet: null,
     ncDocs: null,
@@ -453,8 +442,7 @@ export let auditData = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 03:30 PM", details: "Audit scheduled for Student Feedback & Continual Improvement" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 03:45 PM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" }
+      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 03:30 PM", details: "Audit scheduled and submitted to Trust Head for approval" }
     ]
   },
   {
@@ -488,19 +476,26 @@ export let auditData = [
     },
     scope: "Review of faculty training records, certifications, peer evaluations, and compliance with ISO 9001:2015 Clause 7.2.",
     venue: "Academic Dean's Conference Room",
-    status: "Scheduled",
-    stage: 1,
-    stageLabel: "Draft Scheduled (Ready to Share)",
+    status: "Approved by Trust Head",
+    stage: 2.5,
+    stageLabel: "Approved by Trust Head (Pending QMS Distribution)",
 
     scheduleShared: null,
-    trustHeadConfirmation: null,
+    trustHeadConfirmation: {
+      confirmed: true,
+      confirmedBy: "Anita Rao",
+      confirmedRole: "Trust Head",
+      confirmedAt: "2026-10-26 04:30 PM",
+      remarks: "Audit dates verified and approved. QMS Coordinator may distribute schedule."
+    },
     noticingSheet: null,
     ncDocs: null,
     auditeeClosure: null,
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 04:00 PM", details: "Audit scheduled for Faculty Development & Competency" }
+      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 04:00 PM", details: "Audit scheduled for Faculty Development & Competency" },
+      { action: "Schedule Approved by Trust Head", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 04:30 PM", details: "Trust Head approved audit schedule. Ready for QMS distribution." }
     ]
   }
 ];

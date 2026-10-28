@@ -101,20 +101,10 @@ export const auditService = {
         id,
         scheduledDate: scheduledDateStr,
         auditDates: { startDate, endDate },
-        status: "Awaiting Confirmation",
+        status: "Awaiting Trust Head Approval",
         stage: 2,
-        stageLabel: "Schedule Shared (Awaiting Trust Head Confirmation)",
-        scheduleShared: {
-          shared: true,
-          sharedAt: formatNow(),
-          sharedBy: payload.scheduledBy?.name || "Rahul Kumar (QMS Coordinator)",
-          docTitle: `Internal_Audit_Schedule_${id}.pdf`,
-          recipients: [
-            { role: "Course Coordinator", name: payload.internalAuditee?.name, email: payload.internalAuditee?.email },
-            { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
-            { role: "Internal Auditor", name: payload.internalAuditor?.name, email: payload.internalAuditor?.email }
-          ]
-        },
+        stageLabel: "Awaiting Trust Head Approval",
+        scheduleShared: null,
         trustHeadConfirmation: null,
         noticingSheet: null,
         ncDocs: null,
@@ -122,10 +112,10 @@ export const auditService = {
         qmsFinalClosure: null,
         timeline: [
           {
-            action: "Audit Scheduled & Shared",
+            action: "Audit Scheduled",
             actor: payload.scheduledBy?.name || "Rahul Kumar (QMS Coordinator)",
             timestamp: formatNow(),
-            details: `Scheduled ${payload.process} audit for ${scheduledDateStr}. Automatically dispatched schedule to Trust Head, Auditor, and Auditee.`
+            details: `Scheduled ${payload.process} audit for ${scheduledDateStr}. Automatically submitted to Trust Head for formal ratification & approval.`
           }
         ]
       };
@@ -164,9 +154,9 @@ export const auditService = {
     if (!updated && existing) {
       updated = {
         ...existing,
-        status: "Schedule Confirmed",
+        status: "Approved by Trust Head",
         stage: 2.5,
-        stageLabel: "Schedule Confirmed (Audit In Progress)",
+        stageLabel: "Approved by Trust Head (Pending QMS Distribution)",
         trustHeadConfirmation: {
           confirmed: true,
           confirmedBy: "Anita Rao",
@@ -177,10 +167,68 @@ export const auditService = {
         timeline: [
           ...(existing.timeline || []),
           {
-            action: "Schedule Confirmed by Trust Head",
+            action: "Schedule Approved by Trust Head",
             actor: "Anita Rao (Trust Head)",
             timestamp: formatNow(),
-            details: `Trust Head confirmed the audit schedule. Automated confirmation message dispatched to QMS Coordinator.`
+            details: `Trust Head ratified the audit schedule. Automated approval notification dispatched to QMS Coordinator.`
+          }
+        ]
+      };
+    }
+
+    if (updated) {
+      const nextList = currentList.map((a) => (a.id === id ? updated : a));
+      saveStoredAudits(nextList);
+    }
+
+    return updated;
+  },
+
+  async shareSchedule(id, token) {
+    let updated = null;
+    try {
+      const res = await fetch(`${API_BASE}/${id}/share-schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.data) {
+        updated = data.data;
+      }
+    } catch (err) {
+      console.warn("shareSchedule API offline, updating locally:", err);
+    }
+
+    const currentList = getStoredAudits();
+    const existing = currentList.find((a) => a.id === id);
+
+    if (!updated && existing) {
+      updated = {
+        ...existing,
+        status: "Schedule Dispatched",
+        stage: 3,
+        stageLabel: "Schedule Dispatched (Audit in Progress)",
+        scheduleShared: {
+          shared: true,
+          sharedAt: formatNow(),
+          sharedBy: "Rahul Kumar (QMS Coordinator)",
+          docTitle: `Internal_Audit_Schedule_${id}.pdf`,
+          recipients: [
+            { role: "Course Coordinator", name: existing.internalAuditee?.name, email: existing.internalAuditee?.email },
+            { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
+            { role: "Internal Auditor", name: existing.internalAuditor?.name, email: existing.internalAuditor?.email }
+          ]
+        },
+        timeline: [
+          ...(existing.timeline || []),
+          {
+            action: "Schedule Dispatched to All Stakeholders",
+            actor: "Rahul Kumar (QMS Coordinator)",
+            timestamp: formatNow(),
+            details: `QMS Coordinator officially dispatched confirmed audit schedule to Course Coordinator (${existing.internalAuditee?.name}), Trust Head, and Internal Auditor (${existing.internalAuditor?.name}).`
           }
         ]
       };
@@ -220,7 +268,7 @@ export const auditService = {
       updated = {
         ...existing,
         status: "Noticing Sheet Submitted",
-        stage: 3,
+        stage: 4,
         stageLabel: "Noticing Sheet Submitted (Under QMS Review)",
         noticingSheet: {
           submitted: true,
@@ -237,7 +285,7 @@ export const auditService = {
             action: "Noticing Sheet Submitted",
             actor: payload.submittedBy || "Internal Auditor",
             timestamp: formatNow(),
-            details: `Internal Auditor submitted Noticing Sheet to QMS Coordinator.`
+            details: `Internal Auditor submitted Noticing Sheet to QMS Coordinator only.`
           }
         ]
       };
@@ -277,8 +325,8 @@ export const auditService = {
       updated = {
         ...existing,
         status: "NC Docs Shared",
-        stage: 4,
-        stageLabel: "NC Docs Shared (Action Required by Auditee)",
+        stage: 5,
+        stageLabel: "NC Docs Shared (Action Required: Auditee CAPA)",
         ncDocs: {
           shared: true,
           sharedBy: "Rahul Kumar (QMS Coordinator)",
@@ -336,8 +384,8 @@ export const auditService = {
       updated = {
         ...existing,
         status: "Closed by Auditee",
-        stage: 5,
-        stageLabel: "Closed by Auditee (Pending QMS Final Close)",
+        stage: 6,
+        stageLabel: "Closed by Auditee (Pending QMS Final Sign-off)",
         auditeeClosure: {
           closed: true,
           closedBy: payload.closedBy || "Course Coordinator",
@@ -392,8 +440,8 @@ export const auditService = {
     if (!updated && existing) {
       updated = {
         ...existing,
-        status: "Closed",
-        stage: 6,
+        status: "Completed",
+        stage: 7,
         stageLabel: "Completed / Closed",
         qmsFinalClosure: {
           closed: true,

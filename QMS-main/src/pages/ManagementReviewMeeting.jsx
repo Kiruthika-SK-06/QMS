@@ -481,15 +481,34 @@ Controlled Document - Published for all Course Staff and Auditors
     showToast(`Downloading official MoM file: ${fileName}`);
   };
 
-  // Filter meetings
-  const filteredMRMs = (mrmList || []).filter((mrm) => {
+  // Role-based visibility filter
+  const visibleMRMs = (mrmList || []).filter((mrm) => {
+    const wf = getWorkflowDetails(mrm);
+    // Course Coordinator rule:
+    // Only show MRMs that have reached "Notification Sent" (step 3) or "MoM Published" (step 4)
+    if (isCourseCoordinator) {
+      return wf.step >= 3;
+    }
+    // Internal Auditor rule:
+    // Show approved meetings, dates, agendas, and MoM files (skip draft & revision stages: steps 1 and 1.5)
+    if (isInternalAuditor) {
+      return wf.step >= 2.5 || mrm.status === "Approved" || mrm.status === "Approved by Trust Head" || !!mrm.momFile;
+    }
+    // QMS Coordinator and Trust Head: Full visibility of all MRMs
+    return true;
+  });
+
+  // Filter meetings by search query and active tab
+  const filteredMRMs = visibleMRMs.filter((mrm) => {
     const wf = getWorkflowDetails(mrm);
     const matchesFilter =
       filterStep === "All" ||
       (filterStep === "Step 1" && wf.step === 1) ||
       (filterStep === "Step 2" && (wf.step === 2 || wf.step === 1.5)) ||
       (filterStep === "Step 3" && (wf.step === 2.5 || wf.step === 3)) ||
+      (filterStep === "Scheduled" && (wf.step === 3 || (isInternalAuditor && wf.step === 2.5))) ||
       (filterStep === "Step 4" && wf.step === 4) ||
+      (filterStep === "MoM" && wf.step === 4) ||
       (filterStep === "Approved" && (wf.step >= 2.5 || mrm.status === "Approved" || mrm.status === "Approved by Trust Head" || mrm.momFile));
 
     const q = query.toLowerCase();
@@ -503,11 +522,25 @@ Controlled Document - Published for all Course Staff and Auditors
     return matchesFilter && matchesQuery;
   });
 
-  // Metric counts
-  const totalMeetings = (mrmList || []).length;
+  // Metric counts tailored by role
+  const totalMeetings = visibleMRMs.length;
   const pendingApprovalCount = (mrmList || []).filter((m) => getWorkflowDetails(m).step === 2).length;
   const readyToEmailCount = (mrmList || []).filter((m) => getWorkflowDetails(m).step === 2.5).length;
-  const momPublishedCount = (mrmList || []).filter((m) => getWorkflowDetails(m).step === 4).length;
+  const momPublishedCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step === 4).length;
+  const scheduledCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step === 3).length;
+  const auditorApprovedCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step >= 2.5).length;
+
+  // Course Coordinator action items count from published MoMs
+  const myAssignedActionsCount = visibleMRMs.reduce((acc, mrm) => {
+    const items = mrm.momFile?.actionItems || [];
+    const myItems = items.filter(
+      (act) =>
+        act.assignee?.toLowerCase().includes("priya") ||
+        act.assignee?.toLowerCase().includes("course coordinator") ||
+        act.assignee?.toLowerCase().includes(currentUser?.name?.toLowerCase() || "")
+    );
+    return acc + myItems.length;
+  }, 0);
 
   return (
     <>
@@ -546,7 +579,20 @@ Controlled Document - Published for all Course Staff and Auditors
       {/* Page Intro Header */}
       <PageIntro
         eyebrow="Review Meetings"
-        title="Management Review Meeting (MRM)"
+        title={
+          isCourseCoordinator
+            ? "Scheduled Review Meetings (MRM)"
+            : isInternalAuditor
+            ? "Management Review Meetings (MRM Oversight)"
+            : "Management Review Meeting (MRM)"
+        }
+        description={
+          isCourseCoordinator
+            ? "View scheduled review meetings, official meeting agendas, and published Minutes of Meeting (MoM)."
+            : isInternalAuditor
+            ? "Review approved Management Review Meetings, attendance records, ratified decisions, and official published MoMs."
+            : "Plan, approve, distribute, and record Management Review Meetings in compliance with ISO 9001:2015."
+        }
         action={
           isQMSCoordinator && (
             <button
@@ -561,7 +607,7 @@ Controlled Document - Published for all Course Staff and Auditors
         }
       />
 
-      {/* KPI Stat Cards */}
+      {/* KPI Stat Cards (Tailored per role) */}
       <div
         style={{
           display: "grid",
@@ -570,10 +616,26 @@ Controlled Document - Published for all Course Staff and Auditors
           marginBottom: "20px"
         }}
       >
-        <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
-        <StatCard label="Pending Team Head Approval" value={pendingApprovalCount} icon={Clock} tone="amber" />
-        <StatCard label="Ready for Email Notification" value={readyToEmailCount} icon={Mail} tone="teal" />
-        <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" />
+        {isCourseCoordinator ? (
+          <>
+            <StatCard label="Scheduled Meetings" value={scheduledCount} icon={CalendarCheck} tone="blue" hint="Notified meetings to attend" />
+            <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official minutes available" />
+            <StatCard label="My Assigned Actions" value={myAssignedActionsCount} icon={FileText} tone="teal" hint="Action items assigned to you" />
+          </>
+        ) : isInternalAuditor ? (
+          <>
+            <StatCard label="Approved Meetings" value={auditorApprovedCount} icon={ShieldCheck} tone="blue" hint="Ratified by Trust Head" />
+            <StatCard label="Upcoming Scheduled" value={scheduledCount} icon={Mail} tone="teal" hint="Dispatched to coordinators" />
+            <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official minutes recorded" />
+          </>
+        ) : (
+          <>
+            <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
+            <StatCard label="Pending Team Head Approval" value={pendingApprovalCount} icon={Clock} tone="amber" />
+            <StatCard label="Ready for Email Notification" value={readyToEmailCount} icon={Mail} tone="teal" />
+            <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" />
+          </>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -583,19 +645,37 @@ Controlled Document - Published for all Course Staff and Auditors
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search meetings by title, ID, target month, venue, or agenda..."
+            placeholder={
+              isCourseCoordinator
+                ? "Search scheduled meetings by title, ID, venue, or agenda..."
+                : "Search meetings by title, ID, target month, venue, or agenda..."
+            }
           />
         </label>
 
         <div className="tabs" style={{ overflowX: "auto" }}>
-          {[
-            { id: "All", label: "All Meetings" },
-            { id: "Step 1", label: "1. Planned" },
-            { id: "Step 2", label: "2. Pending Approval" },
-            { id: "Step 3", label: "3. Email Stage" },
-            { id: "Step 4", label: "4. MoM Published" },
-            ...(isTrustHead || isInternalAuditor ? [{ id: "Approved", label: "Approval History" }] : [])
-          ].map((tab) => (
+          {(isCourseCoordinator
+            ? [
+                { id: "All", label: `All Meetings (${visibleMRMs.length})` },
+                { id: "Scheduled", label: `Scheduled (${scheduledCount})` },
+                { id: "MoM", label: `MoM Published (${momPublishedCount})` }
+              ]
+            : isInternalAuditor
+            ? [
+                { id: "All", label: `All Accessible (${visibleMRMs.length})` },
+                { id: "Scheduled", label: `Scheduled (${scheduledCount})` },
+                { id: "MoM", label: `MoM Published (${momPublishedCount})` },
+                { id: "Approved", label: "Approval History" }
+              ]
+            : [
+                { id: "All", label: "All Meetings" },
+                { id: "Step 1", label: "1. Planned" },
+                { id: "Step 2", label: "2. Pending Approval" },
+                { id: "Step 3", label: "3. Email Stage" },
+                { id: "Step 4", label: "4. MoM Published" },
+                { id: "Approved", label: "Approval History" }
+              ]
+          ).map((tab) => (
             <button
               key={tab.id}
               className={filterStep === tab.id ? "tab active" : "tab"}
@@ -655,7 +735,7 @@ Controlled Document - Published for all Course Staff and Auditors
                     </h3>
                   </div>
 
-                  {/* Stage Badge */}
+                  {/* Stage Badge (Role-tailored) */}
                   <span
                     style={{
                       display: "inline-flex",
@@ -665,21 +745,25 @@ Controlled Document - Published for all Course Staff and Auditors
                       borderRadius: "20px",
                       fontSize: "12px",
                       fontWeight: "600",
-                      background: wf.bg,
-                      color: wf.color,
-                      border: `1px solid ${wf.border}`
+                      background: isCourseCoordinator
+                        ? wf.step === 4 ? "#dcfce7" : "#e0e7ff"
+                        : wf.bg,
+                      color: isCourseCoordinator
+                        ? wf.step === 4 ? "#16a34a" : "#4338ca"
+                        : wf.color,
+                      border: `1px solid ${isCourseCoordinator ? (wf.step === 4 ? "#86efac" : "#c7d2fe") : wf.border}`
                     }}
                   >
                     {wf.step === 4 ? (
                       <CheckCircle2 size={14} />
-                    ) : wf.step === 3 ? (
-                      <Mail size={14} />
-                    ) : wf.step >= 2 ? (
-                      <Clock size={14} />
                     ) : (
                       <Calendar size={14} />
                     )}
-                    {wf.badgeText}
+                    {isCourseCoordinator
+                      ? wf.step === 4 ? "MoM Published" : "Meeting Scheduled"
+                      : isInternalAuditor
+                      ? wf.step === 4 ? "MoM Published" : wf.step === 3 ? "Notification Sent" : "Approved by Team Head"
+                      : wf.badgeText}
                   </span>
                 </div>
 
@@ -717,24 +801,44 @@ Controlled Document - Published for all Course Staff and Auditors
                   </div>
                 </div>
 
-                {/* 4-Step Interactive Stepper Progress Indicator */}
-                <div style={{ margin: "16px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-                    {[
-                      { num: 1, title: "1. Plan & Schedule", role: "QMS Coordinator" },
-                      { num: 2, title: "2. Team Head Approval", role: "Team Head" },
-                      { num: 3, title: "3. Email Notification", role: "QMS Coordinator" },
-                      { num: 4, title: "4. MoM File", role: "Public to All" }
-                    ].map((stepItem, idx) => {
-                      const isComplete =
-                        wf.step > stepItem.num ||
-                        (stepItem.num === 2 && wf.step >= 2.5);
-                      const isCurrent =
-                        wf.step === stepItem.num ||
-                        (stepItem.num === 2 && wf.step === 2.5);
+                {/* Progress Indicator: Course Coordinator sees clean attendance/MoM progress; Auditor sees audit milestones; QMS/Head see 4-step admin stepper */}
+                {isCourseCoordinator ? (
+                  <div style={{ margin: "14px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#16a34a", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "700" }}>
+                          <Check size={13} />
+                        </div>
+                        <div>
+                          <strong style={{ fontSize: "12px", color: "#166534", display: "block" }}>1. Meeting Scheduled & Invitation Dispatched</strong>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>You are invited to review syllabus and practical course deliverables.</span>
+                        </div>
+                      </div>
 
-                      return (
-                        <React.Fragment key={stepItem.num}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: wf.step === 4 ? "#16a34a" : "#cbd5e1", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "700" }}>
+                          {wf.step === 4 ? <Check size={13} /> : "2"}
+                        </div>
+                        <div>
+                          <strong style={{ fontSize: "12px", color: wf.step === 4 ? "#166534" : "#475569", display: "block" }}>
+                            {wf.step === 4 ? "2. Minutes of Meeting (MoM) Published" : "2. MoM File in Preparation"}
+                          </strong>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
+                            {wf.step === 4 ? "Official MoM document & action assignments accessible below." : "Will be published after meeting ratification."}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : isInternalAuditor ? (
+                  <div style={{ margin: "14px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+                      {[
+                        { num: 1, title: "1. Team Head Ratified", role: "Executive Sign-off", done: wf.step >= 2.5 },
+                        { num: 2, title: "2. Notification Sent", role: "Coordinators Invited", done: wf.step >= 3 },
+                        { num: 3, title: "3. MoM Published", role: "Formal Audit Evidence", done: wf.step === 4 }
+                      ].map((st, idx) => (
+                        <React.Fragment key={st.num}>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2 }}>
                             <div
                               style={{
@@ -746,43 +850,91 @@ Controlled Document - Published for all Course Staff and Auditors
                                 justifyContent: "center",
                                 fontSize: "11px",
                                 fontWeight: "700",
-                                background: isComplete ? "#16a34a" : isCurrent ? "#2563eb" : "#cbd5e1",
-                                color: "#ffffff",
-                                boxShadow: isCurrent ? "0 0 0 4px rgba(37, 99, 235, 0.2)" : "none",
-                                transition: "all 0.2s ease"
+                                background: st.done ? "#16a34a" : "#cbd5e1",
+                                color: "#ffffff"
                               }}
                             >
-                              {isComplete ? <Check size={13} /> : stepItem.num}
+                              {st.done ? <Check size={13} /> : st.num}
                             </div>
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: isCurrent ? "700" : "500",
-                                color: isCurrent ? "#1e40af" : isComplete ? "#166534" : "#64748b",
-                                marginTop: "4px",
-                                textAlign: "center"
-                              }}
-                            >
-                              {stepItem.title}
+                            <span style={{ fontSize: "11px", fontWeight: st.done ? "700" : "500", color: st.done ? "#166534" : "#64748b", marginTop: "4px", textAlign: "center" }}>
+                              {st.title}
                             </span>
-                            <span style={{ fontSize: "10px", color: "#94a3b8" }}>{stepItem.role}</span>
+                            <span style={{ fontSize: "10px", color: "#94a3b8" }}>{st.role}</span>
                           </div>
-
-                          {idx < 3 && (
-                            <div
-                              style={{
-                                flex: 1,
-                                height: "2px",
-                                background: wf.step > stepItem.num ? "#16a34a" : "#e2e8f0",
-                                margin: "0 8px 18px 8px"
-                              }}
-                            />
+                          {idx < 2 && (
+                            <div style={{ flex: 1, height: "2px", background: st.done ? "#16a34a" : "#e2e8f0", margin: "0 8px 18px 8px" }} />
                           )}
                         </React.Fragment>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div style={{ margin: "16px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+                      {[
+                        { num: 1, title: "1. Plan & Schedule", role: "QMS Coordinator" },
+                        { num: 2, title: "2. Team Head Approval", role: "Team Head" },
+                        { num: 3, title: "3. Email Notification", role: "QMS Coordinator" },
+                        { num: 4, title: "4. MoM File", role: "Public to All" }
+                      ].map((stepItem, idx) => {
+                        const isComplete =
+                          wf.step > stepItem.num ||
+                          (stepItem.num === 2 && wf.step >= 2.5);
+                        const isCurrent =
+                          wf.step === stepItem.num ||
+                          (stepItem.num === 2 && wf.step === 2.5);
+
+                        return (
+                          <React.Fragment key={stepItem.num}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2 }}>
+                              <div
+                                style={{
+                                  width: "26px",
+                                  height: "26px",
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  background: isComplete ? "#16a34a" : isCurrent ? "#2563eb" : "#cbd5e1",
+                                  color: "#ffffff",
+                                  boxShadow: isCurrent ? "0 0 0 4px rgba(37, 99, 235, 0.2)" : "none",
+                                  transition: "all 0.2s ease"
+                                }}
+                              >
+                                {isComplete ? <Check size={13} /> : stepItem.num}
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: isCurrent ? "700" : "500",
+                                  color: isCurrent ? "#1e40af" : isComplete ? "#166534" : "#64748b",
+                                  marginTop: "4px",
+                                  textAlign: "center"
+                                }}
+                              >
+                                {stepItem.title}
+                              </span>
+                              <span style={{ fontSize: "10px", color: "#94a3b8" }}>{stepItem.role}</span>
+                            </div>
+
+                            {idx < 3 && (
+                              <div
+                                style={{
+                                  flex: 1,
+                                  height: "2px",
+                                  background: wf.step > stepItem.num ? "#16a34a" : "#e2e8f0",
+                                  margin: "0 8px 18px 8px"
+                                }}
+                              />
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Bottom Action Toolbar */}
                 <div
@@ -1516,7 +1668,9 @@ Controlled Document - Published for all Course Staff and Auditors
               <div><strong>Target Period:</strong> {selectedMRM.targetMonth}</div>
               <div><strong>Venue:</strong> {selectedMRM.venue}</div>
               <div><strong>Planner:</strong> {selectedMRM.plannedBy}</div>
-              <div><strong>Team Head Approver:</strong> {selectedMRM.approvals?.teamHead?.approverName || "Pending"}</div>
+              {!isCourseCoordinator && (
+                <div><strong>Team Head Approver:</strong> {selectedMRM.approvals?.teamHead?.approverName || "Pending"}</div>
+              )}
             </div>
 
             <div>
@@ -1528,21 +1682,23 @@ Controlled Document - Published for all Course Staff and Auditors
               </ol>
             </div>
 
-            {/* Audit History Timeline */}
-            <div>
-              <strong style={{ fontSize: "13px", display: "block", marginBottom: "6px" }}>Workflow Audit History:</strong>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {(selectedMRM.timeline || []).map((tl, i) => (
-                  <div key={i} style={{ padding: "6px 10px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <strong style={{ color: "#1e40af" }}>{tl.action}</strong>
-                      <span style={{ color: "#94a3b8" }}>{tl.timestamp}</span>
+            {/* Workflow Audit History: Only visible to QMS Coordinator, Trust Head, and Auditor */}
+            {!isCourseCoordinator && (
+              <div>
+                <strong style={{ fontSize: "13px", display: "block", marginBottom: "6px" }}>Workflow Audit History:</strong>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {(selectedMRM.timeline || []).map((tl, i) => (
+                    <div key={i} style={{ padding: "6px 10px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "12px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <strong style={{ color: "#1e40af" }}>{tl.action}</strong>
+                        <span style={{ color: "#94a3b8" }}>{tl.timestamp}</span>
+                      </div>
+                      <div style={{ color: "#475569" }}>{tl.actor}: {tl.details}</div>
                     </div>
-                    <div style={{ color: "#475569" }}>{tl.actor}: {tl.details}</div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end" }}>
               <button

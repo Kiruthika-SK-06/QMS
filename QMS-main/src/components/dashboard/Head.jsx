@@ -10,7 +10,9 @@ import {
   CalendarCheck,
   Check,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  ClipboardCheck,
+  FileCheck2
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 
@@ -86,7 +88,10 @@ const timelineData = [
 ];
 
 export default function Head() {
-  const { headOverview, processes, mrmList, approveMRM } = useApp();
+  const { headOverview, processes, mrmList, auditList = [], approveMRM, currentUser } = useApp();
+  const isAuditor = currentUser?.role === "auditor";
+  const isTrustHead = currentUser?.role === "Head";
+
   const list = headOverview?.processData || (processes?.length ? processes : processData);
   const timeline = headOverview?.timelineData || timelineData;
 
@@ -99,6 +104,13 @@ export default function Head() {
     (m) => m.status === "Pending Trust Head Approval" || m.status === "Submitted for Approval"
   );
 
+  // Trust Head: audits awaiting schedule ratification
+  const pendingAuditApprovals = (auditList || []).filter((a) => a.stage === 2);
+
+  // Auditor: audits with schedule shared, ready for inspection
+  const auditsAwaitingNoticing = (auditList || []).filter((a) => a.stage === 3);
+  const publishedMRMs = (mrmList || []).filter((m) => m.momFile || m.status === "MoM Uploaded" || m.status === "Notification Sent");
+
   const overallProgress = Math.round(
     list.reduce((total, process) => total + (process.progress || 0), 0) / (list.length || 1)
   );
@@ -108,27 +120,95 @@ export default function Head() {
       {/* Page Intro */}
       <div className="page-intro">
         <div>
-          <span className="eyebrow">TRUST EXECUTIVE OVERVIEW</span>
-          <h1>Trust Head Executive Overview</h1>
+          <span className="eyebrow">{isAuditor ? "INTERNAL QUALITY AUDIT OVERSIGHT" : "TRUST EXECUTIVE OVERVIEW"}</span>
+          <h1>{isAuditor ? "Auditor Quality & Compliance Oversight" : "Trust Head Executive Overview"}</h1>
           <p>
-            Monitor Trust-wide quality objectives, academic process performance, and Management Review Meeting (MRM) approvals.
+            {isAuditor
+              ? "Review academic process performance, verified non-conformances, and published Management Review Meetings."
+              : "Monitor Trust-wide quality objectives, academic process performance, and Management Review Meeting (MRM) approvals."}
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          {isTrustHead && (
+            <NavLink
+              to="/internal-audit"
+              className={pendingAuditApprovals.length > 0 ? "primary-button btn-blue" : "secondary-button"}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <ShieldCheck size={16} />
+              <span>Internal Audits {pendingAuditApprovals.length > 0 && `(${pendingAuditApprovals.length} Pending)`}</span>
+            </NavLink>
+          )}
           <NavLink
-            to="/mrm"
+            to={isAuditor ? "/internal-audit" : "/mrm"}
             className="primary-button btn-blue"
             style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
           >
             <CalendarCheck size={16} />
-            <span>Review MRM Meetings</span>
+            <span>{isAuditor ? "Open Internal Audits" : "Review MRM Meetings"}</span>
           </NavLink>
         </div>
       </div>
 
-      {/* Pending MRM Approval Banner */}
-      {pendingApprovalMRMs.length > 0 && (
+      {/* Trust Head Pending Audit Approval Banner */}
+      {isTrustHead && pendingAuditApprovals.length > 0 && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "16px 20px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px",
+            boxShadow: "0 2px 6px rgba(29, 78, 216, 0.08)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: "#dbeafe",
+                color: "#1d4ed8",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}
+            >
+              <CalendarCheck size={20} />
+            </div>
+            <div>
+              <strong style={{ display: "block", color: "#1e40af", fontSize: "15px" }}>
+                {pendingAuditApprovals.length} Internal Audit Schedule{pendingAuditApprovals.length > 1 ? "s" : ""} Awaiting Your Approval
+              </strong>
+              <span style={{ color: "#2563eb", fontSize: "13px" }}>
+                QMS Coordinator scheduled "{pendingAuditApprovals[0]?.process}" ({pendingAuditApprovals[0]?.id}) for {pendingAuditApprovals[0]?.scheduledDate}. Please confirm schedule.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "8px" }}>
+            <NavLink
+              to="/internal-audit"
+              className="primary-button btn-blue"
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <ShieldCheck size={16} />
+              <span>Review & Confirm Schedule</span>
+            </NavLink>
+          </div>
+        </div>
+      )}
+
+      {/* Trust Head Pending MRM Approval Banner */}
+      {isTrustHead && pendingApprovalMRMs.length > 0 && (
         <div
           style={{
             marginBottom: "20px",
@@ -164,7 +244,7 @@ export default function Head() {
                 {pendingApprovalMRMs.length} MRM Meeting MoM Awaiting Your Formal Approval
               </strong>
               <span style={{ color: "#b45309", fontSize: "13px" }}>
-                Course Coordinator submitted "{pendingApprovalMRMs[0]?.title}" Minutes of Meeting for Trust Head sign-off.
+                QMS Coordinator submitted "{pendingApprovalMRMs[0]?.title}" for Trust Head ratification and sign-off.
               </span>
             </div>
           </div>
@@ -182,12 +262,73 @@ export default function Head() {
         </div>
       )}
 
+      {/* Internal Auditor Inspection Banner */}
+      {isAuditor && auditsAwaitingNoticing.length > 0 && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "16px 20px",
+            background: "#f0fdf4",
+            border: "1px solid #bbf7d0",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: "#dcfce7",
+                color: "#166534",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}
+            >
+              <ClipboardCheck size={20} />
+            </div>
+            <div>
+              <strong style={{ display: "block", color: "#166534", fontSize: "15px" }}>
+                {auditsAwaitingNoticing.length} Confirmed Internal Audit{auditsAwaitingNoticing.length > 1 ? "s" : ""} Ready for Inspection
+              </strong>
+              <span style={{ color: "#15803d", fontSize: "13px" }}>
+                Audit schedule confirmed by Trust Head. Conduct audit inspection and submit Noticing Sheets.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "8px" }}>
+            <NavLink
+              to="/internal-audit"
+              className="primary-button btn-green"
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <ClipboardCheck size={16} />
+              <span>Conduct Audit & Submit Sheet</span>
+            </NavLink>
+          </div>
+        </div>
+      )}
+
       {/* Summary Statistics */}
       <div className="stats-grid">
         <StatCard label="Total Processes" value={totalProcesses} icon={Layers} tone="blue" />
         <StatCard label="Completed" value={completedProcesses} icon={CheckCircle2} tone="green" />
         <StatCard label="In Progress" value={inProgressProcesses} icon={Clock3} tone="yellow" hint="Currently active" />
-        <StatCard label="MRM Reviews" value={mrmList?.length || 3} icon={CalendarCheck} tone="blue" hint="Review meetings" />
+        <StatCard
+          label={isAuditor ? "Published MRMs" : "MRM Reviews"}
+          value={isAuditor ? publishedMRMs.length : (mrmList?.length || 3)}
+          icon={CalendarCheck}
+          tone="blue"
+          hint={isAuditor ? "Official minutes" : "Review meetings"}
+        />
       </div>
 
       {/* Overall Progress */}

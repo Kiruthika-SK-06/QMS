@@ -892,6 +892,14 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
   min-width: 0;
   flex: 1;
   box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.page-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .page-intro {
@@ -2041,8 +2049,14 @@ textarea:focus {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  background: rgba(4, 28, 48, 0.55);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background: rgba(4, 28, 48, 0.6);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
@@ -2054,16 +2068,17 @@ textarea:focus {
 }
 
 .modal {
-  width: min(520px, 94vw);
-  max-height: calc(100vh - 48px);
+  width: min(580px, 94vw);
+  max-height: min(88vh, 600px);
   overflow-y: auto;
   background: white;
   border-radius: var(--radius-md);
-  padding: 18px 20px;
-  box-shadow: 0 20px 45px rgba(4, 28, 48, 0.22), 0 0 0 1px rgba(11, 52, 87, 0.08);
-  animation: modalPop 200ms var(--ease) both;
+  padding: 18px 22px;
+  box-shadow: 0 24px 60px rgba(4, 28, 48, 0.28), 0 0 0 1px rgba(11, 52, 87, 0.08);
+  animation: modalPop 180ms var(--ease) both;
   box-sizing: border-box;
   margin: auto;
+  position: relative;
 }
 
 .modal-header {
@@ -3365,6 +3380,7 @@ textarea:focus {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .internal-audit-page * {

@@ -8,6 +8,6 @@ export default function Dashboard() {
   const { currentUser } = useApp();
   if (!currentUser) return null;
   if (currentUser.role === "owner") return <ProcessOwnerDashboard />;
-  if (currentUser.role === "Head") return <Head />;
+  if (currentUser.role === "Head" || currentUser.role === "auditor") return <Head />;
   return <QMGroupDashboard />;
 }

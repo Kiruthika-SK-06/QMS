@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { auditData } from "../data/audits.js";
 import { notificationsData } from "../data/notifications.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
@@ -24,10 +25,41 @@ const pushNotification = (title, text, targetRole = "all") => {
   return notif;
 };
 
-// GET /api/audit
+// GET /api/audit (Role-filtered)
 export const getAllAudits = (req, res) => {
   try {
-    const sorted = [...auditData].sort((a, b) => b.id.localeCompare(a.id));
+    const { role } = req.query;
+    let userRole = role;
+    let userName = req.user?.name;
+
+    if (!userRole && req.headers["authorization"]) {
+      try {
+        const token = req.headers["authorization"].split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026");
+        if (decoded) {
+          userRole = decoded.role;
+          userName = decoded.name;
+        }
+      } catch (e) {}
+    }
+    userRole = req.user?.role || userRole;
+
+    let list = [...auditData];
+
+    if (userRole === "owner") {
+      // Course coordinator only sees their own process once schedule is shared by QMS (stage >= 3)
+      list = list.filter(
+        (a) =>
+          a.stage >= 3 &&
+          ((a.process && a.process.toLowerCase().includes("course")) ||
+            (userName && a.internalAuditee?.name && a.internalAuditee.name.toLowerCase().includes(userName.toLowerCase())))
+      );
+    } else if (userRole === "auditor") {
+      // Auditor conducts audits once schedule has been officially shared by QMS (stage >= 3)
+      list = list.filter((a) => a.stage >= 3);
+    }
+
+    const sorted = list.sort((a, b) => b.id.localeCompare(a.id));
     res.json({ success: true, count: sorted.length, data: sorted });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -47,7 +79,7 @@ export const getAuditById = (req, res) => {
   }
 };
 
-// POST /api/audit - Schedule New Internal Audit & Automatically Share (QMS Coordinator)
+// POST /api/audit - Schedule New Internal Audit (Submitted to Trust Head for Approval)
 export const createAudit = (req, res) => {
   try {
     const {
@@ -122,22 +154,12 @@ export const createAudit = (req, res) => {
       scope: scope || `Verification of standard operating procedures, documentation records, and ISO 9001:2015 Clause compliance for ${process}.`,
       venue: venue || "Academic Section & QMS Portal",
       notes: notes || "",
-      // Submitting immediately shares with Trust Head, Auditor, and Auditees
-      status: "Awaiting Confirmation",
+      // Stage 2: Awaiting Trust Head Approval
+      status: "Awaiting Trust Head Approval",
       stage: 2,
-      stageLabel: "Schedule Shared (Awaiting Trust Head Confirmation)",
+      stageLabel: "Awaiting Trust Head Approval",
 
-      scheduleShared: {
-        shared: true,
-        sharedAt: formatNow(),
-        sharedBy: `${scheduledByName} (${scheduledByRole})`,
-        docTitle: `Internal_Audit_Schedule_${id}.pdf`,
-        recipients: [
-          { role: "Course Coordinator (Auditee)", name: auditeeName, email: `${auditeeName.toLowerCase().replace(/\s+/g, ".")}@cdac.in` },
-          { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
-          { role: "Internal Auditor", name: auditorName, email: `${auditorName.toLowerCase().replace(/\s+/g, ".")}@cdac.in` }
-        ]
-      },
+      scheduleShared: null,
       trustHeadConfirmation: null,
       noticingSheet: null,
       ncDocs: null,
@@ -146,35 +168,28 @@ export const createAudit = (req, res) => {
 
       timeline: [
         {
-          action: "Audit Scheduled & Shared",
+          action: "Audit Scheduled",
           actor: `${scheduledByName} (${scheduledByRole})`,
           timestamp: formatNow(),
-          details: `Scheduled ${process} audit for ${scheduledDateStr}. Details automatically shared with Trust Head, Auditor (${auditorName}), and Auditee (${auditeeName}).`
+          details: `Scheduled ${process} audit for ${scheduledDateStr}. Automatically submitted to Trust Head for formal ratification & approval.`
         }
       ]
     };
 
     auditData.unshift(newAudit);
 
-    // Push automatic notification to Trust Head
+    // Push automatic notification to Trust Head (Action Required: Confirm Schedule)
     pushNotification(
-      "New Internal Audit Scheduled - Confirmation Required",
-      `Internal Audit (${newAudit.id}) for ${newAudit.process} scheduled for ${scheduledDateStr}. Please confirm the schedule.`,
+      "New Internal Audit Scheduled - Approval Required",
+      `Internal Audit (${newAudit.id}) for ${newAudit.process} scheduled for ${scheduledDateStr}. Please review and approve the schedule.`,
       "Head"
     );
 
-    // Push automatic notification to Auditor
+    // Push notification to QMS Coordinator
     pushNotification(
-      "Internal Audit Assignment",
-      `You have been assigned as Internal Auditor for ${newAudit.process} (${newAudit.id}) scheduled for ${scheduledDateStr}.`,
-      "auditor"
-    );
-
-    // Push automatic notification to Course Coordinator (Auditee)
-    pushNotification(
-      "Internal Audit Schedule Announced",
-      `Internal Audit (${newAudit.id}) for ${newAudit.process} scheduled for ${scheduledDateStr}. Auditor: ${auditorName}.`,
-      "owner"
+      "Internal Audit Scheduled",
+      `Internal Audit (${newAudit.id}) for ${newAudit.process} scheduled. Submitted to Trust Head for approval.`,
+      "qm"
     );
 
     broadcastRealtimeEvent("audit_scheduled", {
@@ -186,7 +201,7 @@ export const createAudit = (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: `Internal Audit ${newAudit.id} scheduled and automatically shared with Trust Head, Internal Auditor, and Course Coordinators.`,
+      message: `Internal Audit ${newAudit.id} scheduled and submitted to Trust Head for approval.`,
       data: newAudit
     });
   } catch (error) {
@@ -194,22 +209,7 @@ export const createAudit = (req, res) => {
   }
 };
 
-// POST /api/audit/:id/share-schedule
-export const shareSchedule = (req, res) => {
-  try {
-    const audit = auditData.find((a) => a.id === req.params.id);
-    if (!audit) {
-      return res.status(404).json({ success: false, message: "Internal Audit not found" });
-    }
-    audit.status = "Awaiting Confirmation";
-    audit.stage = 2;
-    res.json({ success: true, message: "Schedule shared with stakeholders", data: audit });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// POST /api/audit/:id/confirm-schedule - Trust Head confirms audit schedule
+// POST /api/audit/:id/confirm-schedule - Trust Head approves audit schedule
 export const confirmSchedule = (req, res) => {
   try {
     const audit = auditData.find((a) => a.id === req.params.id);
@@ -230,29 +230,22 @@ export const confirmSchedule = (req, res) => {
       remarks
     };
 
-    audit.status = "Schedule Confirmed";
+    audit.status = "Approved by Trust Head";
     audit.stage = 2.5;
-    audit.stageLabel = "Schedule Confirmed (Audit In Progress)";
+    audit.stageLabel = "Approved by Trust Head (Pending QMS Distribution)";
 
     audit.timeline.push({
-      action: "Schedule Confirmed by Trust Head",
+      action: "Schedule Approved by Trust Head",
       actor: `${userName} (${userRole})`,
       timestamp: formatNow(),
-      details: `Trust Head confirmed the audit schedule. Automated confirmation message dispatched to QMS Coordinator.`
+      details: `Trust Head ratified the audit schedule. Automated approval notification dispatched to QMS Coordinator to distribute schedule.`
     });
 
-    // Automatically send confirmation message / notification to QMS Coordinator
+    // Automatically send message / notification to QMS Coordinator ONLY
     pushNotification(
-      "Audit Schedule Confirmed by Trust Head",
-      `Trust Head (${userName}) has confirmed the audit schedule for ${audit.process} (${audit.id}). Auditing may proceed.`,
+      "Audit Schedule Approved by Trust Head",
+      `Trust Head (${userName}) has approved the audit schedule for ${audit.process} (${audit.id}). You can now share the schedule with Course Coordinators, Trust Head, and Internal Auditors.`,
       "qm"
-    );
-
-    // Also notify Internal Auditor that schedule is confirmed and ready
-    pushNotification(
-      "Audit Schedule Confirmed - Ready for Execution",
-      `Trust Head confirmed schedule for ${audit.process} (${audit.id}). You can conduct the audit and submit the Noticing Sheet.`,
-      "auditor"
     );
 
     broadcastRealtimeEvent("audit_schedule_confirmed", {
@@ -263,7 +256,85 @@ export const confirmSchedule = (req, res) => {
 
     res.json({
       success: true,
-      message: "Audit schedule confirmed by Trust Head. Confirmation notification automatically sent to QMS Coordinator.",
+      message: "Audit schedule approved by Trust Head. Notification automatically dispatched to QMS Coordinator.",
+      data: audit
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/audit/:id/share-schedule - QMS Coordinator shares schedule to Course Coordinators, Trust Head & Auditors
+export const shareSchedule = (req, res) => {
+  try {
+    const audit = auditData.find((a) => a.id === req.params.id);
+    if (!audit) {
+      return res.status(404).json({ success: false, message: "Internal Audit not found" });
+    }
+
+    const userName = req.user?.name || "Rahul Kumar";
+    const userRole = req.user?.roleTitle || "QMS Coordinator";
+
+    audit.scheduleShared = {
+      shared: true,
+      sharedAt: formatNow(),
+      sharedBy: `${userName} (${userRole})`,
+      docTitle: `Internal_Audit_Schedule_${audit.id}.pdf`,
+      recipients: [
+        { role: "Course Coordinator (Auditee)", name: audit.internalAuditee?.name, email: audit.internalAuditee?.email },
+        { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
+        { role: "Internal Auditor", name: audit.internalAuditor?.name, email: audit.internalAuditor?.email }
+      ]
+    };
+
+    audit.status = "Schedule Dispatched";
+    audit.stage = 3;
+    audit.stageLabel = "Schedule Dispatched (Audit in Progress)";
+
+    audit.timeline.push({
+      action: "Schedule Dispatched to All Stakeholders",
+      actor: `${userName} (${userRole})`,
+      timestamp: formatNow(),
+      details: `QMS Coordinator officially dispatched confirmed audit schedule to Course Coordinator (${audit.internalAuditee?.name}), Trust Head (Anita Rao), and Internal Auditor (${audit.internalAuditor?.name}).`
+    });
+
+    // Notify Course Coordinator (Auditee)
+    pushNotification(
+      "Internal Audit Schedule Announced",
+      `Internal Audit (${audit.id}) for ${audit.process} scheduled for ${audit.scheduledDate}. Auditor: ${audit.internalAuditor?.name}.`,
+      "owner"
+    );
+
+    // Notify Internal Auditor (Now they can conduct the audit and submit sheet to QMS)
+    pushNotification(
+      "Internal Audit Assignment - Ready for Execution",
+      `Audit schedule for ${audit.process} (${audit.id}) has been shared. Please conduct audit inspection and submit Noticing Sheet to QMS Coordinator.`,
+      "auditor"
+    );
+
+    // Notify Trust Head
+    pushNotification(
+      "Audit Schedule Dispatched",
+      `Internal Audit (${audit.id}) schedule has been dispatched to all stakeholders.`,
+      "Head"
+    );
+
+    // Notify QMS
+    pushNotification(
+      "Audit Schedule Dispatched to All",
+      `Schedule for ${audit.process} (${audit.id}) shared with Course Coordinators, Trust Head, and Internal Auditors.`,
+      "qm"
+    );
+
+    broadcastRealtimeEvent("audit_schedule_shared", {
+      auditId: audit.id,
+      title: audit.title,
+      sharedBy: userName
+    });
+
+    res.json({
+      success: true,
+      message: `Audit schedule for ${audit.id} successfully shared with Course Coordinators, Trust Head, and Internal Auditors.`,
       data: audit
     });
   } catch (error) {
@@ -311,17 +382,17 @@ export const submitNoticingSheet = (req, res) => {
     };
 
     audit.status = "Noticing Sheet Submitted";
-    audit.stage = 3;
+    audit.stage = 4;
     audit.stageLabel = "Noticing Sheet Submitted (Under QMS Review)";
 
     audit.timeline.push({
       action: "Noticing Sheet Submitted",
       actor: `${userName} (${userRole})`,
       timestamp: formatNow(),
-      details: `Internal Auditor submitted Noticing Sheet (${audit.noticingSheet.sheetNo}) to QMS Coordinator.`
+      details: `Internal Auditor submitted Noticing Sheet (${audit.noticingSheet.sheetNo}) to QMS Coordinator only.`
     });
 
-    // Automatically send notification to QMS Coordinator
+    // Automatically send notification to QMS Coordinator ONLY
     pushNotification(
       "Noticing Sheet Submitted by Auditor",
       `Internal Auditor (${userName}) submitted Noticing Sheet for ${audit.process} (${audit.id}). Please review and share NC Docs.`,
@@ -369,8 +440,8 @@ export const shareNCDocs = (req, res) => {
     };
 
     audit.status = "NC Docs Shared";
-    audit.stage = 4;
-    audit.stageLabel = "NC Docs Shared (Action Required by Auditee)";
+    audit.stage = 5;
+    audit.stageLabel = "NC Docs Shared (Action Required: Auditee CAPA)";
 
     audit.timeline.push({
       action: "NC Docs Shared",
@@ -441,8 +512,8 @@ export const auditeeClose = (req, res) => {
     };
 
     audit.status = "Closed by Auditee";
-    audit.stage = 5;
-    audit.stageLabel = "Closed by Auditee (Pending QMS Final Close)";
+    audit.stage = 6;
+    audit.stageLabel = "Closed by Auditee (Pending QMS Final Sign-off)";
 
     audit.timeline.push({
       action: "Auditee Closure Submitted",
@@ -451,7 +522,7 @@ export const auditeeClose = (req, res) => {
       details: `Auditee submitted Corrective Action Plan & Evidence. Passed to QMS Coordinator for final close.`
     });
 
-    // Notify QMS Coordinator that auditee has closed and it is ready for final sign-off
+    // Notify QMS Coordinator ONLY that auditee has closed and it is ready for final sign-off
     pushNotification(
       "Auditee Corrective Action Submitted - Final Close Ready",
       `Auditee (${userName}) has submitted corrective actions for ${audit.process} (${audit.id}). Please review and close the audit.`,
@@ -494,8 +565,8 @@ export const finalCloseAudit = (req, res) => {
       completedAt: formatNow()
     };
 
-    audit.status = "Closed";
-    audit.stage = 6;
+    audit.status = "Completed";
+    audit.stage = 7;
     audit.stageLabel = "Completed / Closed";
 
     audit.timeline.push({
@@ -508,7 +579,7 @@ export const finalCloseAudit = (req, res) => {
     // Notify all stakeholders that the audit is officially completed
     pushNotification(
       "Internal Audit Completed & Officially Closed",
-      `Internal Audit (${audit.id}) for ${audit.process} has been fully completed and closed by QMS Coordinator (${userName}).`,
+      `Internal Audit (${audit.id}) for ${audit.process} has been fully completed and closed by QMS Coordinator (${userName}). The entire audit workflow is complete.`,
       "all"
     );
 
@@ -550,7 +621,7 @@ AUDIT TITLE:           ${audit.title}
 PROCESS AUDITED:       ${audit.process}
 SCHEDULED DATES:       ${audit.scheduledDate}
 VENUE / MODE:          ${audit.venue}
-CURRENT STAGE:         Stage ${audit.stage}/6 - ${audit.stageLabel}
+CURRENT STAGE:         Stage ${audit.stage}/7 - ${audit.stageLabel}
 OVERALL STATUS:        ${audit.status.toUpperCase()}
 
 --------------------------------------------------------------------------------

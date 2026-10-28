@@ -37,6 +37,7 @@ export default function QMGroupDashboard() {
     employees,
     usersList,
     mrmList,
+    auditList = [],
     shareMRM,
     downloadDocument,
     deleteDocument
@@ -62,6 +63,10 @@ export default function QMGroupDashboard() {
       (m.status === "Approved by Trust Head" || m.status === "Approved" || m.trustHeadApproval?.approved) &&
       !m.sharedWithAll
   );
+
+  const readyToShareAudits = (auditList || []).filter((a) => a.stage === 2.5);
+  const pendingNCAudits = (auditList || []).filter((a) => a.stage === 4);
+  const readyToCloseAudits = (auditList || []).filter((a) => a.stage === 6);
 
   const activeTasks = tasks.filter((t) => t.status === "In Progress").length;
   const completedTasks = tasks.filter((t) => t.status === "Completed").length;
@@ -100,6 +105,13 @@ export default function QMGroupDashboard() {
               <UserCheck size={16} /> User Management
             </NavLink>
             <NavLink
+              to="/internal-audit"
+              className="secondary-button"
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <CalendarCheck size={16} /> Internal Audit {readyToShareAudits.length > 0 && `(${readyToShareAudits.length} Ready)`}
+            </NavLink>
+            <NavLink
               to="/mrm"
               className="primary-button"
               style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
@@ -109,6 +121,62 @@ export default function QMGroupDashboard() {
           </div>
         }
       />
+
+      {/* Action Banner for Ready-to-Share Internal Audit Schedules */}
+      {readyToShareAudits.length > 0 && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "16px 20px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px",
+            boxShadow: "0 2px 6px rgba(29, 78, 216, 0.08)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: "#dbeafe",
+                color: "#1d4ed8",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}
+            >
+              <Share2 size={20} />
+            </div>
+            <div>
+              <strong style={{ display: "block", color: "#1e40af", fontSize: "15px" }}>
+                {readyToShareAudits.length} Audit Schedule{readyToShareAudits.length > 1 ? "s" : ""} Approved by Trust Head & Ready to Share!
+              </strong>
+              <span style={{ color: "#2563eb", fontSize: "13px" }}>
+                Trust Head Anita Rao approved the schedule for "{readyToShareAudits[0]?.process}" ({readyToShareAudits[0]?.id}). Please share the schedule with Course Coordinators and Auditors.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "8px" }}>
+            <NavLink
+              to="/internal-audit"
+              className="primary-button btn-blue"
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <Share2 size={16} />
+              <span>Share Schedule in Internal Audit</span>
+            </NavLink>
+          </div>
+        </div>
+      )}
 
       {/* Action Banner for Ready-to-Share MRM */}
       {readyToShareMRMs.length > 0 && (

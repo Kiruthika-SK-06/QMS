@@ -23,11 +23,38 @@ const formatNow = () =>
     minute: "2-digit"
   });
 
-// GET /api/mrm - List all MRM meetings
+// GET /api/mrm - List all MRM meetings (Role-filtered)
 export const getAllMRMs = (req, res) => {
   try {
-    const { status, stage } = req.query;
+    const { status, stage, role } = req.query;
+    const userRole = req.user?.role || role;
     let list = [...mrmData];
+
+    // Course Coordinator rule: only notified or MoM published meetings
+    if (userRole === "owner") {
+      list = list.filter(
+        (m) =>
+          m.emailNotification?.sent ||
+          m.status === "Notification Sent" ||
+          m.status === "Shared" ||
+          m.sharedWithAll ||
+          m.momFile ||
+          m.status === "MoM Uploaded" ||
+          (m.stage && m.stage >= 4)
+      );
+    } else if (userRole === "auditor") {
+      // Internal Auditor rule: show approved, scheduled, or MoM published meetings (skip draft stages)
+      list = list.filter(
+        (m) =>
+          m.status === "Approved by Trust Head" ||
+          m.status === "Approved" ||
+          m.trustHeadApproval?.approved ||
+          m.approvals?.teamHead?.status === "Approved" ||
+          m.emailNotification?.sent ||
+          m.momFile ||
+          (m.stage && m.stage >= 3)
+      );
+    }
 
     if (status) {
       list = list.filter((m) => m.status.toLowerCase() === status.toLowerCase());
