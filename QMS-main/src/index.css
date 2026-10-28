@@ -3463,6 +3463,23 @@ textarea:focus {
   margin-bottom: 24px;
 }
 
+.overview-cards-grid.four-col {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 1240px) {
+  .overview-cards-grid.four-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .overview-cards-grid.four-col {
+    grid-template-columns: 1fr;
+  }
+}
+
 .overview-context-card {
   background: var(--surface);
   border: 1px solid var(--line);

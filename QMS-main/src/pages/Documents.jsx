@@ -30,13 +30,25 @@ export default function Documents() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filtered = (documents || []).filter(
-    (document) =>
-      (type === "All" || document.type === type) &&
-      (document.name.toLowerCase().includes(query.toLowerCase()) ||
-        document.id.toLowerCase().includes(query.toLowerCase()) ||
-        document.process.toLowerCase().includes(query.toLowerCase()))
-  );
+  const isReviewer = currentUser?.role === "qm" || currentUser?.role === "Head";
+  const tabs = isReviewer
+    ? ["All", "Under Review", "Forms", "Templates", "Procedures"]
+    : ["All", "Forms", "Templates", "Procedures"];
+
+  const filtered = (documents || []).filter((document) => {
+    const matchesType =
+      type === "All" ||
+      (type === "Under Review"
+        ? document.status === "Under Review" || document.status === "Changes Requested" || document.status === "Draft"
+        : document.type === type);
+
+    const matchesQuery =
+      document.name.toLowerCase().includes(query.toLowerCase()) ||
+      document.id.toLowerCase().includes(query.toLowerCase()) ||
+      document.process.toLowerCase().includes(query.toLowerCase());
+
+    return matchesType && matchesQuery;
+  });
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
@@ -63,7 +75,7 @@ export default function Documents() {
       <PageIntro
         eyebrow="Document control"
         title="Document library"
-        description="A single controlled view of Forms, Templates and Procedures. Previous versions remain available."
+        description="A single controlled view of Forms, Templates and Procedures. Review and manage lifecycle states directly."
         action={
           currentUser && (
             <button className="primary-button btn-blue" onClick={() => setShowUploadModal(true)}>
@@ -84,7 +96,7 @@ export default function Documents() {
           />
         </label>
         <div className="tabs">
-          {["All", "Forms", "Templates", "Procedures"].map((item) => (
+          {tabs.map((item) => (
             <button
               className={type === item ? "tab active" : "tab"}
               onClick={() => setType(item)}

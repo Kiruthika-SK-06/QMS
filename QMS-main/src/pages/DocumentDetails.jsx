@@ -60,18 +60,20 @@ export default function DocumentDetails() {
                   <Plus size={16} />
                   <span>Create new version</span>
                 </button>
-                <button
-                  className="primary-button btn-red"
-                  onClick={() => setShowDeleteModal(true)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px"
-                  }}
-                >
-                  <Trash2 size={16} />
-                  <span>Delete</span>
-                </button>
+                {(currentUser?.role === "qm" || currentUser?.role === "Head") && (
+                  <button
+                    className="primary-button btn-red"
+                    onClick={() => setShowDeleteModal(true)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    <Trash2 size={16} />
+                    <span>Delete</span>
+                  </button>
+                )}
               </>
             )}
           </div>

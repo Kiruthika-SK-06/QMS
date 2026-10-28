@@ -5,16 +5,17 @@ import {
   CalendarCheck,
   Check,
   FileText,
+  ClipboardList,
+  ShieldCheck,
   ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
-import ActivityCard from "./ActivityCard";
-import ProcessTable from "../tables/ProcessTable";
+import StatusBadge from "../common/StatusBadge";
 
 export default function ProcessOwnerDashboard() {
-  const { documents = [], processes = [], mrmList = [] } = useApp();
+  const { documents = [], processes = [], mrmList = [], tasks = [], auditList = [] } = useApp();
 
   const awaitingReview = documents.filter(
     (d) => d.status === "Under Review" || d.status === "Changes Requested"
@@ -151,89 +152,116 @@ export default function ProcessOwnerDashboard() {
         </NavLink>
       </div>
 
-      {/* Row: My Process and Scheduled MRM */}
+      {/* Row: Tasks and Internal Audit with brief details */}
       <div className="dashboard-two-col">
-        {/* Left: My Processes */}
+        {/* Left: Tasks */}
         <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
           <SectionHeader
-            title="My Processes"
-            action={<NavLink className="text-link" to="/processes">View all processes →</NavLink>}
-          />
-          <div style={{ flex: 1 }}>
-            <ProcessTable items={processes.slice(0, 4)} />
-          </div>
-        </section>
-
-        {/* Right: Scheduled MRMs */}
-        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
-          <SectionHeader
-            title="Scheduled MRM"
-            action={<NavLink className="text-link" to="/mrm">View all MRMs →</NavLink>}
+            title="Assigned Tasks"
+            action={<NavLink className="text-link" to="/tasks">View all tasks →</NavLink>}
           />
           <div className="table-wrap" style={{ flex: 1 }}>
             <table>
               <thead>
                 <tr>
-                  <th>Meeting Title</th>
-                  <th>Scheduled Date</th>
-                  <th>MoM Document</th>
+                  <th>Task</th>
+                  <th>Process / Scope</th>
+                  <th>Due Date</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {accessibleMRMs.length === 0 ? (
+                {tasks.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
-                      No review meetings currently scheduled for course coordinators.
+                      No tasks currently assigned.
                     </td>
                   </tr>
                 ) : (
-                  accessibleMRMs.slice(0, 4).map((mrm) => {
-                    const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
-                    return (
-                      <tr key={mrm.id}>
-                        <td>
-                          <NavLink to="/mrm" className="table-link">
-                            <strong>{mrm.title}</strong>
-                          </NavLink>
-                        </td>
-                        <td>{mrm.scheduledDate}</td>
-                        <td>
-                          {hasMoM ? (
-                            <span style={{ color: "var(--status-green)", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                              <Check size={14} /> MoM Published
-                            </span>
-                          ) : (
-                            <span style={{ color: "var(--muted)", fontSize: "12px" }}>Pending Meeting</span>
-                          )}
-                        </td>
-                        <td>
-                          <span
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "9999px",
-                              fontSize: "11px",
-                              fontWeight: "600",
-                              background: hasMoM ? "var(--status-green-bg)" : "var(--status-blue-bg)",
-                              color: hasMoM ? "var(--status-green)" : "var(--status-blue)",
-                              border: `1px solid ${hasMoM ? "var(--status-green-border)" : "var(--status-blue-border)"}`
-                            }}
-                          >
-                            {hasMoM ? "Published" : "Scheduled"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  tasks.slice(0, 4).map((task) => (
+                    <tr key={task.id}>
+                      <td>
+                        <NavLink to="/tasks" className="table-link">
+                          <strong>{task.title}</strong>
+                          <small>{task.id}</small>
+                        </NavLink>
+                      </td>
+                      <td>{task.process || task.document || "General"}</td>
+                      <td>{task.due || "Pending"}</td>
+                      <td>
+                        <StatusBadge status={task.status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Right: Internal Audit */}
+        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+          <SectionHeader
+            title="Internal Audit"
+            action={<NavLink className="text-link" to="/internal-audit">Open Internal Audit →</NavLink>}
+          />
+          <div className="table-wrap" style={{ flex: 1 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Audit Ref</th>
+                  <th>Process</th>
+                  <th>Auditor / Dates</th>
+                  <th>Stage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditList.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
+                      No internal audits currently scheduled.
+                    </td>
+                  </tr>
+                ) : (
+                  auditList.slice(0, 4).map((audit) => (
+                    <tr key={audit.id}>
+                      <td>
+                        <NavLink to="/internal-audit" className="table-link">
+                          <strong>{audit.id}</strong>
+                        </NavLink>
+                      </td>
+                      <td>
+                        <strong>{audit.process}</strong>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: "12px", color: "var(--ink-soft)", display: "block" }}>
+                          {audit.internalAuditor?.name || "Auditor Assigned"}
+                        </span>
+                        <small style={{ color: "var(--muted)" }}>{audit.scheduledDate}</small>
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "9999px",
+                            fontSize: "11px",
+                            fontWeight: "600",
+                            background: audit.stage >= 6 ? "var(--status-green-bg)" : "var(--status-blue-bg)",
+                            color: audit.stage >= 6 ? "var(--status-green)" : "var(--status-blue)",
+                            border: `1px solid ${audit.stage >= 6 ? "var(--status-green-border)" : "var(--status-blue-border)"}`
+                          }}
+                        >
+                          Stage {audit.stage}/7
+                        </span>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
         </section>
       </div>
-
-      {/* Recent Activity Timeline */}
-      <ActivityCard />
     </>
   );
 }

@@ -85,14 +85,28 @@ export default function TaskTable({ items = [] }) {
                       Open
                     </button>
                     {currentUser && (
-                      <button
-                        className="row-action"
-                        onClick={() => setEditingTask(task)}
-                        style={{ cursor: "pointer", color: "var(--navy)", fontWeight: "600" }}
-                        title="Edit task"
-                      >
-                        Edit
-                      </button>
+                      <>
+                        <button
+                          className="row-action"
+                          onClick={() => setEditingTask(task)}
+                          style={{ cursor: "pointer", color: "var(--navy)", fontWeight: "600" }}
+                          title="Edit task"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="row-action"
+                          onClick={async () => {
+                            if (window.confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                              await deleteTask(task.id);
+                            }
+                          }}
+                          style={{ cursor: "pointer", color: "var(--status-red)", fontWeight: "600" }}
+                          title="Delete task"
+                        >
+                          Delete
+                        </button>
+                      </>
                     )}
                   </div>
                 </td>

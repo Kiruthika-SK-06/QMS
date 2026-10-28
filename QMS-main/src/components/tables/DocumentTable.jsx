@@ -7,12 +7,17 @@ import TemplateEditModal from "../common/TemplateEditModal";
 import { useApp } from "../../context/AppContext";
 
 export default function DocumentTable({ items = [], review = false, onEdit, onDelete }) {
-  const { deleteDocument, currentUser } = useApp();
+  const { deleteDocument, updateDocumentStatus, currentUser } = useApp();
   const [editingDoc, setEditingDoc] = useState(null);
   const [docToDelete, setDocToDelete] = useState(null);
+  const [reviewingDoc, setReviewingDoc] = useState(null);
+  const [reviewComments, setReviewComments] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const canManage = currentUser?.role !== "employee";
+  const canEdit = currentUser?.role !== "employee" && currentUser?.role !== "auditor";
+  const canDelete = currentUser?.role === "qm" || currentUser?.role === "Head";
+  const canReview = currentUser?.role === "qm" || currentUser?.role === "Head";
 
   const handleConfirmDelete = async () => {
     if (!docToDelete) return;
@@ -56,62 +61,155 @@ export default function DocumentTable({ items = [], review = false, onEdit, onDe
             </tr>
           </thead>
           <tbody>
-            {items.map((document) => (
-              <tr key={document.id}>
-                <td>
-                  <NavLink className="table-link" to={`/documents/${document.id}`}>
-                    <strong>{document.name}</strong>
-                    <small>{document.id}</small>
-                  </NavLink>
-                </td>
-                <td>{document.type}</td>
-                <td>{document.process}</td>
-                <td>
-                  <b>v{document.version}</b>
-                </td>
-                <td>{document.updated}</td>
-                <td>
-                  <StatusBadge status={document.status} />
-                </td>
-                <td style={{ whiteSpace: "nowrap" }}>
-                  <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
-                    <NavLink
-                      className="row-action"
-                      to={review ? `/reviews?document=${document.id}` : `/documents/${document.id}`}
-                    >
-                      {review ? "Review" : "View"}
+            {items.map((document) => {
+              const isReviewable =
+                document.status === "Under Review" ||
+                document.status === "Changes Requested" ||
+                document.status === "Draft";
+
+              return (
+                <tr key={document.id}>
+                  <td>
+                    <NavLink className="table-link" to={`/documents/${document.id}`}>
+                      <strong>{document.name}</strong>
+                      <small>{document.id}</small>
                     </NavLink>
-
-                    {canManage && (
-                      <button
-                        type="button"
+                  </td>
+                  <td>{document.type}</td>
+                  <td>{document.process}</td>
+                  <td>
+                    <b>v{document.version}</b>
+                  </td>
+                  <td>{document.updated}</td>
+                  <td>
+                    <StatusBadge status={document.status} />
+                  </td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                      <NavLink
                         className="row-action"
-                        onClick={() => (onEdit ? onEdit(document) : setEditingDoc(document))}
-                        style={{ cursor: "pointer", color: "var(--navy)", fontWeight: "600" }}
-                        title="Edit specification & checklist"
+                        to={`/documents/${document.id}`}
                       >
-                        Edit
-                      </button>
-                    )}
+                        View
+                      </NavLink>
 
-                    {canManage && (
-                      <button
-                        type="button"
-                        className="row-action"
-                        onClick={() => setDocToDelete(document)}
-                        style={{ cursor: "pointer", color: "#ef4444" }}
-                        title={`Delete ${document.name}`}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {canReview && isReviewable && (
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => {
+                            setReviewingDoc(document);
+                            setReviewComments(document.reviewComments || "");
+                          }}
+                          style={{ cursor: "pointer", color: "var(--status-blue)", fontWeight: "600" }}
+                          title="Review and record approval decision"
+                        >
+                          Review
+                        </button>
+                      )}
+
+                      {canEdit && (
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => (onEdit ? onEdit(document) : setEditingDoc(document))}
+                          style={{ cursor: "pointer", color: "var(--navy)", fontWeight: "600" }}
+                          title="Edit specification & checklist"
+                        >
+                          Edit
+                        </button>
+                      )}
+
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => setDocToDelete(document)}
+                          style={{ cursor: "pointer", color: "#ef4444" }}
+                          title={`Delete ${document.name}`}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Review Document Decision Modal */}
+      {reviewingDoc && (
+        <Modal
+          title={`Review Document: ${reviewingDoc.name}`}
+          onClose={() => {
+            setReviewingDoc(null);
+            setReviewComments("");
+          }}
+        >
+          <div style={{ marginBottom: "16px" }}>
+            <p style={{ margin: "0 0 6px 0", fontSize: "13.5px", color: "var(--ink-soft)" }}>
+              <strong>Document ID:</strong> {reviewingDoc.id} &bull; <strong>Version:</strong> v{reviewingDoc.version}
+            </p>
+            <p style={{ margin: "0 0 12px 0", fontSize: "13.5px", color: "var(--ink-soft)" }}>
+              <strong>Process:</strong> {reviewingDoc.process} &bull; <strong>Owner:</strong> {reviewingDoc.owner}
+            </p>
+            <label style={{ display: "block", fontSize: "12.5px", fontWeight: "600", color: "var(--ink)", marginBottom: "6px" }}>
+              Quality Review Comments / Evaluation:
+            </label>
+            <textarea
+              rows={3}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--line)", fontSize: "13px", boxSizing: "border-box" }}
+              placeholder="Enter compliance evaluation remarks or change requirements..."
+              value={reviewComments}
+              onChange={(e) => setReviewComments(e.target.value)}
+            />
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={submittingReview}
+              onClick={async () => {
+                if (!reviewComments.trim()) {
+                  alert("Please provide comments explaining the requested changes.");
+                  return;
+                }
+                setSubmittingReview(true);
+                try {
+                  await updateDocumentStatus(reviewingDoc.id, "Changes Requested", reviewComments);
+                  setReviewingDoc(null);
+                  setReviewComments("");
+                } finally {
+                  setSubmittingReview(false);
+                }
+              }}
+              style={{ color: "var(--status-red)", borderColor: "var(--status-red-border)" }}
+            >
+              Request Changes
+            </button>
+            <button
+              type="button"
+              className="primary-button btn-green"
+              disabled={submittingReview}
+              onClick={async () => {
+                setSubmittingReview(true);
+                try {
+                  await updateDocumentStatus(reviewingDoc.id, "Approved", reviewComments || "Document reviewed and approved.");
+                  setReviewingDoc(null);
+                  setReviewComments("");
+                } finally {
+                  setSubmittingReview(false);
+                }
+              }}
+            >
+              Approve Document
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {/* Built-in fallback Edit Modal if onEdit wasn't provided by parent */}
       {!onEdit && editingDoc && (

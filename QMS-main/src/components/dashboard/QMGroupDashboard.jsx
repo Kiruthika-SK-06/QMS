@@ -6,13 +6,15 @@ import {
   Check,
   FileText,
   ShieldCheck,
+  UserCheck,
+  History,
   ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
+import StatusBadge from "../common/StatusBadge";
 import ActivityCard from "./ActivityCard";
-import ProcessTable from "../tables/ProcessTable";
 
 export default function QMGroupDashboard() {
   const {
@@ -41,6 +43,18 @@ export default function QMGroupDashboard() {
   const readyToShareAudits = (auditList || []).filter((a) => a.stage === 2.5);
   const readyToCloseAudits = (auditList || []).filter((a) => a.stage === 6);
 
+  // Flatten version audit records
+  const auditTrailRecords = (documents || []).flatMap((doc) =>
+    (doc.versions || []).map((v) => ({
+      docId: doc.id,
+      docName: doc.name,
+      version: v.version,
+      date: v.date,
+      author: v.author,
+      status: v.status
+    }))
+  ).slice(0, 4);
+
   return (
     <>
       <PageIntro
@@ -49,41 +63,41 @@ export default function QMGroupDashboard() {
         description="Oversee quality governance, process monitoring, Management Review Meetings, and compliance oversight."
       />
 
-      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
-      <div className="overview-cards-grid">
+      {/* 4 Main Context Overview Cards in a single row */}
+      <div className="overview-cards-grid four-col">
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon purple">
-              <CalendarCheck size={22} />
+              <CalendarCheck size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>MRM</h3>
-              <span>Management Review Meetings</span>
+              <span>Review Meetings</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {mrmList.length} <small>Total Meetings</small>
+            {mrmList.length} <small>Sessions</small>
           </div>
           <ul className="overview-card-details">
             <li>
               <span className="detail-label">Next Session:</span>
-              <span className="detail-val">{mrmList[0]?.scheduledDate || "None upcoming"}</span>
+              <span className="detail-val">{mrmList[0]?.scheduledDate || "None"}</span>
             </li>
             <li>
-              <span className="detail-label">Ready to Share:</span>
+              <span className="detail-label">To Share:</span>
               <span className="detail-val" style={{ color: readyToShareMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {readyToShareMRMs.length} Pending Distribution
+                {readyToShareMRMs.length} Pending
               </span>
             </li>
             <li>
               <span className="detail-label">MoM Released:</span>
-              <span className="detail-val">{mrmList.filter((m) => !!m.momFile || m.status === "MoM Uploaded").length} Published</span>
+              <span className="detail-val">{mrmList.filter((m) => !!m.momFile || m.status === "MoM Uploaded").length}</span>
             </li>
           </ul>
           <div className="overview-card-footer">
-            <span>View MRM Schedule</span>
-            <ArrowRight size={14} />
+            <span>View MRMs</span>
+            <ArrowRight size={13} />
           </div>
         </NavLink>
 
@@ -91,33 +105,33 @@ export default function QMGroupDashboard() {
         <NavLink to="/processes" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon teal">
-              <BookOpen size={22} />
+              <BookOpen size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>Process Overview</h3>
-              <span>Institutional Quality SOPs</span>
+              <span>Quality SOPs</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {processes.length} <small>Monitored Processes</small>
+            {processes.length} <small>Processes</small>
           </div>
           <ul className="overview-card-details">
             <li>
-              <span className="detail-label">Course Coordinators:</span>
+              <span className="detail-label">Coordinators:</span>
               <span className="detail-val">{courseCoordinatorsCount} Assigned</span>
             </li>
             <li>
-              <span className="detail-label">Active Status:</span>
+              <span className="detail-label">Status:</span>
               <span className="detail-val" style={{ color: "var(--status-green)" }}>100% Operational</span>
             </li>
             <li>
-              <span className="detail-label">Adherence Rate:</span>
-              <span className="detail-val">98% Target Met</span>
+              <span className="detail-label">Adherence:</span>
+              <span className="detail-val">98% On Track</span>
             </li>
           </ul>
           <div className="overview-card-footer">
             <span>Explore Processes</span>
-            <ArrowRight size={14} />
+            <ArrowRight size={13} />
           </div>
         </NavLink>
 
@@ -125,35 +139,35 @@ export default function QMGroupDashboard() {
         <NavLink to="/documents" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon blue">
-              <FileText size={22} />
+              <FileText size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>Docs Management</h3>
-              <span>Controlled Library</span>
+              <span>Controlled Docs</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {documents.length} <small>Controlled Docs</small>
+            {documents.length} <small>Controlled</small>
           </div>
           <ul className="overview-card-details">
             <li>
-              <span className="detail-label">Live & Approved:</span>
-              <span className="detail-val">{documents.length - pendingReviews} Active</span>
+              <span className="detail-label">Live Active:</span>
+              <span className="detail-val">{documents.length - pendingReviews}</span>
             </li>
             <li>
-              <span className="detail-label">Under Review:</span>
+              <span className="detail-label">Review Queue:</span>
               <span className="detail-val" style={{ color: pendingReviews > 0 ? "var(--status-amber)" : "var(--muted)" }}>
                 {pendingReviews} in queue
               </span>
             </li>
             <li>
-              <span className="detail-label">Compliance:</span>
-              <span className="detail-val">ISO 9001:2015 Compliant</span>
+              <span className="detail-label">Standard:</span>
+              <span className="detail-val">ISO 9001:2015</span>
             </li>
           </ul>
           <div className="overview-card-footer">
-            <span>Open Document Library</span>
-            <ArrowRight size={14} />
+            <span>Open Library</span>
+            <ArrowRight size={13} />
           </div>
         </NavLink>
 
@@ -161,114 +175,139 @@ export default function QMGroupDashboard() {
         <NavLink to="/internal-audit" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon green">
-              <ShieldCheck size={22} />
+              <ShieldCheck size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>Internal Audit</h3>
-              <span>IQA Cycle Governance</span>
+              <span>IQA Cycles</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {auditList.length} <small>Total Audits</small>
+            {auditList.length} <small>Audits</small>
           </div>
           <ul className="overview-card-details">
             <li>
-              <span className="detail-label">Active Stages:</span>
-              <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} In Progress</span>
+              <span className="detail-label">In Progress:</span>
+              <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} Active</span>
             </li>
             <li>
               <span className="detail-label">Pending Action:</span>
               <span className="detail-val" style={{ color: readyToShareAudits.length + readyToCloseAudits.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {readyToShareAudits.length + readyToCloseAudits.length} Awaiting QMS
+                {readyToShareAudits.length + readyToCloseAudits.length} QMS Pending
               </span>
             </li>
             <li>
-              <span className="detail-label">Completed:</span>
-              <span className="detail-val">{auditList.filter((a) => a.stage === 7).length} Closed</span>
+              <span className="detail-label">Closed:</span>
+              <span className="detail-val">{auditList.filter((a) => a.stage === 7).length} Complete</span>
             </li>
           </ul>
           <div className="overview-card-footer">
-            <span>Open Internal Audit</span>
-            <ArrowRight size={14} />
+            <span>Open Audit</span>
+            <ArrowRight size={13} />
           </div>
         </NavLink>
       </div>
 
-      {/* Row: My Process and Scheduled MRM */}
+      {/* Row: Audit Trails and User Management */}
       <div className="dashboard-two-col">
-        {/* Left: Quality Processes */}
+        {/* Left: Audit Trails */}
         <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
           <SectionHeader
-            title="Monitored Processes"
-            action={<NavLink className="text-link" to="/processes">View all processes →</NavLink>}
-          />
-          <div style={{ flex: 1 }}>
-            <ProcessTable items={processes.slice(0, 4)} />
-          </div>
-        </section>
-
-        {/* Right: Scheduled MRMs */}
-        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
-          <SectionHeader
-            title="Scheduled MRM"
-            action={<NavLink className="text-link" to="/mrm">View all MRMs →</NavLink>}
+            title="Audit Trails"
+            action={<NavLink className="text-link" to="/version-history">View full audit trail →</NavLink>}
           />
           <div className="table-wrap" style={{ flex: 1 }}>
             <table>
               <thead>
                 <tr>
-                  <th>Meeting Title</th>
-                  <th>Scheduled Date</th>
-                  <th>MoM Document</th>
+                  <th>Document Record</th>
+                  <th>Version</th>
+                  <th>Date & Author</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {mrmList.length === 0 ? (
+                {auditTrailRecords.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
-                      No review meetings currently scheduled.
+                      No audit trail records found.
                     </td>
                   </tr>
                 ) : (
-                  mrmList.slice(0, 4).map((mrm) => {
-                    const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
-                    return (
-                      <tr key={mrm.id}>
-                        <td>
-                          <NavLink to="/mrm" className="table-link">
-                            <strong>{mrm.title}</strong>
-                          </NavLink>
-                        </td>
-                        <td>{mrm.scheduledDate}</td>
-                        <td>
-                          {hasMoM ? (
-                            <span style={{ color: "var(--status-green)", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                              <Check size={14} /> MoM Published
-                            </span>
-                          ) : (
-                            <span style={{ color: "var(--muted)", fontSize: "12px" }}>Pending Meeting</span>
-                          )}
-                        </td>
-                        <td>
-                          <span
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "9999px",
-                              fontSize: "11px",
-                              fontWeight: "600",
-                              background: hasMoM ? "var(--status-green-bg)" : "var(--status-blue-bg)",
-                              color: hasMoM ? "var(--status-green)" : "var(--status-blue)",
-                              border: `1px solid ${hasMoM ? "var(--status-green-border)" : "var(--status-blue-border)"}`
-                            }}
-                          >
-                            {mrm.status || "Planned"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  auditTrailRecords.map((item, idx) => (
+                    <tr key={`${item.docId}-${item.version}-${idx}`}>
+                      <td>
+                        <NavLink to={`/documents/${item.docId}`} className="table-link">
+                          <strong>{item.docName}</strong>
+                          <small>{item.docId}</small>
+                        </NavLink>
+                      </td>
+                      <td>
+                        <b>v{item.version}</b>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: "12px", color: "var(--ink-soft)", display: "block" }}>{item.author}</span>
+                        <small style={{ color: "var(--muted)" }}>{item.date}</small>
+                      </td>
+                      <td>
+                        <StatusBadge status={item.status} />
+                      </td>
+                    </tr>
+                  ))
                 )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Right: User Management */}
+        <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+          <SectionHeader
+            title="User Management"
+            action={<NavLink className="text-link" to="/user-management">Manage all users →</NavLink>}
+          />
+          <div className="table-wrap" style={{ flex: 1 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>User Name</th>
+                  <th>Role</th>
+                  <th>Department</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(usersList && usersList.length > 0 ? usersList : employees).slice(0, 4).map((user) => (
+                  <tr key={user.id || user.email}>
+                    <td>
+                      <NavLink to="/user-management" className="table-link">
+                        <strong>{user.name}</strong>
+                        <small>{user.email}</small>
+                      </NavLink>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--navy)" }}>
+                        {user.roleTitle || user.role}
+                      </span>
+                    </td>
+                    <td>{user.department || "Academic Division"}</td>
+                    <td>
+                      <span
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: "9999px",
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          background: "var(--status-green-bg)",
+                          color: "var(--status-green)",
+                          border: "1px solid var(--status-green-border)"
+                        }}
+                      >
+                        Active
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

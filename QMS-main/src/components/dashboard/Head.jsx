@@ -6,6 +6,7 @@ import {
   Check,
   FileText,
   ShieldCheck,
+  FileDown,
   ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
@@ -75,53 +76,270 @@ export default function Head() {
     list.reduce((total, process) => total + (process.progress || 0), 0) / (list.length || 1)
   );
 
+  // =========================================================================
+  // INTERNAL AUDITOR SPECIALIZED STREAMLINED VIEW
+  // (Only Internal Audit & MRM with MoM download access)
+  // =========================================================================
+  if (isAuditor) {
+    return (
+      <>
+        <PageIntro
+          eyebrow="INTERNAL AUDITOR WORKSPACE"
+          title="Internal Auditor Workspace"
+          description="Quality assurance inspection, noticing sheet verification, and review meeting Minutes of Meeting (MoM) access."
+        />
+
+        {/* 2 Core Cards for Auditor: Internal Audit & MRM */}
+        <div className="overview-cards-grid">
+          {/* Card 1: Internal Quality Audit */}
+          <NavLink to="/internal-audit" className="overview-context-card">
+            <div className="overview-card-header">
+              <div className="overview-card-icon green">
+                <ShieldCheck size={22} />
+              </div>
+              <div className="overview-card-title-group">
+                <h3>Internal Audit</h3>
+                <span>IQA Inspections & Noticing Sheets</span>
+              </div>
+            </div>
+            <div className="overview-card-metric">
+              {auditList.length} <small>Total Audits</small>
+            </div>
+            <ul className="overview-card-details">
+              <li>
+                <span className="detail-label">Awaiting Inspection:</span>
+                <span className="detail-val" style={{ color: auditsAwaitingNoticing.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                  {auditsAwaitingNoticing.length} Ready for Noticing
+                </span>
+              </li>
+              <li>
+                <span className="detail-label">In Progress:</span>
+                <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} Active Stages</span>
+              </li>
+              <li>
+                <span className="detail-label">Standard:</span>
+                <span className="detail-val">ISO 9001:2015 Clause 9.2</span>
+              </li>
+            </ul>
+            <div className="overview-card-footer">
+              <span>Open Internal Audit</span>
+              <ArrowRight size={14} />
+            </div>
+          </NavLink>
+
+          {/* Card 2: MRM & MoM Downloads */}
+          <NavLink to="/mrm" className="overview-context-card">
+            <div className="overview-card-header">
+              <div className="overview-card-icon purple">
+                <CalendarCheck size={22} />
+              </div>
+              <div className="overview-card-title-group">
+                <h3>MRM & MoM Downloads</h3>
+                <span>Review Meetings Evidence</span>
+              </div>
+            </div>
+            <div className="overview-card-metric">
+              {publishedMRMs.length} <small>MoMs Available</small>
+            </div>
+            <ul className="overview-card-details">
+              <li>
+                <span className="detail-label">Latest Meeting:</span>
+                <span className="detail-val">{mrmList[0]?.scheduledDate || "None"}</span>
+              </li>
+              <li>
+                <span className="detail-label">MoM Status:</span>
+                <span className="detail-val" style={{ color: "var(--status-green)" }}>
+                  {publishedMRMs.length} Published for Download
+                </span>
+              </li>
+              <li>
+                <span className="detail-label">Compliance Evidence:</span>
+                <span className="detail-val">Audit Ready</span>
+              </li>
+            </ul>
+            <div className="overview-card-footer">
+              <span>View MRMs & Download MoM</span>
+              <ArrowRight size={14} />
+            </div>
+          </NavLink>
+        </div>
+
+        {/* Row: Internal Quality Audits & Scheduled MRM (with MoM Download) */}
+        <div className="dashboard-two-col">
+          {/* Left: Internal Audits */}
+          <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+            <SectionHeader
+              title="Internal Quality Audits"
+              action={<NavLink className="text-link" to="/internal-audit">Open Internal Audit →</NavLink>}
+            />
+            <div className="table-wrap" style={{ flex: 1 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Audit ID</th>
+                    <th>Process</th>
+                    <th>Auditee / Date</th>
+                    <th>Stage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditList.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
+                        No internal audits scheduled.
+                      </td>
+                    </tr>
+                  ) : (
+                    auditList.slice(0, 4).map((audit) => (
+                      <tr key={audit.id}>
+                        <td>
+                          <NavLink to="/internal-audit" className="table-link">
+                            <strong>{audit.id}</strong>
+                          </NavLink>
+                        </td>
+                        <td>
+                          <strong>{audit.process}</strong>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: "12px", color: "var(--ink-soft)", display: "block" }}>
+                            {audit.internalAuditee?.name || "Auditee"}
+                          </span>
+                          <small style={{ color: "var(--muted)" }}>{audit.scheduledDate}</small>
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "9999px",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              background: audit.stage >= 6 ? "var(--status-green-bg)" : "var(--status-blue-bg)",
+                              color: audit.stage >= 6 ? "var(--status-green)" : "var(--status-blue)",
+                              border: `1px solid ${audit.stage >= 6 ? "var(--status-green-border)" : "var(--status-blue-border)"}`
+                            }}
+                          >
+                            Stage {audit.stage}/7
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Right: Scheduled MRMs & MoM Downloads */}
+          <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
+            <SectionHeader
+              title="MRM & Minutes of Meeting"
+              action={<NavLink className="text-link" to="/mrm">View all MRMs →</NavLink>}
+            />
+            <div className="table-wrap" style={{ flex: 1 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Meeting Title</th>
+                    <th>Date</th>
+                    <th>MoM File</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mrmList.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
+                        No review meetings currently scheduled.
+                      </td>
+                    </tr>
+                  ) : (
+                    mrmList.slice(0, 4).map((mrm) => {
+                      const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
+                      return (
+                        <tr key={mrm.id}>
+                          <td>
+                            <NavLink to="/mrm" className="table-link">
+                              <strong>{mrm.title}</strong>
+                            </NavLink>
+                          </td>
+                          <td>{mrm.scheduledDate}</td>
+                          <td>
+                            {hasMoM ? (
+                              <span style={{ color: "var(--status-green)", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <Check size={14} /> MoM Ready
+                              </span>
+                            ) : (
+                              <span style={{ color: "var(--muted)", fontSize: "12px" }}>In Preparation</span>
+                            )}
+                          </td>
+                          <td>
+                            <NavLink
+                              to="/mrm"
+                              className="row-action"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                            >
+                              <FileDown size={14} /> Download
+                            </NavLink>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </>
+    );
+  }
+
+  // =========================================================================
+  // TRUST HEAD EXECUTIVE VIEW (No Approval History)
+  // =========================================================================
   return (
     <>
       <PageIntro
-        eyebrow={isAuditor ? "INTERNAL AUDITOR WORKSPACE" : "TRUST EXECUTIVE WORKSPACE"}
-        title={isAuditor ? "Internal Auditor Workspace" : "Trust Head Workspace"}
-        description={
-          isAuditor
-            ? "Quality assurance oversight, internal audit inspections, and compliance verification."
-            : "Executive governance, institutional quality performance, and review meeting ratification."
-        }
+        eyebrow="TRUST EXECUTIVE WORKSPACE"
+        title="Trust Head Workspace"
+        description="Executive governance, institutional quality performance, and review meeting ratification."
       />
 
       {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
-      <div className="overview-cards-grid">
+      <div className="overview-cards-grid four-col">
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon purple">
-              <CalendarCheck size={22} />
+              <CalendarCheck size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>MRM</h3>
-              <span>Management Review Meetings</span>
+              <span>Review Meetings</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {mrmList.length} <small>Total Meetings</small>
+            {mrmList.length} <small>Sessions</small>
           </div>
           <ul className="overview-card-details">
             <li>
               <span className="detail-label">Next Session:</span>
-              <span className="detail-val">{mrmList[0]?.scheduledDate || "None upcoming"}</span>
+              <span className="detail-val">{mrmList[0]?.scheduledDate || "None"}</span>
             </li>
             <li>
               <span className="detail-label">Status:</span>
-              <span className="detail-val" style={{ color: isTrustHead && pendingApprovalMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {isTrustHead ? (pendingApprovalMRMs.length > 0 ? `${pendingApprovalMRMs.length} Pending Approval` : "All Ratified") : `${publishedMRMs.length} MoMs Released`}
+              <span className="detail-val" style={{ color: pendingApprovalMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {pendingApprovalMRMs.length > 0 ? `${pendingApprovalMRMs.length} Awaiting Approval` : "All Ratified"}
               </span>
             </li>
             <li>
               <span className="detail-label">Governance:</span>
-              <span className="detail-val">Executive Oversight</span>
+              <span className="detail-val">Executive Sign-off</span>
             </li>
           </ul>
           <div className="overview-card-footer">
             <span>View MRM Schedule</span>
-            <ArrowRight size={14} />
+            <ArrowRight size={13} />
           </div>
         </NavLink>
 
@@ -129,33 +347,33 @@ export default function Head() {
         <NavLink to="/processes" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon teal">
-              <BookOpen size={22} />
+              <BookOpen size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>Process Overview</h3>
-              <span>Institutional Quality SOPs</span>
+              <span>Institutional Quality</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {totalProcesses} <small>Monitored Processes</small>
+            {totalProcesses} <small>Processes</small>
           </div>
           <ul className="overview-card-details">
             <li>
               <span className="detail-label">Adherence Rate:</span>
-              <span className="detail-val" style={{ color: "var(--status-green)" }}>{overallProgress}% Overall Progress</span>
+              <span className="detail-val" style={{ color: "var(--status-green)" }}>{overallProgress}% On Track</span>
             </li>
             <li>
-              <span className="detail-label">Active / In Progress:</span>
-              <span className="detail-val">{inProgressProcesses} Processes</span>
+              <span className="detail-label">In Progress:</span>
+              <span className="detail-val">{inProgressProcesses} Active</span>
             </li>
             <li>
               <span className="detail-label">Completed:</span>
-              <span className="detail-val">{completedProcesses} Processes</span>
+              <span className="detail-val">{completedProcesses} Concluded</span>
             </li>
           </ul>
           <div className="overview-card-footer">
             <span>Explore Processes</span>
-            <ArrowRight size={14} />
+            <ArrowRight size={13} />
           </div>
         </NavLink>
 
@@ -163,7 +381,7 @@ export default function Head() {
         <NavLink to="/documents" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon blue">
-              <FileText size={22} />
+              <FileText size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>Docs Management</h3>
@@ -171,16 +389,16 @@ export default function Head() {
             </div>
           </div>
           <div className="overview-card-metric">
-            {documents.length || 12} <small>Controlled Docs</small>
+            {documents.length || 12} <small>Controlled</small>
           </div>
           <ul className="overview-card-details">
             <li>
               <span className="detail-label">Quality Policy:</span>
-              <span className="detail-val">ISO 9001:2015 Approved</span>
+              <span className="detail-val">ISO 9001:2015</span>
             </li>
             <li>
               <span className="detail-label">Authority:</span>
-              <span className="detail-val">Trust & QMS Cell</span>
+              <span className="detail-val">Executive Cell</span>
             </li>
             <li>
               <span className="detail-label">Status:</span>
@@ -188,8 +406,8 @@ export default function Head() {
             </li>
           </ul>
           <div className="overview-card-footer">
-            <span>Open Document Library</span>
-            <ArrowRight size={14} />
+            <span>Open Library</span>
+            <ArrowRight size={13} />
           </div>
         </NavLink>
 
@@ -197,21 +415,21 @@ export default function Head() {
         <NavLink to="/internal-audit" className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon green">
-              <ShieldCheck size={22} />
+              <ShieldCheck size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>Internal Audit</h3>
-              <span>{isAuditor ? "Inspections & Noticing" : "Schedule Ratification"}</span>
+              <span>Schedule Ratification</span>
             </div>
           </div>
           <div className="overview-card-metric">
-            {auditList.length} <small>Total Audits</small>
+            {auditList.length} <small>Audits</small>
           </div>
           <ul className="overview-card-details">
             <li>
-              <span className="detail-label">Action Required:</span>
-              <span className="detail-val" style={{ color: (isTrustHead ? pendingAuditApprovals.length : auditsAwaitingNoticing.length) > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {isTrustHead ? `${pendingAuditApprovals.length} Awaiting Approval` : `${auditsAwaitingNoticing.length} Awaiting Inspection`}
+              <span className="detail-label">Awaiting Approval:</span>
+              <span className="detail-val" style={{ color: pendingAuditApprovals.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {pendingAuditApprovals.length} Schedule(s)
               </span>
             </li>
             <li>
@@ -225,7 +443,7 @@ export default function Head() {
           </ul>
           <div className="overview-card-footer">
             <span>Open Internal Audit</span>
-            <ArrowRight size={14} />
+            <ArrowRight size={13} />
           </div>
         </NavLink>
       </div>

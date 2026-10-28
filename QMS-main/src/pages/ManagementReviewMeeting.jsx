@@ -662,18 +662,15 @@ Controlled Document - Published for all Course Staff and Auditors
               ]
             : isInternalAuditor
             ? [
-                { id: "All", label: `All Accessible (${visibleMRMs.length})` },
-                { id: "Scheduled", label: `Scheduled (${scheduledCount})` },
-                { id: "MoM", label: `MoM Published (${momPublishedCount})` },
-                { id: "Approved", label: "Approval History" }
+                { id: "All", label: `Review Meetings (${visibleMRMs.length})` },
+                { id: "MoM", label: `MoM Available (${momPublishedCount})` }
               ]
             : [
                 { id: "All", label: "All Meetings" },
                 { id: "Step 1", label: "1. Planned" },
                 { id: "Step 2", label: "2. Pending Approval" },
                 { id: "Step 3", label: "3. Email Stage" },
-                { id: "Step 4", label: "4. MoM Published" },
-                { id: "Approved", label: "Approval History" }
+                { id: "Step 4", label: "4. MoM Published" }
               ]
           ).map((tab) => (
             <button
@@ -681,11 +678,7 @@ Controlled Document - Published for all Course Staff and Auditors
               className={filterStep === tab.id ? "tab active" : "tab"}
               onClick={() => {
                 setFilterStep(tab.id);
-                if (tab.id === "Approved") {
-                  setSearchParams({ filter: "Approved" });
-                } else {
-                  setSearchParams({});
-                }
+                setSearchParams({});
               }}
             >
               {tab.label}
@@ -831,42 +824,27 @@ Controlled Document - Published for all Course Staff and Auditors
                     </div>
                   </div>
                 ) : isInternalAuditor ? (
-                  <div style={{ margin: "14px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-                      {[
-                        { num: 1, title: "1. Team Head Ratified", role: "Executive Sign-off", done: wf.step >= 2.5 },
-                        { num: 2, title: "2. Notification Sent", role: "Coordinators Invited", done: wf.step >= 3 },
-                        { num: 3, title: "3. MoM Published", role: "Formal Audit Evidence", done: wf.step === 4 }
-                      ].map((st, idx) => (
-                        <React.Fragment key={st.num}>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2 }}>
-                            <div
-                              style={{
-                                width: "26px",
-                                height: "26px",
-                                borderRadius: "50%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                background: st.done ? "#16a34a" : "#cbd5e1",
-                                color: "#ffffff"
-                              }}
-                            >
-                              {st.done ? <Check size={13} /> : st.num}
-                            </div>
-                            <span style={{ fontSize: "11px", fontWeight: st.done ? "700" : "500", color: st.done ? "#166534" : "#64748b", marginTop: "4px", textAlign: "center" }}>
-                              {st.title}
-                            </span>
-                            <span style={{ fontSize: "10px", color: "#94a3b8" }}>{st.role}</span>
-                          </div>
-                          {idx < 2 && (
-                            <div style={{ flex: 1, height: "2px", background: st.done ? "#16a34a" : "#e2e8f0", margin: "0 8px 18px 8px" }} />
-                          )}
-                        </React.Fragment>
-                      ))}
+                  <div style={{ margin: "14px 0", padding: "14px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <strong style={{ fontSize: "11.5px", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "4px" }}>
+                        Meeting Purpose & Main Context
+                      </strong>
+                      <p style={{ margin: 0, fontSize: "13.5px", color: "#1e293b", lineHeight: 1.5 }}>
+                        {mrm.description || "Comprehensive academic review of course delivery milestones, student satisfaction indices, practical curriculum modernization, and quality standard adherence."}
+                      </p>
                     </div>
+                    {Array.isArray(mrm.agenda) && mrm.agenda.length > 0 && (
+                      <div style={{ marginTop: "10px" }}>
+                        <strong style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
+                          Discussion Agendas:
+                        </strong>
+                        <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "12.5px", color: "#334155", display: "flex", flexDirection: "column", gap: "3px" }}>
+                          {mrm.agenda.slice(0, 3).map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div style={{ margin: "16px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
@@ -1013,6 +991,13 @@ Controlled Document - Published for all Course Staff and Auditors
                         <UploadCloud size={15} />
                         <span>Upload MoM as File</span>
                       </button>
+                    )}
+
+                    {/* Internal Auditor MoM status when pending */}
+                    {isInternalAuditor && wf.step < 4 && (
+                      <span style={{ fontSize: "12px", color: "var(--muted)", fontStyle: "italic", padding: "6px 8px" }}>
+                        MoM file in preparation by QMS Coordinator
+                      </span>
                     )}
 
                     {/* STEP 4: MoM File Uploaded -> Downloadable & Viewable by EVERYONE */}
