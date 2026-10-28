@@ -153,8 +153,9 @@ export const createAudit = (req, res) => {
       title,
       process,
       processId,
-      startDate,
-      endDate,
+      date,
+      startDate: rawStartDate,
+      endDate: rawEndDate,
       internalAuditor,
       internalAuditee,
       scope,
@@ -162,8 +163,12 @@ export const createAudit = (req, res) => {
       notes
     } = req.body;
 
+    const finalDate = date || rawStartDate;
+    const startDate = rawStartDate || finalDate;
+    const endDate = rawEndDate || finalDate;
+
     if (!startDate || !endDate) {
-      return res.status(400).json({ success: false, message: "Audit start and end dates are required." });
+      return res.status(400).json({ success: false, message: "Audit date is required." });
     }
 
     if (!process) {
@@ -583,23 +588,23 @@ export const auditeeClose = (req, res) => {
       remarks: remarks || "Corrective actions completed and validated. Submitted for QMS Coordinator final review."
     };
 
-    audit.status = "Closed by Auditee";
+    audit.status = "Closed";
     audit.stage = 6;
-    audit.stageLabel = "Closed by Auditee (Pending QMS Final Sign-off)";
+    audit.stageLabel = "Closed / Completed";
 
     audit.timeline.push({
-      action: "Auditee Closure Submitted",
+      action: "Audit Process Closed",
       actor: `${userName} (${userRole})`,
       timestamp: formatNow(),
-      details: `Auditee submitted Corrective Action Plan & Evidence. Passed to QMS Coordinator for final close.`
+      details: `Corrective Action Plan & Evidence submitted. Process officially closed.`
     });
     saveAuditsToDisk();
 
-    // Notify QMS Coordinator ONLY that auditee has closed and it is ready for final sign-off
+    // Notify all stakeholders that the audit process is closed
     pushNotification(
-      "Auditee Corrective Action Submitted - Final Close Ready",
-      `Auditee (${userName}) has submitted corrective actions for ${audit.process} (${audit.id}). Please review and close the audit.`,
-      "qm"
+      "Internal Audit Process Closed",
+      `Internal audit process for ${audit.process} (${audit.id}) has been closed by ${userName}. Status marked as Closed.`,
+      "all"
     );
 
     broadcastRealtimeEvent("auditee_closed", {
@@ -610,7 +615,7 @@ export const auditeeClose = (req, res) => {
 
     res.json({
       success: true,
-      message: "Auditee closure submitted successfully. Passed to QMS Coordinator for final review.",
+      message: "Audit process closed successfully. Marked as Closed.",
       data: audit
     });
   } catch (error) {

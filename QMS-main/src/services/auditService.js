@@ -159,9 +159,10 @@ export const auditService = {
     if (!created) {
       const year = new Date().getFullYear();
       const id = `IA-${year}-${String(Math.floor(100 + Math.random() * 900))}`;
-      const startDate = payload.startDate || new Date().toISOString().split("T")[0];
-      const endDate = payload.endDate || startDate;
-      const scheduledDateStr = startDate === endDate ? startDate : `${startDate} to ${endDate}`;
+      const auditDate = payload.date || payload.startDate || new Date().toISOString().split("T")[0];
+      const startDate = payload.startDate || auditDate;
+      const endDate = payload.endDate || auditDate;
+      const scheduledDateStr = auditDate;
 
       created = {
         ...payload,
@@ -450,9 +451,9 @@ export const auditService = {
     if (!updated && existing) {
       updated = {
         ...existing,
-        status: "Closed by Auditee",
+        status: "Closed",
         stage: 6,
-        stageLabel: "Closed by Auditee (Pending QMS Final Sign-off)",
+        stageLabel: "Closed / Completed",
         auditeeClosure: {
           closed: true,
           closedBy: payload.closedBy || "Course Coordinator",
@@ -465,10 +466,10 @@ export const auditService = {
         timeline: [
           ...(existing.timeline || []),
           {
-            action: "Auditee Closure Submitted",
+            action: "Audit Process Closed",
             actor: payload.closedBy || "Course Coordinator",
             timestamp: formatNow(),
-            details: `Auditee submitted Corrective Action Plan & Evidence. Passed to QMS Coordinator for final close.`
+            details: `Corrective Action Plan & Evidence submitted. Process officially closed.`
           }
         ]
       };
@@ -507,9 +508,9 @@ export const auditService = {
     if (!updated && existing) {
       updated = {
         ...existing,
-        status: "Completed",
+        status: "Closed",
         stage: 7,
-        stageLabel: "Completed / Closed",
+        stageLabel: "Closed & Conforming",
         qmsFinalClosure: {
           closed: true,
           closedBy: "Rahul Kumar (QMS Coordinator)",
