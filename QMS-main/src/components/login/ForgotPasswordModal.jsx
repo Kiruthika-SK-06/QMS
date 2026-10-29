@@ -480,7 +480,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
                   borderRadius: "6px",
                   fontSize: "15px",
                   letterSpacing: "2px",
-                  fontFamily: "monospace",
+                  fontFamily: "'Roboto Mono', monospace",
                   fontWeight: "600",
                   boxSizing: "border-box"
                 }}

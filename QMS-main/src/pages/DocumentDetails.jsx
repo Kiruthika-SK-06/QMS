@@ -133,7 +133,7 @@ export default function DocumentDetails() {
               style={{
                 margin: 0,
                 whiteSpace: "pre-wrap",
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                fontFamily: "'Roboto Mono', ui-monospace, monospace",
                 fontSize: "13px",
                 lineHeight: "1.6",
                 color: "#1e293b"

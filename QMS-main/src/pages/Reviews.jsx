@@ -153,7 +153,7 @@ export default function Reviews() {
               <strong style={{ display: "block", fontSize: "12px", color: "#64748b", textTransform: "uppercase", marginBottom: "6px" }}>
                 Template Content Preview
               </strong>
-              <pre style={{ margin: 0, fontSize: "12px", whiteSpace: "pre-wrap", fontFamily: "ui-monospace, monospace", color: "#334155" }}>
+              <pre style={{ margin: 0, fontSize: "12px", whiteSpace: "pre-wrap", fontFamily: "'Roboto Mono', monospace", color: "#334155" }}>
                 {selected.content}
               </pre>
             </div>

@@ -153,7 +153,7 @@ export default function TemplateEditModal({ template, onClose, onSave }) {
             rows={10}
             style={{
               width: "100%",
-              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+              fontFamily: "'Roboto Mono', ui-monospace, monospace",
               fontSize: "13px",
               lineHeight: "1.5",
               padding: "10px",

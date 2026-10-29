@@ -926,7 +926,7 @@ export default function InternalAudit() {
                   >
                     {/* 1. Audit Ref & Process */}
                     <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", overflow: "hidden" }}>
-                      <span style={{ fontFamily: "monospace", fontWeight: "700", fontSize: "11px", color: "var(--navy)", background: "#edf4fa", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
+                      <span style={{ fontFamily: "'Roboto Mono', monospace", fontWeight: "700", fontSize: "11px", color: "var(--navy)", background: "#edf4fa", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
                         {audit.id}
                       </span>
                       <strong
