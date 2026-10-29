@@ -51,7 +51,7 @@ export default function InternalAudit() {
   const isAuditor = effectiveRole === "auditor" || effectiveRole === "internal auditor";
   const isAuditee = effectiveRole === "owner" || effectiveRole === "course coordinator" || effectiveRole === "auditee";
 
-  // Registered system processes list tailored by role
+  // Registered system processes list
   const systemProcesses = useMemo(() => {
     const defaultList = [
       "Course Administration",
@@ -67,14 +67,10 @@ export default function InternalAudit() {
       "Library & Knowledge Resources",
       "Student Feedback & Grievance Redressal"
     ];
-    if (isAuditee) {
-      // Course coordinator only sees their own process domain
-      return ["Course Administration", "Course Management"];
-    }
     const fromContext = (processes || []).map((p) => (typeof p === "string" ? p : p.name || p.processName)).filter(Boolean);
     const combined = Array.from(new Set([...fromContext, ...defaultList]));
     return combined;
-  }, [processes, isAuditee]);
+  }, [processes]);
 
   // Filter & Search
   const [filterStatus, setFilterStatus] = useState("all");
@@ -130,27 +126,11 @@ export default function InternalAudit() {
     setTimeout(() => setToast(null), 4500);
   };
 
-  // Role-based visibility filter (No sub-tabs clutter)
+  // Role-based visibility filter: Auditees (Course Coordinators) and Auditors see all announced audits (stage >= 3)
   const visibleAudits = useMemo(() => {
     return (auditList || []).filter((audit) => {
       if (isAuditee) {
-        if (audit.stage < 3) return false;
-        if (currentUser?.role === "owner") {
-          const userProc = (currentUser?.process || "Course Management").toLowerCase();
-          const userName = (currentUser?.name || "Priya Sharma").toLowerCase();
-          const auditProc = (audit.process || "").toLowerCase();
-          const auditeeName = (audit.internalAuditee?.name || "").toLowerCase();
-
-          const matchesMyProcess =
-            auditProc.includes("course") ||
-            auditProc.includes(userProc) ||
-            userProc.includes(auditProc) ||
-            auditeeName.includes(userName) ||
-            auditeeName.includes("priya");
-
-          if (!matchesMyProcess) return false;
-        }
-        return true;
+        return audit.stage >= 3;
       }
 
       if (isAuditor) {
@@ -159,24 +139,25 @@ export default function InternalAudit() {
 
       return true;
     });
-  }, [auditList, currentUser, isAuditee, isAuditor]);
+  }, [auditList, isAuditee, isAuditor]);
 
   // Stats tailored by role
   const stats = useMemo(() => {
     const total = visibleAudits.length;
     const awaitingConfirmation = (auditList || []).filter((a) => a.stage === 2).length;
     const isAuditClosed = (a) =>
-      a.stage >= 6 ||
-      a.status?.toLowerCase().includes("clos") ||
-      a.status?.toLowerCase().includes("comp");
+      a.stage >= 7 ||
+      (a.stage >= 6 && a.qmsFinalClosure?.closed) ||
+      a.status === "Closed" ||
+      a.status === "Completed";
 
     const completed = visibleAudits.filter(isAuditClosed).length;
     const inProgress = visibleAudits.filter((a) => a.stage >= 2.5 && !isAuditClosed(a)).length;
     const pendingAction = visibleAudits.filter((a) => {
       if (isAuditee) return a.stage === 5;
-      if (isAuditor) return a.stage === 3 || a.stage === 5;
+      if (isAuditor) return a.stage === 3;
       if (isTrustHead) return a.stage === 2;
-      return a.stage === 2.5 || a.stage === 4;
+      return a.stage === 2.5 || a.stage === 4 || a.stage === 6;
     }).length;
 
     return { total, awaitingConfirmation, inProgress, completed, pendingAction };
@@ -194,15 +175,16 @@ export default function InternalAudit() {
       }
 
       const isClosed =
-        audit.stage >= 6 ||
-        audit.status?.toLowerCase().includes("clos") ||
-        audit.status?.toLowerCase().includes("comp");
+        audit.stage >= 7 ||
+        (audit.stage >= 6 && audit.qmsFinalClosure?.closed) ||
+        audit.status === "Closed" ||
+        audit.status === "Completed";
 
       // Status / Actions filter
       if (filterStatus === "pending") {
         if (isTrustHead && audit.stage === 2) return true;
-        if (isQMS && (audit.stage === 2.5 || audit.stage === 4)) return true;
-        if (isAuditor && (audit.stage === 3 || audit.stage === 5)) return true;
+        if (isQMS && (audit.stage === 2.5 || audit.stage === 4 || audit.stage === 6)) return true;
+        if (isAuditor && audit.stage === 3) return true;
         if (isAuditee && audit.stage === 5) return true;
         return false;
       }
@@ -269,6 +251,17 @@ export default function InternalAudit() {
         }
       };
 
+      setShowScheduleModal(false);
+      setScheduleForm({
+        date: "",
+        process: "",
+        customProcess: "",
+        auditorName: "",
+        customAuditor: "",
+        auditeeName: "",
+        customAuditee: ""
+      });
+
       const created = await scheduleAudit(payload);
 
       // Real-time automatic notification to Trust Head only for approval
@@ -285,16 +278,6 @@ export default function InternalAudit() {
         );
       }
 
-      setShowScheduleModal(false);
-      setScheduleForm({
-        date: "",
-        process: "",
-        customProcess: "",
-        auditorName: "",
-        customAuditor: "",
-        auditeeName: "",
-        customAuditee: ""
-      });
       showToast(`Audit ${created.id} scheduled! Submitted automatically to Trust Head for formal approval.`);
     } catch (err) {
       showToast(err.message || "Failed to schedule audit", "error");
@@ -306,20 +289,22 @@ export default function InternalAudit() {
   // 2. Trust Head Confirms Schedule -> Automatically notifies QMS Coordinator
   const handleConfirmSubmit = async () => {
     if (!confirmingAudit) return;
-    setSubmitting(true);
+    const audit = confirmingAudit;
+    const remarks = confirmRemarks;
+    setConfirmingAudit(null);
+
     try {
-      await confirmAuditSchedule(confirmingAudit.id, confirmRemarks);
+      await confirmAuditSchedule(audit.id, remarks);
 
       if (pushNotification) {
         pushNotification(
           "Audit Schedule Approved by Trust Head",
-          `Trust Head Anita Rao approved the audit schedule for ${confirmingAudit.process} (${confirmingAudit.id}). You can now share the schedule with Course Coordinators, Trust Head, and Internal Auditors.`,
+          `Trust Head Anita Rao approved the audit schedule for ${audit.process} (${audit.id}). You can now share the schedule with Course Coordinators, Trust Head, and Internal Auditors.`,
           "qm"
         );
       }
 
-      setConfirmingAudit(null);
-      showToast(`Audit ${confirmingAudit.id} approved! Notification dispatched to QMS Coordinator to distribute schedule.`);
+      showToast(`Audit ${audit.id} approved! Notification dispatched to QMS Coordinator to distribute schedule.`);
     } catch (err) {
       showToast(err.message || "Failed to confirm schedule", "error");
     } finally {
@@ -330,35 +315,36 @@ export default function InternalAudit() {
   // 3. QMS Coordinator Shares Schedule to All (Course Coordinators, Trust Head & Internal Auditors)
   const handleShareScheduleSubmit = async () => {
     if (!shareScheduleAudit) return;
-    setSubmitting(true);
+    const audit = shareScheduleAudit;
+    setShareScheduleAudit(null);
+
     try {
-      await shareAuditSchedule(shareScheduleAudit.id);
+      await shareAuditSchedule(audit.id);
 
       if (pushNotification) {
         pushNotification(
           "Internal Audit Schedule Announced",
-          `Internal Audit (${shareScheduleAudit.id}) for ${shareScheduleAudit.process} scheduled for ${shareScheduleAudit.scheduledDate}. Auditor: ${shareScheduleAudit.internalAuditor?.name}.`,
+          `Internal Audit (${audit.id}) for ${audit.process} scheduled for ${audit.scheduledDate}. Auditor: ${audit.internalAuditor?.name}.`,
           "owner"
         );
         pushNotification(
           "Internal Audit Assignment - Ready for Execution",
-          `Audit schedule for ${shareScheduleAudit.process} (${shareScheduleAudit.id}) confirmed and dispatched. You can now conduct the audit and submit the Noticing Sheet to QMS Coordinator.`,
+          `Audit schedule for ${audit.process} (${audit.id}) confirmed and dispatched. You can now conduct the audit and submit the Noticing Sheet to QMS Coordinator.`,
           "auditor"
         );
         pushNotification(
           "Audit Schedule Dispatched",
-          `Schedule for ${shareScheduleAudit.process} (${shareScheduleAudit.id}) dispatched to all stakeholders.`,
+          `Schedule for ${audit.process} (${audit.id}) dispatched to all stakeholders.`,
           "Head"
         );
         pushNotification(
           "Audit Schedule Shared",
-          `Schedule for ${shareScheduleAudit.process} (${shareScheduleAudit.id}) shared with Course Coordinators, Trust Head, and Internal Auditors.`,
+          `Schedule for ${audit.process} (${audit.id}) shared with Course Coordinators, Trust Head, and Internal Auditors.`,
           "qm"
         );
       }
 
-      setShareScheduleAudit(null);
-      showToast(`Audit ${shareScheduleAudit.id} schedule shared with Course Coordinators, Trust Head, and Internal Auditors! Audit is now active.`);
+      showToast(`Audit ${audit.id} schedule shared with Course Coordinators, Trust Head, and Internal Auditors! Audit is now active.`);
     } catch (err) {
       showToast(err.message || "Failed to share audit schedule", "error");
     } finally {
@@ -370,41 +356,42 @@ export default function InternalAudit() {
   const handleNoticingSheetSubmit = async (e) => {
     e.preventDefault();
     if (!noticingSheetAudit) return;
-    setSubmitting(true);
-    try {
-      const payload = {
-        sheetNo: `NS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-        summary: noticingSheetData.summary || "Audit concluded. Non-conformance items identified.",
-        fileName: "Noticing_Sheet_Signed.pdf",
-        submittedBy: `${currentUser?.name || noticingSheetAudit.internalAuditor?.name} (Internal Auditor)`,
-        findings: [
-          {
-            id: "NC-01",
-            type: "Minor NC",
-            clause: noticingSheetData.clause,
-            description: noticingSheetData.ncDescription || "Process documentation record gap identified during sample verification.",
-            targetDate: noticingSheetData.targetDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-          }
-        ]
-      };
+    const audit = noticingSheetAudit;
+    const payload = {
+      sheetNo: `NS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      summary: noticingSheetData.summary || "Audit concluded. Non-conformance items identified.",
+      fileName: "Noticing_Sheet_Signed.pdf",
+      submittedBy: `${currentUser?.name || audit.internalAuditor?.name} (Internal Auditor)`,
+      findings: [
+        {
+          id: "NC-01",
+          type: "Minor NC",
+          clause: noticingSheetData.clause,
+          description: noticingSheetData.ncDescription || "Process documentation record gap identified during sample verification.",
+          targetDate: noticingSheetData.targetDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+        }
+      ]
+    };
 
-      await submitNoticingSheet(noticingSheetAudit.id, payload);
+    setNoticingSheetAudit(null);
+    setNoticingSheetData({
+      summary: "",
+      clause: "ISO 9001:2015 Clause 8.5.1",
+      ncDescription: "",
+      targetDate: ""
+    });
+
+    try {
+      await submitNoticingSheet(audit.id, payload);
 
       if (pushNotification) {
         pushNotification(
           "Noticing Sheet Submitted by Auditor",
-          `Internal Auditor (${currentUser?.name || noticingSheetAudit.internalAuditor?.name}) submitted Noticing Sheet for ${noticingSheetAudit.process} (${noticingSheetAudit.id}). Please review findings and issue NC Document.`,
+          `Internal Auditor (${currentUser?.name || audit.internalAuditor?.name}) submitted Noticing Sheet for ${audit.process} (${audit.id}). Please review findings and issue NC Document.`,
           "qm"
         );
       }
 
-      setNoticingSheetAudit(null);
-      setNoticingSheetData({
-        summary: "",
-        clause: "ISO 9001:2015 Clause 8.5.1",
-        ncDescription: "",
-        targetDate: ""
-      });
       showToast(`Noticing Sheet submitted and shared with QMS Coordinator only for review!`);
     } catch (err) {
       showToast(err.message || "Failed to submit noticing sheet", "error");
@@ -416,25 +403,27 @@ export default function InternalAudit() {
   // 5. QMS Coordinator Shares NC Docs to Auditor & Auditee
   const handleShareNCDocsSubmit = async () => {
     if (!ncDocsAudit) return;
-    setSubmitting(true);
+    const audit = ncDocsAudit;
+    const remarks = ncDocsRemarks;
+    setNcDocsAudit(null);
+
     try {
-      await shareNCDocs(ncDocsAudit.id, { remarks: ncDocsRemarks });
+      await shareNCDocs(audit.id, { remarks });
 
       if (pushNotification) {
         pushNotification(
           "NC Docs Issued - Corrective Action Required",
-          `QMS Coordinator has issued NC Docs for ${ncDocsAudit.process} (${ncDocsAudit.id}). Please review findings, take corrective action, and close the NC.`,
+          `QMS Coordinator has issued NC Docs for ${audit.process} (${audit.id}). Please review findings, take corrective action, and close the NC.`,
           "owner"
         );
         pushNotification(
           "NC Docs Distributed to Auditee",
-          `NC Docs for ${ncDocsAudit.process} (${ncDocsAudit.id}) distributed to Auditee.`,
+          `NC Docs for ${audit.process} (${audit.id}) distributed to Auditee.`,
           "auditor"
         );
       }
 
-      setNcDocsAudit(null);
-      showToast(`NC Docs shared to Internal Auditor and Auditee (${ncDocsAudit.internalAuditee?.name})!`);
+      showToast(`NC Docs shared to Internal Auditor and Auditee (${audit.internalAuditee?.name})!`);
     } catch (err) {
       showToast(err.message || "Failed to share NC docs", "error");
     } finally {
@@ -442,34 +431,40 @@ export default function InternalAudit() {
     }
   };
 
-  // 6. Auditee / Auditor Closes Process
+  // 6. Auditee (Course Coordinator) Closes Process & Passes to QMS Coordinator
   const handleAuditeeCloseSubmit = async (e) => {
     e.preventDefault();
     if (!auditeeCloseAudit) return;
-    setSubmitting(true);
-    try {
-      const actorRole = isAuditor ? "Internal Auditor" : "Course Coordinator";
-      const actorName = currentUser?.name || (isAuditor ? auditeeCloseAudit.internalAuditor?.name : auditeeCloseAudit.internalAuditee?.name) || "Auditor";
-      const payload = {
-        rootCause: auditeeClosureData.rootCause || "Operational procedure delay addressed and non-conformance closed.",
-        correctiveAction: auditeeClosureData.correctiveAction,
-        evidenceFileName: auditeeClosureData.evidenceFileName || "CAPA_Evidence_Signed.pdf",
-        closedBy: `${actorName} (${actorRole})`
-      };
+    const audit = auditeeCloseAudit;
+    const actorRole = isAuditor ? "Internal Auditor" : "Course Coordinator";
+    const actorName = currentUser?.name || (isAuditor ? audit.internalAuditor?.name : audit.internalAuditee?.name) || "Course Coordinator";
+    const payload = {
+      rootCause: auditeeClosureData.rootCause || "Operational procedure delay addressed and non-conformance closed.",
+      correctiveAction: auditeeClosureData.correctiveAction,
+      evidenceFileName: auditeeClosureData.evidenceFileName || "CAPA_Evidence_Signed.pdf",
+      closedBy: `${actorName} (${actorRole})`
+    };
 
-      await submitAuditeeClosure(auditeeCloseAudit.id, payload);
+    setAuditeeCloseAudit(null);
+    setAuditeeClosureData({ rootCause: "", correctiveAction: "", evidenceFileName: "CAPA_Evidence_Signed.pdf" });
+
+    try {
+      await submitAuditeeClosure(audit.id, payload);
 
       if (pushNotification) {
         pushNotification(
-          "Internal Audit Process Closed",
-          `Internal audit process for ${auditeeCloseAudit.process} (${auditeeCloseAudit.id}) has been closed by ${actorName}. Status marked as Closed.`,
+          "Audit Process Closed by Auditee - Final Sign-off Required",
+          `Internal audit process for ${audit.process} (${audit.id}) has been closed with CAPA by Course Coordinator (${actorName}). Passed to QMS Coordinator for final sign-off.`,
+          "qm"
+        );
+        pushNotification(
+          "Internal Audit Process Closed & Passed to QMS",
+          `Internal audit process for ${audit.process} (${audit.id}) closed by Course Coordinator (${actorName}) and passed to QMS Coordinator for sign-off.`,
           "all"
         );
       }
 
-      setAuditeeCloseAudit(null);
-      setAuditeeClosureData({ rootCause: "", correctiveAction: "", evidenceFileName: "CAPA_Evidence_Signed.pdf" });
-      showToast(`Audit process closed! Marked as Closed.`);
+      showToast(`Audit process closed and passed to QMS Coordinator for final sign-off!`);
     } catch (err) {
       showToast(err.message || "Failed to submit closure", "error");
     } finally {
@@ -480,20 +475,22 @@ export default function InternalAudit() {
   // 7. QMS Coordinator Final Close -> Whole Process is Completed!
   const handleFinalCloseSubmit = async () => {
     if (!finalCloseAuditItem) return;
-    setSubmitting(true);
+    const audit = finalCloseAuditItem;
+    const remarks = finalCloseRemarks;
+    setFinalCloseAuditItem(null);
+
     try {
-      await finalCloseAudit(finalCloseAuditItem.id, finalCloseRemarks);
+      await finalCloseAudit(audit.id, remarks);
 
       if (pushNotification) {
         pushNotification(
           "Internal Audit Completed & Officially Closed",
-          `Internal Audit (${finalCloseAuditItem.id}) for ${finalCloseAuditItem.process} is 100% complete and closed.`,
+          `Internal Audit (${audit.id}) for ${audit.process} is 100% complete and closed.`,
           "all"
         );
       }
 
-      setFinalCloseAuditItem(null);
-      showToast(`Internal Audit ${finalCloseAuditItem.id} officially closed! Marked as Closed.`);
+      showToast(`Internal Audit ${audit.id} officially closed! Marked as Closed.`);
     } catch (err) {
       showToast(err.message || "Failed to finalize audit closure", "error");
     } finally {
@@ -504,27 +501,70 @@ export default function InternalAudit() {
   // Status Badge styling helper (Tailored per role, with clear green Closed badge)
   const renderStatusBadge = (audit) => {
     const isClosed =
-      audit.stage >= 6 ||
-      audit.status?.toLowerCase().includes("clos") ||
-      audit.status?.toLowerCase().includes("comp");
+      audit.stage >= 7 ||
+      (audit.stage >= 6 && audit.qmsFinalClosure?.closed) ||
+      audit.status === "Closed" ||
+      audit.status === "Completed";
+
+    const badgeBase = {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "5px",
+      padding: "3px 8px",
+      borderRadius: "5px",
+      fontSize: "12px",
+      fontWeight: "600",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      maxWidth: "100%",
+      boxSizing: "border-box"
+    };
 
     if (isClosed) {
       return (
         <span
+          title="Audit Concluded & Closed"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            padding: "4px 9px",
-            borderRadius: "6px",
-            fontSize: "12px",
-            fontWeight: "600",
+            ...badgeBase,
             color: "#166534",
             background: "#dcfce7",
             border: "1px solid #bbf7d0"
           }}
         >
-          <CheckCircle2 size={13} /> Closed
+          <CheckCircle2 size={13} style={{ flexShrink: 0 }} /> Closed
+        </span>
+      );
+    }
+
+    if (audit.stage === 6) {
+      if (isQMS) {
+        return (
+          <span
+            title="Action Required: Final Sign-off"
+            style={{
+              ...badgeBase,
+              fontWeight: "700",
+              color: "#1e40af",
+              background: "#dbeafe",
+              border: "1px solid #93c5fd"
+            }}
+          >
+            <Clock size={13} style={{ flexShrink: 0 }} /> Action: Final Sign-off
+          </span>
+        );
+      }
+      return (
+        <span
+          title="Process Closed (Pending QMS Sign-off)"
+          style={{
+            ...badgeBase,
+            color: "#0d9488",
+            background: "#f0fdfa",
+            border: "1px solid #99f6e4"
+          }}
+        >
+          <CheckCircle2 size={13} style={{ flexShrink: 0 }} /> Process Closed
         </span>
       );
     }
@@ -533,14 +573,45 @@ export default function InternalAudit() {
       switch (audit.stage) {
         case 5:
           return (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", color: "#9a3412", background: "#ffedd5", border: "1px solid #fed7aa" }}>
-              <AlertCircle size={13} /> Action Required: Submit CAPA
+            <span
+              title="Action Required: Submit CAPA & Close"
+              style={{
+                ...badgeBase,
+                fontWeight: "700",
+                color: "#9a3412",
+                background: "#ffedd5",
+                border: "1px solid #fed7aa"
+              }}
+            >
+              <AlertCircle size={13} style={{ flexShrink: 0 }} /> Action: Submit CAPA
+            </span>
+          );
+        case 4:
+          return (
+            <span
+              title="Noticing Sheet Under Review"
+              style={{
+                ...badgeBase,
+                color: "#6d28d9",
+                background: "#f5f3ff",
+                border: "1px solid #ddd6fe"
+              }}
+            >
+              <Clock size={13} style={{ flexShrink: 0 }} /> Under Review
             </span>
           );
         default:
           return (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#334155", background: "#f8fafc", border: "1px solid #cbd5e1" }}>
-              <Calendar size={13} /> Audit Scheduled (In Progress)
+            <span
+              title="Audit Scheduled (In Progress)"
+              style={{
+                ...badgeBase,
+                color: "#334155",
+                background: "#f8fafc",
+                border: "1px solid #cbd5e1"
+              }}
+            >
+              <Calendar size={13} style={{ flexShrink: 0 }} /> Scheduled
             </span>
           );
       }
@@ -550,21 +621,45 @@ export default function InternalAudit() {
       switch (audit.stage) {
         case 5:
           return (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#b45309", background: "#fffbeb", border: "1px solid #fcd34d" }}>
-              <Clock size={13} /> NC Docs Issued (Action Required)
+            <span
+              title="NC Docs Issued (Action Required)"
+              style={{
+                ...badgeBase,
+                color: "#b45309",
+                background: "#fffbeb",
+                border: "1px solid #fcd34d"
+              }}
+            >
+              <Clock size={13} style={{ flexShrink: 0 }} /> NC Docs Issued
             </span>
           );
         case 4:
           return (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#6d28d9", background: "#f5f3ff", border: "1px solid #ddd6fe" }}>
-              <CheckCircle2 size={13} /> Noticing Sheet Submitted
+            <span
+              title="Noticing Sheet Submitted"
+              style={{
+                ...badgeBase,
+                color: "#6d28d9",
+                background: "#f5f3ff",
+                border: "1px solid #ddd6fe"
+              }}
+            >
+              <CheckCircle2 size={13} style={{ flexShrink: 0 }} /> Sheet Submitted
             </span>
           );
         case 3:
         default:
           return (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#0369a1", background: "#f0f9ff", border: "1px solid #bae6fd" }}>
-              <Clock size={13} /> Ready to Audit (Submit Sheet)
+            <span
+              title="Ready to Conduct Audit (Submit Noticing Sheet)"
+              style={{
+                ...badgeBase,
+                color: "#0369a1",
+                background: "#f0f9ff",
+                border: "1px solid #bae6fd"
+              }}
+            >
+              <Clock size={13} style={{ flexShrink: 0 }} /> Ready to Audit
             </span>
           );
       }
@@ -574,33 +669,74 @@ export default function InternalAudit() {
     switch (audit.stage) {
       case 5:
         return (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#b45309", background: "#fffbeb", border: "1px solid #fcd34d" }}>
-            <Clock size={13} /> NC Docs Shared
+          <span
+            title="NC Docs Shared with Stakeholders"
+            style={{
+              ...badgeBase,
+              color: "#b45309",
+              background: "#fffbeb",
+              border: "1px solid #fcd34d"
+            }}
+          >
+            <Clock size={13} style={{ flexShrink: 0 }} /> NC Docs Shared
           </span>
         );
       case 4:
         return (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#6d28d9", background: "#f5f3ff", border: "1px solid #ddd6fe" }}>
-            <Clock size={13} /> Noticing Sheet Submitted
+          <span
+            title="Noticing Sheet Received (Action Required: Share NC Docs)"
+            style={{
+              ...badgeBase,
+              fontWeight: "700",
+              color: "#6d28d9",
+              background: "#f5f3ff",
+              border: "1px solid #ddd6fe"
+            }}
+          >
+            <Clock size={13} style={{ flexShrink: 0 }} /> Action: Share NC Docs
           </span>
         );
       case 3:
         return (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#0f766e", background: "#f0fdfa", border: "1px solid #99f6e4" }}>
-            <Clock size={13} /> Schedule Dispatched
+          <span
+            title="Schedule Dispatched (Awaiting Auditor Sheet)"
+            style={{
+              ...badgeBase,
+              color: "#0f766e",
+              background: "#f0fdfa",
+              border: "1px solid #99f6e4"
+            }}
+          >
+            <Clock size={13} style={{ flexShrink: 0 }} /> Schedule Dispatched
           </span>
         );
       case 2.5:
         return (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#0369a1", background: "#f0f9ff", border: "1px solid #bae6fd" }}>
-            <Clock size={13} /> Approved by Trust Head (Pending QMS Distribution)
+          <span
+            title="Approved by Trust Head (Pending QMS Distribution)"
+            style={{
+              ...badgeBase,
+              color: "#0369a1",
+              background: "#f0f9ff",
+              border: "1px solid #bae6fd"
+            }}
+          >
+            <Clock size={13} style={{ flexShrink: 0 }} /> Approved by Head
           </span>
         );
       case 2:
       default:
         return (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe" }}>
-            <Clock size={13} /> Awaiting Trust Head Approval
+          <span
+            title="Awaiting Trust Head Formal Approval"
+            style={{
+              ...badgeBase,
+              color: "#1d4ed8",
+              background: "#eff6ff",
+              border: "1px solid #bfdbfe"
+            }}
+          >
+            <Clock size={13} style={{ flexShrink: 0 }} /> Awaiting Approval
           </span>
         );
     }
@@ -753,166 +889,191 @@ export default function InternalAudit() {
 
       {/* Clean Table of Audits */}
       <div className="audit-table-wrapper">
-        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+        <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", minWidth: "980px" }}>
+          <colgroup>
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "23%" }} />
+            <col style={{ width: "19%" }} />
+          </colgroup>
           <thead>
-            <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600" }}>
-              <th style={{ padding: "10px 14px", width: "24%" }}>Audit Ref & Process</th>
-              <th style={{ padding: "10px 14px", width: "15%" }}>Dates</th>
-              <th style={{ padding: "10px 14px", width: "18%" }}>Internal Auditor</th>
-              <th style={{ padding: "10px 14px", width: "18%" }}>Internal Auditee</th>
-              <th style={{ padding: "10px 14px", width: "12%" }}>Status</th>
-              <th style={{ padding: "10px 14px", width: "13%", textAlign: "right" }}>Action</th>
+            <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600", height: "42px" }}>
+              <th style={{ padding: "10px 12px", width: "20%", boxSizing: "border-box" }}>Audit Ref & Process</th>
+              <th style={{ padding: "10px 12px", width: "10%", boxSizing: "border-box" }}>Date</th>
+              <th style={{ padding: "10px 12px", width: "14%", boxSizing: "border-box" }}>Internal Auditor</th>
+              <th style={{ padding: "10px 12px", width: "14%", boxSizing: "border-box" }}>Internal Auditee</th>
+              <th style={{ padding: "10px 12px", width: "23%", boxSizing: "border-box" }}>Status</th>
+              <th style={{ padding: "10px 12px", width: "19%", textAlign: "right", boxSizing: "border-box" }}>Action</th>
             </tr>
           </thead>
-            <tbody>
-              {filteredAudits.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>
-                    No audits found.
-                  </td>
-                </tr>
-              ) : (
-                filteredAudits.map((audit) => {
-                  return (
-                    <tr
-                      key={audit.id}
-                      style={{ borderBottom: "1px solid #f1f5f9" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
-                      {/* 1. Audit Ref & Process */}
-                      <td style={{ padding: "12px 16px" }}>
-                        <span style={{ fontFamily: "monospace", fontWeight: "700", fontSize: "11px", color: "var(--navy)", background: "#edf4fa", padding: "2px 6px", borderRadius: "4px" }}>
-                          {audit.id}
-                        </span>
-                        <strong style={{ display: "block", color: "#0f172a", marginTop: "3px", fontSize: "13px" }}>
-                          {audit.process}
-                        </strong>
-                      </td>
+          <tbody>
+            {filteredAudits.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>
+                  No audits found.
+                </td>
+              </tr>
+            ) : (
+              filteredAudits.map((audit) => {
+                return (
+                  <tr
+                    key={audit.id}
+                    style={{ borderBottom: "1px solid #f1f5f9", height: "56px" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    {/* 1. Audit Ref & Process */}
+                    <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", overflow: "hidden" }}>
+                      <span style={{ fontFamily: "monospace", fontWeight: "700", fontSize: "11px", color: "var(--navy)", background: "#edf4fa", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
+                        {audit.id}
+                      </span>
+                      <strong
+                        style={{
+                          display: "block",
+                          color: "#0f172a",
+                          marginTop: "2px",
+                          fontSize: "12.5px",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                        title={audit.process}
+                      >
+                        {audit.process}
+                      </strong>
+                    </td>
 
-                      {/* 2. Audit Dates */}
-                      <td style={{ padding: "12px 16px", color: "#334155" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                          <Calendar size={13} color="#64748b" />
-                          <span>{audit.scheduledDate}</span>
-                        </div>
-                      </td>
+                    {/* 2. Audit Dates */}
+                    <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", color: "#334155", whiteSpace: "nowrap", overflow: "hidden" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <Calendar size={13} color="#64748b" style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: "12.5px" }}>{audit.scheduledDate}</span>
+                      </div>
+                    </td>
 
-                      {/* 3. Internal Auditor */}
-                      <td style={{ padding: "12px 16px", color: "#0f172a", fontWeight: "500" }}>
+                    {/* 3. Internal Auditor */}
+                    <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={audit.internalAuditor?.name}>
+                      <span style={{ color: "#0f172a", fontWeight: "500", fontSize: "12.5px", display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {audit.internalAuditor?.name}
-                      </td>
+                      </span>
+                    </td>
 
-                      {/* 4. Internal Auditee */}
-                      <td style={{ padding: "12px 16px", color: "#0f172a", fontWeight: "500" }}>
+                    {/* 4. Internal Auditee */}
+                    <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={audit.internalAuditee?.name}>
+                      <span style={{ color: "#0f172a", fontWeight: "500", fontSize: "12.5px", display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {audit.internalAuditee?.name}
-                      </td>
+                      </span>
+                    </td>
 
-                      {/* 5. Status Badge */}
-                      <td style={{ padding: "12px 16px" }}>
+                    {/* 5. Status Badge */}
+                    <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", whiteSpace: "nowrap", overflow: "hidden" }}>
+                      <div style={{ display: "flex", alignItems: "center", overflow: "hidden", maxWidth: "100%" }}>
                         {renderStatusBadge(audit)}
-                      </td>
+                      </div>
+                    </td>
 
-                      {/* 6. Contextual Action Button */}
-                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
-                          {/* Stage 2: Trust Head Confirm Action */}
-                          {audit.stage === 2 && isTrustHead && (
-                            <button
-                              type="button"
-                              className="primary-button btn-green"
-                              onClick={() => setConfirmingAudit(audit)}
-                              style={{ padding: "6px 12px", fontSize: "12px" }}
-                            >
-                              <Check size={13} style={{ marginRight: "4px" }} />
-                              Confirm Schedule
-                            </button>
-                          )}
-
-                          {/* Stage 2.5: QMS Coordinator Share Schedule to All */}
-                          {audit.stage === 2.5 && isQMS && (
-                            <button
-                              type="button"
-                              className="primary-button btn-blue"
-                              onClick={() => setShareScheduleAudit(audit)}
-                              style={{ padding: "6px 12px", fontSize: "12px" }}
-                            >
-                              <Send size={13} style={{ marginRight: "4px" }} />
-                              Share Schedule to All
-                            </button>
-                          )}
-
-                          {/* Stage 3: Internal Auditor Noticing Sheet Action */}
-                          {audit.stage === 3 && (isAuditor || isQMS) && (
-                            <button
-                              type="button"
-                              className="primary-button btn-blue"
-                              onClick={() => setNoticingSheetAudit(audit)}
-                              style={{ padding: "6px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                            >
-                              <FileCheck2 size={13} />
-                              Submit Noticing Sheet
-                            </button>
-                          )}
-
-                          {/* Stage 4: QMS Coordinator Share NC Docs Action */}
-                          {audit.stage === 4 && isQMS && (
-                            <button
-                              type="button"
-                              className="primary-button btn-blue"
-                              onClick={() => setNcDocsAudit(audit)}
-                              style={{ padding: "6px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                            >
-                              <Send size={13} />
-                              Share NC Docs
-                            </button>
-                          )}
-
-                          {/* Stage 5: Auditee / Auditor Close Process Action */}
-                          {audit.stage === 5 && (isAuditee || isAuditor || isQMS) && (
-                            <button
-                              type="button"
-                              className="primary-button btn-green"
-                              onClick={() => setAuditeeCloseAudit(audit)}
-                              style={{ padding: "6px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                              title="Close Process"
-                            >
-                              <UploadCloud size={13} />
-                              Close Process
-                            </button>
-                          )}
-
-                          {/* Stage 6: QMS Coordinator Final Sign-off Action */}
-                          {audit.stage === 6 && isQMS && (
-                            <button
-                              type="button"
-                              className="primary-button btn-green"
-                              onClick={() => setFinalCloseAuditItem(audit)}
-                              style={{ padding: "6px 12px", fontSize: "12px" }}
-                            >
-                              <CheckCheck size={14} style={{ marginRight: "4px" }} />
-                              Sign Off
-                            </button>
-                          )}
-
-                          {/* View details */}
+                    {/* 6. Contextual Action Button */}
+                    <td style={{ padding: "8px 12px", verticalAlign: "middle", boxSizing: "border-box", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", width: "100%", height: "30px", whiteSpace: "nowrap" }}>
+                        {/* Stage 2: Trust Head Confirm Action */}
+                        {audit.stage === 2 && isTrustHead && (
                           <button
                             type="button"
-                            className="secondary-button"
-                            onClick={() => setViewingAudit(audit)}
-                            style={{ padding: "6px 8px", fontSize: "12px" }}
-                            title="View Audit Details & Timeline"
+                            className="primary-button btn-green"
+                            onClick={() => setConfirmingAudit(audit)}
+                            style={{ padding: "5px 10px", fontSize: "12px", whiteSpace: "nowrap", height: "30px", display: "inline-flex", alignItems: "center" }}
                           >
-                            <Eye size={13} />
+                            <Check size={13} style={{ marginRight: "4px", flexShrink: 0 }} />
+                            <span>Confirm</span>
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        )}
+
+                        {/* Stage 2.5: QMS Coordinator Share Schedule to All */}
+                        {audit.stage === 2.5 && isQMS && (
+                          <button
+                            type="button"
+                            className="primary-button btn-blue"
+                            onClick={() => setShareScheduleAudit(audit)}
+                            style={{ padding: "5px 10px", fontSize: "12px", whiteSpace: "nowrap", height: "30px", display: "inline-flex", alignItems: "center" }}
+                          >
+                            <Send size={13} style={{ marginRight: "4px", flexShrink: 0 }} />
+                            <span>Share Schedule</span>
+                          </button>
+                        )}
+
+                        {/* Stage 3: Internal Auditor Noticing Sheet Action (ONLY Internal Auditor) */}
+                        {audit.stage === 3 && isAuditor && (
+                          <button
+                            type="button"
+                            className="primary-button btn-blue"
+                            onClick={() => setNoticingSheetAudit(audit)}
+                            style={{ padding: "5px 10px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", height: "30px" }}
+                          >
+                            <FileCheck2 size={13} style={{ flexShrink: 0 }} />
+                            <span>Noticing Sheet</span>
+                          </button>
+                        )}
+
+                        {/* Stage 4: QMS Coordinator Share NC Docs Action */}
+                        {audit.stage === 4 && isQMS && (
+                          <button
+                            type="button"
+                            className="primary-button btn-blue"
+                            onClick={() => setNcDocsAudit(audit)}
+                            style={{ padding: "5px 10px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", height: "30px" }}
+                          >
+                            <Send size={13} style={{ flexShrink: 0 }} />
+                            <span>Share NC Docs</span>
+                          </button>
+                        )}
+
+                        {/* Stage 5: Auditee (Course Coordinator) Close Process Action */}
+                        {audit.stage === 5 && (isAuditee || isQMS) && (
+                          <button
+                            type="button"
+                            className="primary-button btn-green"
+                            onClick={() => setAuditeeCloseAudit(audit)}
+                            style={{ padding: "5px 10px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap", height: "30px" }}
+                            title="Close Process & Submit CAPA"
+                          >
+                            <UploadCloud size={13} style={{ flexShrink: 0 }} />
+                            <span>Close Process</span>
+                          </button>
+                        )}
+
+                        {/* Stage 6: QMS Coordinator Final Sign-off Action */}
+                        {audit.stage === 6 && isQMS && (
+                          <button
+                            type="button"
+                            className="primary-button btn-green"
+                            onClick={() => setFinalCloseAuditItem(audit)}
+                            style={{ padding: "5px 10px", fontSize: "12px", whiteSpace: "nowrap", height: "30px", display: "inline-flex", alignItems: "center" }}
+                          >
+                            <CheckCheck size={14} style={{ marginRight: "4px", flexShrink: 0 }} />
+                            <span>Sign Off</span>
+                          </button>
+                        )}
+
+                        {/* View details */}
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => setViewingAudit(audit)}
+                          style={{ padding: "5px 8px", fontSize: "12px", height: "30px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                          title="View Audit Details & Timeline"
+                        >
+                          <Eye size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* =========================================================================
@@ -1104,8 +1265,7 @@ export default function InternalAudit() {
                   className="primary-button btn-blue"
                   disabled={
                     submitting ||
-                    !scheduleForm.startDate ||
-                    !scheduleForm.endDate ||
+                    !scheduleForm.date ||
                     !(scheduleForm.process === "__custom__" ? scheduleForm.customProcess.trim() : scheduleForm.process.trim()) ||
                     !(scheduleForm.auditorName === "__custom__" ? scheduleForm.customAuditor.trim() : scheduleForm.auditorName.trim()) ||
                     !(scheduleForm.auditeeName === "__custom__" ? scheduleForm.customAuditee.trim() : scheduleForm.auditeeName.trim())
@@ -1355,7 +1515,7 @@ export default function InternalAudit() {
           <form onSubmit={handleAuditeeCloseSubmit}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <div style={{ padding: "6px 10px", background: "#f0fdf4", borderRadius: "6px", border: "1px solid #bbf7d0", fontSize: "11.5px", color: "#166534" }}>
-                <strong>Close Process & Record CAPA:</strong> Document the Root Cause Analysis, Corrective Action Plan (CAPA), and verification evidence to officially close this audit process.
+                <strong>Close Process & Record CAPA:</strong> Document the Root Cause Analysis, Corrective Action Plan (CAPA), and verification evidence to close this audit process and pass it to QMS Coordinator for final sign-off.
               </div>
 
               <div style={{ padding: "6px 10px", background: "#fef3c7", borderRadius: "6px", border: "1px solid #fde68a", fontSize: "11.5px", color: "#92400e" }}>
@@ -1415,7 +1575,7 @@ export default function InternalAudit() {
                   style={{ padding: "6px 16px", fontSize: "12px" }}
                 >
                   <UploadCloud size={14} style={{ marginRight: "4px" }} />
-                  <span>{submitting ? "Closing Process..." : "Close Process & Complete Audit"}</span>
+                  <span>{submitting ? "Closing Process..." : "Close Process & Pass to QMS Coordinator"}</span>
                 </button>
               </div>
             </div>
@@ -1505,25 +1665,23 @@ export default function InternalAudit() {
               </div>
             )}
 
-            {/* Timeline: Visible to Auditor, QMS Coordinator, and Trust Head */}
-            {!isAuditee && (
-              <div>
-                <strong style={{ fontSize: "11.5px", color: "#0f172a", display: "block", marginBottom: "4px" }}>
-                  Audit Timeline
-                </strong>
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  {(viewingAudit.timeline || []).map((t, idx) => (
-                    <div key={idx} style={{ padding: "5px 7px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "11px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "600", color: "#0f172a" }}>
-                        <span>{t.action}</span>
-                        <span style={{ color: "#64748b" }}>{t.timestamp}</span>
-                      </div>
-                      <div style={{ color: "#475569" }}>{t.details}</div>
+            {/* Timeline: Visible to All Stakeholders */}
+            <div>
+              <strong style={{ fontSize: "11.5px", color: "#0f172a", display: "block", marginBottom: "4px" }}>
+                Audit Timeline
+              </strong>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {(viewingAudit.timeline || []).map((t, idx) => (
+                  <div key={idx} style={{ padding: "5px 7px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "11px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "600", color: "#0f172a" }}>
+                      <span>{t.action}</span>
+                      <span style={{ color: "#64748b" }}>{t.timestamp}</span>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ color: "#475569" }}>{t.details}</div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4px" }}>
               <button type="button" className="secondary-button" onClick={() => setViewingAudit(null)} style={{ padding: "6px 14px", fontSize: "12px" }}>

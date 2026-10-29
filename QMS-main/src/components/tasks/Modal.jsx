@@ -3,9 +3,15 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 export default function Modal({ title, onClose, children, maxWidth }) {
-  // Lock body scroll and handle Escape key while modal is mounted
+  // Lock body scroll and handle Escape key while modal is mounted without layout shift
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    }
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e) => {
@@ -17,6 +23,7 @@ export default function Modal({ title, onClose, children, maxWidth }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);

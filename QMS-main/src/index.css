@@ -111,7 +111,9 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
   overflow-x: hidden;
+  overflow-y: scroll;
 }
 
 body {
@@ -3474,7 +3476,17 @@ textarea:focus {
 .audit-table-wrapper table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 680px;
+  table-layout: fixed !important;
+  min-width: 900px;
+}
+
+.audit-table-wrapper tr {
+  height: 56px;
+}
+
+.audit-table-wrapper th,
+.audit-table-wrapper td {
+  box-sizing: border-box;
 }
 
 .audit-table-wrapper th {

@@ -15,7 +15,17 @@ const loadAuditsFromDisk = () => {
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const map = new Map();
-        parsed.forEach((a) => a && a.id && map.set(a.id, a));
+        parsed.forEach((a) => {
+          if (a && a.id) {
+            if (a.scheduledDate && a.scheduledDate.includes(" to ")) {
+              a.scheduledDate = a.scheduledDate.split(" to ")[0].trim();
+            }
+            if (a.auditDates?.startDate) {
+              a.auditDates.endDate = a.auditDates.startDate;
+            }
+            map.set(a.id, a);
+          }
+        });
         auditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
         const merged = Array.from(map.values());
         auditData.length = 0;
@@ -188,7 +198,7 @@ export const createAudit = (req, res) => {
     const seq = String(existingForYear.length + 1).padStart(3, "0");
     const id = `IA-${year}-${seq}`;
 
-    const scheduledDateStr = startDate === endDate ? startDate : `${startDate} to ${endDate}`;
+    const scheduledDateStr = startDate;
     const auditorName = internalAuditor.name;
     const auditeeName = internalAuditee.name;
     const scheduledByName = req.user?.name || "Rahul Kumar";
@@ -201,7 +211,7 @@ export const createAudit = (req, res) => {
       processId: processId || "PROC-01",
       auditDates: {
         startDate,
-        endDate
+        endDate: startDate
       },
       scheduledDate: scheduledDateStr,
       internalAuditor: {
@@ -585,25 +595,30 @@ export const auditeeClose = (req, res) => {
       rootCause: rootCause || "Operational procedure delay during transition period.",
       correctiveAction,
       evidenceFileName: evidenceFileName || `CAPA_Evidence_${audit.id}.pdf`,
-      remarks: remarks || "Corrective actions completed and validated. Submitted for QMS Coordinator final review."
+      remarks: remarks || "Corrective actions completed and validated. Passed to QMS Coordinator for final review."
     };
 
-    audit.status = "Closed";
+    audit.status = "Pending QMS Sign-off";
     audit.stage = 6;
-    audit.stageLabel = "Closed / Completed";
+    audit.stageLabel = "Process Closed by Auditee (Pending QMS Sign-off)";
 
     audit.timeline.push({
-      action: "Audit Process Closed",
+      action: "Audit Process Closed by Auditee",
       actor: `${userName} (${userRole})`,
       timestamp: formatNow(),
-      details: `Corrective Action Plan & Evidence submitted. Process officially closed.`
+      details: `Corrective Action Plan & Evidence submitted by ${userRole}. Passed to QMS Coordinator for final sign-off.`
     });
     saveAuditsToDisk();
 
-    // Notify all stakeholders that the audit process is closed
+    // Notify QMS Coordinator for final sign-off and all stakeholders
     pushNotification(
-      "Internal Audit Process Closed",
-      `Internal audit process for ${audit.process} (${audit.id}) has been closed by ${userName}. Status marked as Closed.`,
+      "Audit Process Closed by Auditee - Final Sign-off Required",
+      `Internal audit process for ${audit.process} (${audit.id}) has been closed by ${userName} with CAPA. Passed to QMS Coordinator for final sign-off.`,
+      "qm"
+    );
+    pushNotification(
+      "Audit Process Closed & Passed to QMS",
+      `Internal audit process for ${audit.process} (${audit.id}) has been closed by ${userName} and passed to QMS Coordinator for final sign-off.`,
       "all"
     );
 
@@ -615,7 +630,7 @@ export const auditeeClose = (req, res) => {
 
     res.json({
       success: true,
-      message: "Audit process closed successfully. Marked as Closed.",
+      message: "Audit process closed by Auditee and passed to QMS Coordinator for final sign-off.",
       data: audit
     });
   } catch (error) {

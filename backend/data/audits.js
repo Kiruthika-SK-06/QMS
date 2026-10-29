@@ -7,9 +7,9 @@ export let auditData = [
     processId: "PROC-01",
     auditDates: {
       startDate: "2026-11-05",
-      endDate: "2026-11-06"
+      endDate: "2026-11-05"
     },
-    scheduledDate: "2026-11-05 to 2026-11-06",
+    scheduledDate: "2026-11-05",
     internalAuditor: {
       id: "IA001",
       name: "Vikas Deshmukh",
@@ -120,9 +120,9 @@ export let auditData = [
     processId: "PROC-02",
     auditDates: {
       startDate: "2026-11-18",
-      endDate: "2026-11-19"
+      endDate: "2026-11-18"
     },
-    scheduledDate: "2026-11-18 to 2026-11-19",
+    scheduledDate: "2026-11-18",
     internalAuditor: {
       id: "IA002",
       name: "Suresh Menon",
@@ -144,7 +144,7 @@ export let auditData = [
     },
     scope: "Review of student admission eligibility verification, fee receipts, registration registers, and ISO 9001:2015 Clause 8.2 conformity.",
     venue: "Admissions Center & Online ERP",
-    status: "Closed by Auditee",
+    status: "Pending QMS Sign-off",
     stage: 6,
     stageLabel: "Closed by Auditee (Pending QMS Final Sign-off)",
 
@@ -226,9 +226,9 @@ export let auditData = [
     processId: "PROC-03",
     auditDates: {
       startDate: "2026-11-25",
-      endDate: "2026-11-26"
+      endDate: "2026-11-25"
     },
-    scheduledDate: "2026-11-25 to 2026-11-26",
+    scheduledDate: "2026-11-25",
     internalAuditor: {
       id: "IA001",
       name: "Vikas Deshmukh",
@@ -322,9 +322,9 @@ export let auditData = [
     processId: "PROC-04",
     auditDates: {
       startDate: "2026-12-02",
-      endDate: "2026-12-03"
+      endDate: "2026-12-02"
     },
-    scheduledDate: "2026-12-02 to 2026-12-03",
+    scheduledDate: "2026-12-02",
     internalAuditor: {
       id: "IA002",
       name: "Suresh Menon",
@@ -406,9 +406,9 @@ export let auditData = [
     processId: "PROC-05",
     auditDates: {
       startDate: "2026-12-10",
-      endDate: "2026-12-11"
+      endDate: "2026-12-10"
     },
-    scheduledDate: "2026-12-10 to 2026-12-11",
+    scheduledDate: "2026-12-10",
     internalAuditor: {
       id: "IA001",
       name: "Vikas Deshmukh",
@@ -452,9 +452,9 @@ export let auditData = [
     processId: "PROC-06",
     auditDates: {
       startDate: "2026-12-15",
-      endDate: "2026-12-16"
+      endDate: "2026-12-15"
     },
-    scheduledDate: "2026-12-15 to 2026-12-16",
+    scheduledDate: "2026-12-15",
     internalAuditor: {
       id: "IA002",
       name: "Suresh Menon",
