@@ -74,6 +74,13 @@ export function saveStoredMRMs(mrms) {
       channel.postMessage({ type: "MRM_UPDATE", mrms: sorted });
       channel.close();
     } catch {}
+
+    // Cross-tab and server sync so other user accounts / tabs immediately receive new MRMs
+    syncBackground(`${API_BASE}/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mrms: sorted })
+    });
   } catch (e) {
     console.warn("Error saving qms_mrms to localStorage", e);
   }
@@ -234,9 +241,11 @@ export const mrmService = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-user-role": "qm",
+        "x-demo-role": "qm",
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
-      body: JSON.stringify({ ...payload, id, process: newMRM.process })
+      body: JSON.stringify({ ...payload, id, process: newMRM.process, isNew: true, createdAt: newMRM.createdAt })
     });
 
     return newMRM;

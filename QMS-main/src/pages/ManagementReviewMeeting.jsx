@@ -140,11 +140,15 @@ export default function ManagementReviewMeeting() {
     usersList
   } = useApp();
 
-  // Role permissions
-  const isQMSCoordinator = currentUser?.role === "qm";
-  const isTrustHead = currentUser?.role === "Head";
-  const isInternalAuditor = currentUser?.role === "auditor";
-  const isCourseCoordinator = currentUser?.role === "owner";
+  // Role permissions (case-insensitive & alias-safe)
+  const roleLower = (currentUser?.role || "").toLowerCase();
+  const titleLower = (currentUser?.roleTitle || "").toLowerCase();
+  const userLower = (currentUser?.username || "").toLowerCase();
+
+  const isQMSCoordinator = roleLower === "qm" || roleLower === "qms" || titleLower.includes("qms") || userLower.includes("qm");
+  const isTrustHead = roleLower === "head" || roleLower === "trusthead" || roleLower === "qmhead" || titleLower.includes("trust head") || titleLower.includes("team head") || userLower.includes("trusthead") || userLower.includes("head");
+  const isInternalAuditor = roleLower === "auditor" || titleLower.includes("auditor") || userLower.includes("auditor");
+  const isCourseCoordinator = roleLower === "owner" || titleLower.includes("course coordinator") || titleLower.includes("process owner") || userLower.includes("coordinator");
 
   const [searchParams, setSearchParams] = useSearchParams();
   const urlFilter = searchParams.get("filter");

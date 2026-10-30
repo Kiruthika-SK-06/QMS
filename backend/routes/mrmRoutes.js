@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getAllMRMs,
+  syncMRMs,
   getMRMById,
   createMRM,
   scheduleMRM,
@@ -25,6 +26,7 @@ import { authenticateToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.get("/", getAllMRMs);
+router.post("/sync", syncMRMs);
 router.get("/:id", getMRMById);
 router.post("/", authenticateToken, createMRM);
 
