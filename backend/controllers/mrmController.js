@@ -75,16 +75,17 @@ export const getAllMRMs = (req, res) => {
           (m.stage && m.stage >= 4)
       );
     } else if (userRole === "auditor") {
-      // Internal Auditor rule: show approved, scheduled, or MoM published meetings (skip draft stages)
+      // Internal Auditor rule: only notified via email or MoM published meetings
       list = list.filter(
         (m) =>
-          m.status === "Approved by Trust Head" ||
-          m.status === "Approved" ||
-          m.trustHeadApproval?.approved ||
-          m.approvals?.teamHead?.status === "Approved" ||
           m.emailNotification?.sent ||
+          m.status === "Notification Sent" ||
+          m.status === "Shared" ||
+          m.sharedWithAll ||
           m.momFile ||
-          (m.stage && m.stage >= 3)
+          m.status === "MoM Uploaded" ||
+          m.status === "Completed" ||
+          (m.stage && m.stage >= 4)
       );
     }
 
@@ -95,6 +96,21 @@ export const getAllMRMs = (req, res) => {
     if (stage) {
       list = list.filter((m) => String(m.stage) === String(stage));
     }
+
+    const dummyIds = new Set(["MRM-2026-001", "MRM-2026-002", "MRM-2026-003", "MRM-2026-004"]);
+    list.sort((a, b) => {
+      const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003") && !a.id?.endsWith("-004"));
+      const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003") && !b.id?.endsWith("-004"));
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+      if (aIsNew && bIsNew) {
+        const aTime = a.createdAt || 0;
+        const bTime = b.createdAt || 0;
+        if (bTime !== aTime) return bTime - aTime;
+        return (b.id || "").localeCompare(a.id || "");
+      }
+      return (a.id || "").localeCompare(b.id || "");
+    });
 
     res.json({
       success: true,
@@ -154,6 +170,8 @@ export const createMRM = (req, res) => {
 
     const newMRM = {
       id: id || `MRM-${new Date().getFullYear()}-${String(mrmData.length + 1).padStart(3, "0")}`,
+      isNew: true,
+      createdAt: req.body.createdAt || Date.now(),
       title: title.trim(),
       description: (description || "").trim(),
       version: "1.0",

@@ -492,15 +492,10 @@ Controlled Document - Published for all Course Staff and Auditors
   // Role-based visibility filter
   const visibleMRMs = (mrmList || []).filter((mrm) => {
     const wf = getWorkflowDetails(mrm);
-    // Course Coordinator rule:
-    // Only show MRMs that have reached "Notification Sent" (step 3) or "MoM Published" (step 4)
-    if (isCourseCoordinator) {
+    // Course Coordinator & Internal Auditor rule:
+    // Only receive the meeting once the QMS Coordinator shares the official email notification (step 3) or MoM is published (step 4)
+    if (isCourseCoordinator || isInternalAuditor) {
       return wf.step >= 3;
-    }
-    // Internal Auditor rule:
-    // Show approved meetings, dates, agendas, and MoM files (skip draft & revision stages: steps 1 and 1.5)
-    if (isInternalAuditor) {
-      return wf.step >= 2.5 || mrm.status === "Approved" || mrm.status === "Approved by Trust Head" || !!mrm.momFile;
     }
     // QMS Coordinator and Trust Head: Full visibility of all MRMs
     return true;
@@ -537,6 +532,10 @@ Controlled Document - Published for all Course Staff and Auditors
   const momPublishedCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step === 4).length;
   const scheduledCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step === 3).length;
   const auditorApprovedCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step >= 2.5).length;
+  const headApprovedCount = visibleMRMs.filter((m) => {
+    const s = getWorkflowDetails(m).step;
+    return s === 2.5 || s === 3;
+  }).length;
 
   // Course Coordinator action items count from published MoMs
   const myAssignedActionsCount = visibleMRMs.reduce((acc, mrm) => {
@@ -632,8 +631,8 @@ Controlled Document - Published for all Course Staff and Auditors
           </>
         ) : isInternalAuditor ? (
           <>
-            <StatCard label="Approved Meetings" value={auditorApprovedCount} icon={ShieldCheck} tone="blue" hint="Ratified by Trust Head" />
-            <StatCard label="Upcoming Scheduled" value={scheduledCount} icon={Mail} tone="teal" hint="Dispatched to coordinators" />
+            <StatCard label="Total Review Meetings" value={visibleMRMs.length} icon={CalendarCheck} tone="blue" hint="All accessible MRMs" />
+            <StatCard label="Scheduled Meetings" value={scheduledCount} icon={Mail} tone="teal" hint="Notified meetings to attend" />
             <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official minutes recorded" />
           </>
         ) : isTrustHead ? (
@@ -677,14 +676,15 @@ Controlled Document - Published for all Course Staff and Auditors
               ]
             : isInternalAuditor
             ? [
-                { id: "All", label: `Review Meetings (${visibleMRMs.length})` },
-                { id: "MoM", label: `MoM Available (${momPublishedCount})` }
+                { id: "All", label: `All Meetings (${visibleMRMs.length})` },
+                { id: "Scheduled", label: `Scheduled (${scheduledCount})` },
+                { id: "MoM", label: `MoM Published (${momPublishedCount})` }
               ]
             : isTrustHead
             ? [
                 { id: "All", label: `All Meetings (${visibleMRMs.length})` },
                 { id: "Step 2", label: `Pending My Approval (${pendingApprovalCount})` },
-                { id: "Step 3", label: "Approved Meetings" },
+                { id: "Step 3", label: `Approved Meetings (${headApprovedCount})` },
                 { id: "Step 4", label: `Completed / MoM (${momPublishedCount})` }
               ]
             : [
@@ -1227,7 +1227,7 @@ Controlled Document - Published for all Course Staff and Auditors
                   checked={planForm.requestApprovalImmediately}
                   onChange={(e) => setPlanForm({ ...planForm, requestApprovalImmediately: e.target.checked })}
                 />
-                <span>Share to Team Head for approval immediately</span>
+                <span>Submit to Trust Head for formal approval immediately</span>
               </label>
             </div>
 
