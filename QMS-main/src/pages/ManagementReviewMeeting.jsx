@@ -42,12 +42,12 @@ import Modal from "../components/tasks/Modal";
 // Step 3: Share Notification via Email (QMS Coordinator -> Course Coordinators, Team Head & Auditors)
 // Step 4: MoM File Publication (QMS Coordinator uploads, Everyone accesses)
 const getWorkflowDetails = (mrm) => {
-  if (mrm.momFile || mrm.status === "MoM Uploaded" || mrm.stage >= 5) {
+  if (mrm.momFile || mrm.status === "MoM Uploaded" || mrm.status === "Completed" || (mrm.stage && mrm.stage >= 4)) {
     return {
       step: 4,
-      statusLabel: "MoM Published",
-      badgeText: "MoM Published",
-      color: "#16a34a",
+      statusLabel: "Completed (MoM Published)",
+      badgeText: "Completed (MoM Published)",
+      color: "#166534",
       bg: "#dcfce7",
       border: "#86efac"
     };
@@ -57,7 +57,8 @@ const getWorkflowDetails = (mrm) => {
     mrm.emailNotification?.sent ||
     mrm.status === "Notification Sent" ||
     mrm.status === "Shared" ||
-    mrm.sharedWithAll
+    mrm.sharedWithAll ||
+    mrm.stage === 3
   ) {
     return {
       step: 3,
@@ -73,35 +74,37 @@ const getWorkflowDetails = (mrm) => {
     mrm.approvals?.teamHead?.status === "Approved" ||
     mrm.status === "Approved" ||
     mrm.status === "Approved by Trust Head" ||
-    mrm.trustHeadApproval?.approved;
+    mrm.trustHeadApproval?.approved ||
+    mrm.stage === 2.5;
 
   if (isApproved) {
     return {
       step: 2.5,
-      statusLabel: "Approved by Team Head",
-      badgeText: "Approved by Team Head",
-      color: "#059669",
-      bg: "#ecfdf5",
-      border: "#a7f3d0"
+      statusLabel: "Approved by Trust Head",
+      badgeText: "Approved by Trust Head",
+      color: "#0f766e",
+      bg: "#f0fdfa",
+      border: "#99f6e4"
     };
   }
 
   if (
     mrm.status === "Pending Approval" ||
     mrm.status === "Submitted for Approval" ||
-    mrm.status === "Pending Trust Head Approval"
+    mrm.status === "Pending Trust Head Approval" ||
+    mrm.stage === 2
   ) {
     return {
       step: 2,
       statusLabel: "Pending Approval",
-      badgeText: "Pending Approval",
-      color: "#d97706",
-      bg: "#fef3c7",
+      badgeText: "Pending Trust Head Approval",
+      color: "#b45309",
+      bg: "#fffbeb",
       border: "#fde68a"
     };
   }
 
-  if (mrm.status === "Changes Requested") {
+  if (mrm.status === "Changes Requested" || mrm.stage === 1.5) {
     return {
       step: 1.5,
       statusLabel: "Revisions Requested",
@@ -114,9 +117,9 @@ const getWorkflowDetails = (mrm) => {
 
   return {
     step: 1,
-    statusLabel: "Planned & Scheduled",
-    badgeText: "Planned & Scheduled",
-    color: "#2563eb",
+    statusLabel: "Planned",
+    badgeText: "Planned",
+    color: "#1d4ed8",
     bg: "#eff6ff",
     border: "#bfdbfe"
   };
@@ -125,6 +128,7 @@ const getWorkflowDetails = (mrm) => {
 export default function ManagementReviewMeeting() {
   const {
     mrmList,
+    processes = [],
     addMRM,
     updateMRM,
     requestMRMApproval,
@@ -177,6 +181,7 @@ export default function ManagementReviewMeeting() {
     scheduledTime: "10:30 AM",
     venue: "Main Boardroom / Webex Video Conference (Room 402)",
     department: "Academic Quality & Compliance",
+    process: "All Processes (Comprehensive Academic Quality Review)",
     requestApprovalImmediately: true,
     agenda: [
       "Review of previous MRM action items & closure status",
@@ -248,6 +253,7 @@ export default function ManagementReviewMeeting() {
       scheduledTime: "10:30 AM",
       venue: "Main Boardroom / Webex Video Conference (Room 402)",
       department: "Academic Quality & Compliance",
+      process: "All Processes (Comprehensive Academic Quality Review)",
       requestApprovalImmediately: true,
       agenda: [
         "Review of previous MRM action items & closure status",
@@ -332,12 +338,14 @@ export default function ManagementReviewMeeting() {
     }
 
     setSubmitting(true);
+    setShowPlanModal(false);
+    setFilterStep("All");
+    setSearchParams({});
     try {
       await addMRM(planForm);
-      setShowPlanModal(false);
       showToast(
         planForm.requestApprovalImmediately
-          ? "MRM planned and shared to Team Head (Anita Rao) for approval!"
+          ? "MRM planned and shared to Trust Head (Anita Rao) for approval!"
           : "MRM meeting planned and scheduled successfully!"
       );
     } catch (err) {
@@ -349,13 +357,13 @@ export default function ManagementReviewMeeting() {
 
   // Submit Stage 1 -> Stage 2: Share to Team Head for approval
   const handleShareToTeamHead = async (mrm) => {
-    if (!window.confirm(`Share "${mrm.title}" to Team Head (Anita Rao) for formal approval?`)) {
+    if (!window.confirm(`Share "${mrm.title}" to Trust Head (Anita Rao) for formal approval?`)) {
       return;
     }
     setSubmitting(true);
     try {
       await requestMRMApproval(mrm.id);
-      showToast("Meeting proposal shared to Team Head (Anita Rao) for approval!");
+      showToast("Meeting proposal shared to Trust Head (Anita Rao) for approval!");
     } catch (err) {
       alert(err.message || "Failed to share for approval");
     } finally {
@@ -631,9 +639,9 @@ Controlled Document - Published for all Course Staff and Auditors
         ) : (
           <>
             <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
-            <StatCard label="Pending Team Head Approval" value={pendingApprovalCount} icon={Clock} tone="amber" />
+            <StatCard label="Pending Trust Head Approval" value={pendingApprovalCount} icon={Clock} tone="amber" />
             <StatCard label="Ready for Email Notification" value={readyToEmailCount} icon={Mail} tone="teal" />
-            <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" />
+            <StatCard label="Completed / MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" />
           </>
         )}
       </div>
@@ -669,8 +677,8 @@ Controlled Document - Published for all Course Staff and Auditors
                 { id: "All", label: "All Meetings" },
                 { id: "Step 1", label: "1. Planned" },
                 { id: "Step 2", label: "2. Pending Approval" },
-                { id: "Step 3", label: "3. Email Stage" },
-                { id: "Step 4", label: "4. MoM Published" }
+                { id: "Step 3", label: "3. Notification Sent" },
+                { id: "Step 4", label: "4. Completed / MoM Published" }
               ]
           ).map((tab) => (
             <button
@@ -723,6 +731,37 @@ Controlled Document - Published for all Course Staff and Auditors
                 {/* Meeting Top Bar */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
                   <div style={{ flex: 1, minWidth: "260px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
+                      <span
+                        style={{
+                          fontFamily: "'Roboto Mono', monospace",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          color: "#2563eb",
+                          background: "#eff6ff",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          border: "1px solid #bfdbfe",
+                          display: "inline-flex",
+                          alignItems: "center"
+                        }}
+                      >
+                        {mrm.id}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          color: "#475569",
+                          background: "#f1f5f9",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          border: "1px solid #e2e8f0"
+                        }}
+                      >
+                        Process: {mrm.process || "All Processes (Comprehensive Academic Quality Review)"}
+                      </span>
+                    </div>
                     <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>
                       {mrm.title}
                     </h3>
@@ -851,9 +890,9 @@ Controlled Document - Published for all Course Staff and Auditors
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
                       {[
                         { num: 1, title: "1. Plan & Schedule", role: "QMS Coordinator" },
-                        { num: 2, title: "2. Team Head Approval", role: "Team Head" },
+                        { num: 2, title: "2. Trust Head Approval", role: "Trust Head" },
                         { num: 3, title: "3. Email Notification", role: "QMS Coordinator" },
-                        { num: 4, title: "4. MoM File", role: "Public to All" }
+                        { num: 4, title: "4. MoM Document & Completion", role: "Public to All" }
                       ].map((stepItem, idx) => {
                         const isComplete =
                           wf.step > stepItem.num ||
@@ -950,7 +989,7 @@ Controlled Document - Published for all Course Staff and Auditors
                         style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px" }}
                       >
                         <Send size={14} />
-                        <span>Share to Team Head for Approval</span>
+                        <span>Share to Trust Head for Approval</span>
                       </button>
                     )}
 
@@ -989,7 +1028,7 @@ Controlled Document - Published for all Course Staff and Auditors
                         style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", background: "#0891b2" }}
                       >
                         <UploadCloud size={15} />
-                        <span>Upload MoM as File</span>
+                        <span>Build & Upload MoM as Document</span>
                       </button>
                     )}
 
@@ -1054,6 +1093,27 @@ Controlled Document - Published for all Course Staff and Auditors
                   onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
                   style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
+              </label>
+
+              <label style={{ gridColumn: "span 2" }}>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
+                  Associated Quality Process <span style={{ color: "#ef4444" }}>*</span>
+                </span>
+                <select
+                  value={planForm.process || "All Processes (Comprehensive Academic Quality Review)"}
+                  onChange={(e) => setPlanForm({ ...planForm, process: e.target.value })}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff", fontSize: "13px" }}
+                >
+                  <option value="All Processes (Comprehensive Academic Quality Review)">
+                    All Processes (Comprehensive Academic Quality Review)
+                  </option>
+                  <option value="Quality Review & MRM">Quality Review & MRM</option>
+                  {(processes || []).map((p) => (
+                    <option key={p.id} value={p.name}>
+                      {p.name} ({p.id})
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>
@@ -1397,7 +1457,7 @@ Controlled Document - Published for all Course Staff and Auditors
       {/* ========================================================================= */}
       {showUploadMoMModal && isQMSCoordinator && selectedMRM && (
         <Modal
-          title={`Upload Minutes of Meeting (MoM): ${selectedMRM.title}`}
+          title={`Build & Upload Minutes of Meeting (MoM) as Document: ${selectedMRM.title}`}
           onClose={() => setShowUploadMoMModal(false)}
         >
           <form onSubmit={handleUploadMoMSubmit}>
@@ -1502,7 +1562,7 @@ Controlled Document - Published for all Course Staff and Auditors
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
                 <Check size={15} />
-                <span>{submitting ? "Publishing..." : "Publish MoM File for Everyone"}</span>
+                <span>{submitting ? "Publishing..." : "Publish MoM Document for Everyone"}</span>
               </button>
             </div>
           </form>

@@ -130,6 +130,7 @@ export const createMRM = (req, res) => {
     }
 
     const {
+      id,
       title,
       description,
       targetMonth,
@@ -139,6 +140,7 @@ export const createMRM = (req, res) => {
       agenda,
       attendees,
       department,
+      process,
       requestApprovalImmediately
     } = req.body;
 
@@ -151,7 +153,7 @@ export const createMRM = (req, res) => {
     const isRequestingApproval = !!requestApprovalImmediately;
 
     const newMRM = {
-      id: `MRM-${new Date().getFullYear()}-${String(mrmData.length + 1).padStart(3, "0")}`,
+      id: id || `MRM-${new Date().getFullYear()}-${String(mrmData.length + 1).padStart(3, "0")}`,
       title: title.trim(),
       description: (description || "").trim(),
       version: "1.0",
@@ -165,6 +167,7 @@ export const createMRM = (req, res) => {
       plannedBy: plannerName,
       plannedByRole: plannerRole,
       department: department || req.user?.department || "Quality Assurance & Compliance",
+      process: process || "All Processes (Comprehensive Academic Quality Review)",
       agenda: Array.isArray(agenda) && agenda.length ? agenda : [
         "Review of previous MRM action items & closure status",
         "Analysis of student semester feedback & satisfaction index",

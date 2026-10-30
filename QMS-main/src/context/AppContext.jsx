@@ -17,7 +17,7 @@ import { taskService } from "../services/taskService";
 import { notificationService } from "../services/notificationService";
 import { processService } from "../services/processService";
 import { userService } from "../services/userService";
-import { mrmService } from "../services/mrmService";
+import { mrmService, getStoredMRMs, saveStoredMRMs } from "../services/mrmService";
 import { auditService, getStoredAudits, saveStoredAudits } from "../services/auditService";
 
 const AppContext = createContext(null);
@@ -47,7 +47,7 @@ export function AppProvider({ children }) {
   const [processes, setProcesses] = useState(initialProcesses);
   const [employees, setEmployees] = useState(initialEmployees);
   const [usersList, setUsersList] = useState(initialUsersList);
-  const [mrmList, setMrmList] = useState(initialMRMList);
+  const [mrmList, setMrmList] = useState(() => getStoredMRMs());
   const [auditList, setAuditList] = useState(() => getStoredAudits());
   const [activities, setActivities] = useState(initialActivities);
   const [headOverview, setHeadOverview] = useState(null);
@@ -331,79 +331,47 @@ export function AppProvider({ children }) {
   };
 
   // ==================== MRM (MANAGEMENT REVIEW MEETING) ACTIONS ====================
+  // 1. QMS Coordinator plans and schedules meeting -> Immediately visible, passes to Trust Head for Approval
   const addMRM = async (mrmData) => {
     try {
       const created = await mrmService.createMRM(mrmData, token);
-      setMrmList((prev) => [created, ...prev]);
-      refreshData();
+      setMrmList((prev) => [created, ...prev.filter((m) => m.id !== created.id)]);
+
+      // Associate and update process register for Quality Review & MRM
+      setProcesses((prevProcs) =>
+        prevProcs.map((p) => {
+          if (p.name?.includes("Quality Review") || p.id === "PROC-006") {
+            return { ...p, active: (p.active || 0) + 1 };
+          }
+          return p;
+        })
+      );
+
+      pushNotification(
+        "New MRM Scheduled - Approval Required",
+        `Meeting (${created.id}) for "${created.title}" scheduled for ${created.scheduledDate}. Please review and approve.`,
+        "Head"
+      );
+      pushNotification(
+        "MRM Meeting Scheduled",
+        `Meeting (${created.id}) scheduled and submitted to Trust Head Anita Rao for formal authorization.`,
+        "qm"
+      );
       return created;
     } catch (err) {
-      console.error("addMRM failed, fallback to local:", err);
-      const isSched = !!mrmData.scheduledDate;
-      const fallbackMRM = {
-        ...mrmData,
-        id: `MRM-${new Date().getFullYear()}-${String(mrmList.length + 1).padStart(3, "0")}`,
-        version: "1.0",
-        versionHistory: [],
-        status: isSched ? "Scheduled" : "Planned",
-        mom: null,
-        trustHeadApproval: null,
-        sharedWithAll: false,
-        acknowledgements: [],
-        timeline: [
-          {
-            action: isSched ? "Meeting Planned & Scheduled" : "Meeting Planned",
-            actor: mrmData.plannedBy || currentUser?.name || "QMS Coordinator",
-            timestamp: new Date().toLocaleString(),
-            version: "1.0",
-            details: isSched ? `Scheduled for ${mrmData.scheduledDate}` : "Meeting plan created"
-          }
-        ]
-      };
-      setMrmList((prev) => [fallbackMRM, ...prev]);
-      return fallbackMRM;
+      console.error("addMRM failed:", err);
+      throw err;
     }
   };
 
   const scheduleMRM = async (id, scheduleData) => {
-    try {
-      const updated = await mrmService.scheduleMRM(id, scheduleData, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
-      return updated;
-    } catch (err) {
-      console.error("scheduleMRM failed, fallback to local:", err);
-      let localUpdated = null;
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id !== id) return m;
-          localUpdated = {
-            ...m,
-            ...scheduleData,
-            status: "Scheduled",
-            timeline: [
-              ...(m.timeline || []),
-              {
-                action: "Meeting Scheduled",
-                actor: currentUser?.name || "QMS Coordinator",
-                timestamp: new Date().toLocaleString(),
-                version: m.version || "1.0",
-                details: `Scheduled for ${scheduleData.scheduledDate} at ${scheduleData.scheduledTime || "10:00 AM"}`
-              }
-            ]
-          };
-          return localUpdated;
-        })
-      );
-      return localUpdated;
-    }
+    return addMRM({ ...scheduleData, id });
   };
 
   const updateMRM = async (id, data) => {
     try {
       const updated = await mrmService.updateMRM(id, data, token);
       setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
       return updated;
     } catch (err) {
       console.error("updateMRM failed:", err);
@@ -425,118 +393,184 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.requestApproval(id, token);
       setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
+      pushNotification(
+        "New MRM Scheduled - Approval Required",
+        `Approval requested for "${updated.title}". Please review and confirm schedule.`,
+        "Head"
+      );
       return updated;
     } catch (err) {
-      console.error("requestMRMApproval failed, fallback to local:", err);
-      let localUpdated = null;
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id === id) {
-            localUpdated = {
-              ...m,
-              status: "Pending Approval",
-              stage: 2,
-              approvals: {
-                teamHead: { status: "Pending", decision: null, approverName: null, approverRole: null, approvedAt: null, remarks: null },
-                internalAuditor: { status: "Pending", decision: null, approverName: null, approverRole: null, approvedAt: null, remarks: null }
-              }
-            };
-            return localUpdated;
-          }
-          return m;
-        })
-      );
-      return localUpdated;
+      console.error("requestMRMApproval failed:", err);
+      throw err;
     }
   };
 
+  // 2. Trust Head Confirms / Approves Schedule -> Passes to QMS Coordinator to dispatch emails
+  const approveMRM = async (id, { remarks = "" } = {}) => {
+    try {
+      const updated = await mrmService.approveMRM(id, { remarks }, token);
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        pushNotification(
+          "MRM Approved by Trust Head",
+          `Trust Head Anita Rao approved the schedule for "${updated.title}". You can now dispatch meeting notifications via email to all stakeholders.`,
+          "qm"
+        );
+        pushNotification(
+          "MRM Schedule Ratified",
+          `Meeting "${updated.title}" approved. Notification dispatched to QMS Coordinator.`,
+          "Head"
+        );
+      }
+      return updated;
+    } catch (err) {
+      console.error("approveMRM failed:", err);
+      throw err;
+    }
+  };
+
+  const requestChangesMRM = async (id, remarks) => {
+    try {
+      const updated = await mrmService.requestChangesMRM(id, { remarks }, token);
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        pushNotification(
+          "MRM Changes Requested",
+          `Trust Head requested revisions for "${updated.title}": ${remarks}`,
+          "qm"
+        );
+      }
+      return updated;
+    } catch (err) {
+      console.error("requestChangesMRM failed:", err);
+      throw err;
+    }
+  };
+
+  const rejectMRM = async (id, reason) => {
+    try {
+      const updated = await mrmService.rejectMRM(id, { reason }, token);
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
+      return updated;
+    } catch (err) {
+      console.error("rejectMRM failed:", err);
+      throw err;
+    }
+  };
+
+  const resubmitMRM = async (id, mom, revisionNotes) => {
+    try {
+      const updated = await mrmService.resubmitMRM(id, { mom, revisionNotes }, token);
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
+      return updated;
+    } catch (err) {
+      console.error("resubmitMRM failed:", err);
+      throw err;
+    }
+  };
+
+  // 3. QMS Coordinator Shares Email Notification to Course Coordinators, Trust Head & Internal Auditor
   const shareMeetingEmail = async (id) => {
     try {
       const updated = await mrmService.shareMeetingEmail(id, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        pushNotification(
+          "Management Review Meeting Notice",
+          `MRM "${updated.title}" scheduled on ${updated.scheduledDate} at ${updated.scheduledTime}. You are cordially invited.`,
+          "owner"
+        );
+        pushNotification(
+          "Management Review Meeting Scheduled",
+          `MRM "${updated.title}" scheduled on ${updated.scheduledDate}. Agenda available for audit review.`,
+          "auditor"
+        );
+        pushNotification(
+          "MRM Notification Dispatched",
+          `Meeting notice for "${updated.title}" emailed to all Course Coordinators, Trust Head, and Internal Auditor.`,
+          "qm"
+        );
+        pushNotification(
+          "MRM Invitation Dispatched",
+          `Meeting notice for "${updated.title}" sent to all stakeholders.`,
+          "Head"
+        );
+      }
       return updated;
     } catch (err) {
-      console.error("shareMeetingEmail failed, fallback to local:", err);
-      let localUpdated = null;
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id === id) {
-            localUpdated = {
-              ...m,
-              status: "Notification Sent",
-              stage: 4,
-              sharedWithAll: true,
-              sharedAt: new Date().toLocaleString(),
-              sharedBy: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
-              emailNotification: {
-                sent: true,
-                sentAt: new Date().toLocaleString(),
-                sentBy: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
-                subject: `Official Notice: ${m.title} Scheduled`,
-                status: "Delivered",
-                recipients: [
-                  { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-                  { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-                  { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
-                  { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-                  { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
-                ]
-              }
-            };
-            return localUpdated;
-          }
-          return m;
-        })
-      );
-      return localUpdated;
+      console.error("shareMeetingEmail failed:", err);
+      throw err;
     }
   };
 
+  const shareMRM = async (id) => {
+    return shareMeetingEmail(id);
+  };
+
+  // 4. QMS Coordinator Uploads MoM File -> Stored as official Document & Whole Process Completed
   const uploadMoMFile = async (id, momPayload) => {
     try {
       const updated = await mrmService.uploadMoMFile(id, momPayload, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+
+        // Upload and store as official Document in Document Management
+        const docId = `DOC-MOM-${updated.id.replace(/[^a-zA-Z0-9]/g, "")}`;
+        const newDoc = {
+          id: docId,
+          title: `Minutes of Meeting: ${updated.title}`,
+          process: updated.process || "Quality Review & MRM",
+          category: "Quality Governance & MRM",
+          type: "Meeting Minutes",
+          version: "1.0",
+          author: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
+          authorRole: "QMS Coordinator",
+          updated: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          updatedBy: currentUser?.name || "Rahul Kumar",
+          status: "Approved",
+          securityClassification: "Internal Controlled",
+          fileSize: momPayload.fileSize || "2.4 MB",
+          downloadCount: 0,
+          versions: [
+            {
+              version: "1.0",
+              date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+              author: currentUser?.name || "Rahul Kumar",
+              status: "Approved",
+              notes: "Official published Minutes of Management Review Meeting."
+            }
+          ]
+        };
+        setDocuments((prevDocs) => [newDoc, ...prevDocs.filter((d) => d.id !== docId)]);
+
+        // Update Quality Review & MRM process in Process Register
+        setProcesses((prevProcs) =>
+          prevProcs.map((p) => {
+            if (p.name?.includes("Quality Review") || p.id === "PROC-006") {
+              return {
+                ...p,
+                completed: (p.completed || 0) + 1,
+                active: Math.max(0, (p.active || 1) - 1)
+              };
+            }
+            return p;
+          })
+        );
+
+        pushNotification(
+          "MRM Completed & MoM Document Published",
+          `Minutes of Meeting for "${updated.title}" has been published and uploaded as an official document. Open for download by all Course Coordinators and Auditors.`,
+          "all"
+        );
+      }
       return updated;
     } catch (err) {
-      console.error("uploadMoMFile failed, fallback to local:", err);
-      let localUpdated = null;
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id === id) {
-            localUpdated = {
-              ...m,
-              status: "MoM Uploaded",
-              stage: 5,
-              momFile: {
-                fileName: momPayload.fileName || `MRM_${m.id}_MoM.pdf`,
-                fileSize: momPayload.fileSize || "2.1 MB",
-                fileType: momPayload.fileType || "application/pdf",
-                fileData: momPayload.fileData || null,
-                uploadedBy: currentUser?.name || "Rahul Kumar",
-                uploadedByRole: currentUser?.roleTitle || "QMS Coordinator",
-                uploadedAt: new Date().toLocaleString(),
-                downloadUrl: `/api/mrm/${m.id}/mom-download`,
-                summary: momPayload.summary || "Official Minutes of Meeting recorded",
-                discussionPoints: momPayload.discussionPoints || [],
-                actionItems: momPayload.actionItems || [],
-                decisions: momPayload.decisions || []
-              },
-              mom: {
-                summary: momPayload.summary,
-                discussionPoints: momPayload.discussionPoints,
-                actionItems: momPayload.actionItems,
-                decisions: momPayload.decisions
-              }
-            };
-            return localUpdated;
-          }
-          return m;
-        })
-      );
-      return localUpdated;
+      console.error("uploadMoMFile failed:", err);
+      throw err;
     }
   };
 
@@ -548,199 +582,16 @@ export function AppProvider({ children }) {
     return requestMRMApproval(id);
   };
 
-  const approveMRM = async (id, remarks = "") => {
-    try {
-      const updated = await mrmService.approveMRM(id, { remarks }, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
-      return updated;
-    } catch (err) {
-      console.error("approveMRM failed, fallback to local:", err);
-      const isAuditor = currentUser?.role === "auditor";
-      const approverName = currentUser?.name || (isAuditor ? "Suresh Menon" : "Anita Rao");
-      const approverRole = currentUser?.roleTitle || (isAuditor ? "Internal Auditor" : "Trust Head");
-
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id !== id) return m;
-          const currentApprovals = m.approvals || { teamHead: { status: "Pending" }, internalAuditor: { status: "Pending" } };
-          const updatedApprovals = {
-            ...currentApprovals,
-            ...(isAuditor
-              ? { internalAuditor: { status: "Approved", decision: "Approved", approverName, approverRole, approvedAt: new Date().toLocaleString(), remarks } }
-              : { teamHead: { status: "Approved", decision: "Approved", approverName, approverRole, approvedAt: new Date().toLocaleString(), remarks } })
-          };
-          const bothApproved = updatedApprovals.teamHead?.status === "Approved" && updatedApprovals.internalAuditor?.status === "Approved";
-          return {
-            ...m,
-            status: bothApproved ? "Approved" : "Pending Approval",
-            stage: bothApproved ? 3 : 2,
-            approvals: updatedApprovals,
-            trustHeadApproval: {
-              decision: "Approved",
-              approved: true,
-              approvedBy: approverName,
-              approvedAt: new Date().toLocaleString(),
-              remarks
-            }
-          };
-        })
-      );
-    }
-  };
-
-  const requestChangesMRM = async (id, remarks) => {
-    try {
-      const updated = await mrmService.requestChangesMRM(id, { remarks }, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
-      return updated;
-    } catch (err) {
-      console.error("requestChangesMRM failed, fallback to local:", err);
-      setMrmList((prev) =>
-        prev.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                status: "Changes Requested",
-                trustHeadApproval: {
-                  decision: "Changes Requested",
-                  approved: false,
-                  approvedBy: currentUser?.name || "Anita Rao (Trust Head)",
-                  approvedAt: new Date().toLocaleString(),
-                  remarks,
-                  versionReviewed: m.version || "1.0"
-                }
-              }
-            : m
-        )
-      );
-    }
-  };
-
-  const rejectMRM = async (id, reason) => {
-    try {
-      const updated = await mrmService.rejectMRM(id, { reason }, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
-      return updated;
-    } catch (err) {
-      console.error("rejectMRM failed, fallback to local:", err);
-      setMrmList((prev) =>
-        prev.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                status: "Rejected",
-                trustHeadApproval: {
-                  decision: "Rejected",
-                  approved: false,
-                  rejected: true,
-                  approvedBy: currentUser?.name || "Anita Rao (Trust Head)",
-                  approvedAt: new Date().toLocaleString(),
-                  remarks: reason,
-                  versionReviewed: m.version || "1.0"
-                }
-              }
-            : m
-        )
-      );
-    }
-  };
-
-  const resubmitMRM = async (id, mom, revisionNotes) => {
-    try {
-      const updated = await mrmService.resubmitMRM(id, { mom, revisionNotes }, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
-      return updated;
-    } catch (err) {
-      console.error("resubmitMRM failed, fallback to local:", err);
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id !== id) return m;
-          const nextVer = (parseFloat(m.version || "1.0") + 0.1).toFixed(1);
-          const history = m.versionHistory || [];
-          return {
-            ...m,
-            version: nextVer,
-            versionHistory: [
-              ...history,
-              {
-                version: m.version || "1.0",
-                mom: m.mom,
-                trustHeadApproval: m.trustHeadApproval,
-                submittedAt: m.submittedForApprovalAt,
-                archivedAt: new Date().toLocaleString(),
-                revisionNotes
-              }
-            ],
-            mom: mom ? { ...m.mom, ...mom } : m.mom,
-            status: "Submitted for Approval",
-            submittedForApprovalAt: new Date().toLocaleString(),
-            trustHeadApproval: null
-          };
-        })
-      );
-    }
-  };
-
-  const shareMRM = async (id) => {
-    try {
-      const updated = await mrmService.shareMRM(id, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
-      return updated;
-    } catch (err) {
-      console.error("shareMRM failed, fallback to local:", err);
-      setMrmList((prev) =>
-        prev.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                status: "Shared",
-                sharedWithAll: true,
-                sharedAt: new Date().toLocaleString(),
-                sharedBy: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
-                sharedVersion: m.version || "1.0",
-                acknowledgements: m.acknowledgements || []
-              }
-            : m
-        )
-      );
-    }
-  };
-
   const acknowledgeMRM = async (id) => {
     try {
       const updated = await mrmService.acknowledgeMRM(id, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      refreshData();
+      if (updated) {
+        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
       return updated;
     } catch (err) {
-      console.error("acknowledgeMRM failed, fallback to local:", err);
-      setMrmList((prev) =>
-        prev.map((m) => {
-          if (m.id !== id) return m;
-          const acks = m.acknowledgements || [];
-          if (acks.some((a) => a.userId === currentUser?.id || a.name === currentUser?.name)) {
-            return m;
-          }
-          return {
-            ...m,
-            acknowledgements: [
-              ...acks,
-              {
-                userId: currentUser?.id || "CC-208",
-                name: currentUser?.name || "Course Coordinator",
-                role: currentUser?.roleTitle || "Course Coordinator",
-                department: currentUser?.department || "Academic Division",
-                acknowledgedAt: new Date().toLocaleString()
-              }
-            ]
-          };
-        })
-      );
+      console.error("acknowledgeMRM failed:", err);
+      return null;
     }
   };
 
