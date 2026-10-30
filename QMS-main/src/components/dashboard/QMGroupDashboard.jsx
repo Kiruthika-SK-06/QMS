@@ -11,6 +11,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { sortMRMs } from "../../services/mrmService";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
 import StatusBadge from "../common/StatusBadge";
@@ -82,7 +83,7 @@ export default function QMGroupDashboard() {
           <ul className="overview-card-details">
             <li>
               <span className="detail-label">Next Session:</span>
-              <span className="detail-val">{mrmList[0]?.scheduledDate || "None"}</span>
+              <span className="detail-val">{sortMRMs(mrmList)[0]?.scheduledDate || "None"}</span>
             </li>
             <li>
               <span className="detail-label">To Share:</span>

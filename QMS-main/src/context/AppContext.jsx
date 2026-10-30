@@ -67,7 +67,7 @@ export function AppProvider({ children }) {
         processService.fetchActivities(),
         processService.fetchHeadOverview(),
         userService.fetchUsers(),
-        mrmService.fetchMRMs(token),
+        mrmService.fetchMRMs(token, currentUser?.role),
         auditService.fetchAudits(token)
       ]);
 
@@ -105,7 +105,7 @@ export function AppProvider({ children }) {
     } catch (err) {
       console.warn("Silent sync notice:", err);
     }
-  }, [token]);
+  }, [token, currentUser?.role]);
 
   // Initial and manual refresh with loading indicator
   const refreshData = useCallback(async () => {
@@ -134,7 +134,7 @@ export function AppProvider({ children }) {
     } else {
       refreshData();
     }
-  }, [token]);
+  }, [token, currentUser?.role]);
 
   // Real-Time EventSource (SSE) Subscription & Live Polling Heartbeat
   useEffect(() => {

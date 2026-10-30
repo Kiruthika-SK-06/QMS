@@ -31,6 +31,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { sortMRMs } from "../services/mrmService";
 import PageIntro from "../components/common/PageIntro";
 import StatCard from "../components/common/StatCard";
 import StatusBadge from "../components/common/StatusBadge";
@@ -140,10 +141,18 @@ export default function ManagementReviewMeeting() {
     usersList
   } = useApp();
 
-  // Role permissions (case-insensitive & alias-safe)
-  const roleLower = (currentUser?.role || "").toLowerCase();
-  const titleLower = (currentUser?.roleTitle || "").toLowerCase();
-  const userLower = (currentUser?.username || "").toLowerCase();
+  // Role permissions (case-insensitive & alias-safe, with resilient localStorage fallback)
+  const activeUser = currentUser || (() => {
+    try {
+      return JSON.parse(localStorage.getItem("qms_user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+
+  const roleLower = (activeUser?.role || "").toLowerCase();
+  const titleLower = (activeUser?.roleTitle || "").toLowerCase();
+  const userLower = (activeUser?.username || "").toLowerCase();
 
   const isQMSCoordinator = roleLower === "qm" || roleLower === "qms" || titleLower.includes("qms") || userLower.includes("qm");
   const isTrustHead = roleLower === "head" || roleLower === "trusthead" || roleLower === "qmhead" || titleLower.includes("trust head") || titleLower.includes("team head") || userLower.includes("trusthead") || userLower.includes("head");
@@ -160,6 +169,8 @@ export default function ManagementReviewMeeting() {
     const f = searchParams.get("filter");
     if (f === "Approved") {
       setFilterStep("Approved");
+    } else if (f === "pending" || f === "approval" || f === "Step 2") {
+      setFilterStep("Step 2");
     } else if (!f && filterStep === "Approved") {
       setFilterStep("All");
     }
@@ -505,8 +516,11 @@ Controlled Document - Published for all Course Staff and Auditors
     return true;
   });
 
+  // Sort meetings so newly scheduled ones are ALWAYS placed first
+  const sortedVisibleMRMs = sortMRMs(visibleMRMs);
+
   // Filter meetings by search query and active tab
-  const filteredMRMs = visibleMRMs.filter((mrm) => {
+  const filteredMRMs = sortedVisibleMRMs.filter((mrm) => {
     const wf = getWorkflowDetails(mrm);
     const matchesFilter =
       filterStep === "All" ||

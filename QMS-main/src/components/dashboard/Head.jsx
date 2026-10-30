@@ -10,6 +10,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { sortMRMs } from "../../services/mrmService";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
 import ActivityCard from "./ActivityCard";
@@ -64,8 +65,14 @@ export default function Head() {
   const completedProcesses = list.filter((p) => p.status === "Completed").length;
   const inProgressProcesses = list.filter((p) => p.status === "In Progress" || p.status === "Active").length;
 
+  const sortedMRMs = sortMRMs(mrmList);
+
   const pendingApprovalMRMs = (mrmList || []).filter(
-    (m) => m.status === "Pending Trust Head Approval" || m.status === "Submitted for Approval"
+    (m) =>
+      m.status === "Pending Trust Head Approval" ||
+      m.status === "Submitted for Approval" ||
+      m.status === "Pending Approval" ||
+      m.stage === 2
   );
 
   const pendingAuditApprovals = (auditList || []).filter((a) => a.stage === 2);
@@ -144,7 +151,7 @@ export default function Head() {
             <ul className="overview-card-details">
               <li>
                 <span className="detail-label">Latest Meeting:</span>
-                <span className="detail-val">{mrmList[0]?.scheduledDate || "None"}</span>
+                <span className="detail-val">{sortedMRMs[0]?.scheduledDate || "None"}</span>
               </li>
               <li>
                 <span className="detail-label">MoM Status:</span>
@@ -246,14 +253,14 @@ export default function Head() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mrmList.length === 0 ? (
+                  {sortedMRMs.length === 0 ? (
                     <tr>
                       <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
                         No review meetings currently scheduled.
                       </td>
                     </tr>
                   ) : (
-                    mrmList.slice(0, 4).map((mrm) => {
+                    sortedMRMs.slice(0, 4).map((mrm) => {
                       const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
                       return (
                         <tr key={mrm.id}>
@@ -324,7 +331,7 @@ export default function Head() {
           <ul className="overview-card-details">
             <li>
               <span className="detail-label">Next Session:</span>
-              <span className="detail-val">{mrmList[0]?.scheduledDate || "None"}</span>
+              <span className="detail-val">{sortedMRMs[0]?.scheduledDate || "None"}</span>
             </li>
             <li>
               <span className="detail-label">Status:</span>
@@ -478,14 +485,14 @@ export default function Head() {
                 </tr>
               </thead>
               <tbody>
-                {mrmList.length === 0 ? (
+                {sortedMRMs.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
                       No review meetings currently scheduled.
                     </td>
                   </tr>
                 ) : (
-                  mrmList.slice(0, 4).map((mrm) => {
+                  sortedMRMs.slice(0, 4).map((mrm) => {
                     const hasMoM = !!mrm.momFile || mrm.status === "MoM Uploaded";
                     return (
                       <tr key={mrm.id}>

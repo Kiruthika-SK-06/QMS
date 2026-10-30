@@ -122,13 +122,24 @@ export const mrmService = {
   saveStoredMRMs,
   mergeMRMs,
 
-  async fetchMRMs(token) {
+  async fetchMRMs(token, role) {
     const cached = getStoredMRMs();
+    let currentRole = role;
+    if (!currentRole) {
+      try {
+        const u = JSON.parse(localStorage.getItem("qms_user") || "null");
+        if (u?.role) currentRole = u.role;
+      } catch {}
+    }
+
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 800);
+      const timer = setTimeout(() => controller.abort(), 2500);
       const res = await fetch(API_BASE, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(currentRole ? { "x-user-role": currentRole, "x-demo-role": currentRole } : {})
+        },
         signal: controller.signal
       });
       clearTimeout(timer);
@@ -163,7 +174,7 @@ export const mrmService = {
   async createMRM(payload, token) {
     const currentList = getStoredMRMs();
     const year = new Date().getFullYear();
-    const id = `MRM-${year}-${String(Date.now()).slice(-3)}`;
+    const id = payload.id || `MRM-${year}-${String(Date.now()).slice(-3)}`;
     const isReq = payload.requestApprovalImmediately !== false;
 
     const newMRM = {
@@ -173,7 +184,7 @@ export const mrmService = {
       createdAt: Date.now(),
       version: "1.0",
       versionHistory: [],
-      status: isReq ? "Pending Approval" : "Planned",
+      status: isReq ? "Pending Trust Head Approval" : "Planned",
       stage: isReq ? 2 : 1,
       targetMonth: payload.targetMonth || "November 2026",
       scheduledDate: payload.scheduledDate || new Date().toISOString().split("T")[0],
@@ -245,7 +256,16 @@ export const mrmService = {
         "x-demo-role": "qm",
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
-      body: JSON.stringify({ ...payload, id, process: newMRM.process, isNew: true, createdAt: newMRM.createdAt })
+      body: JSON.stringify({
+        ...payload,
+        id,
+        status: newMRM.status,
+        stage: newMRM.stage,
+        requestApprovalImmediately: isReq,
+        process: newMRM.process,
+        isNew: true,
+        createdAt: newMRM.createdAt
+      })
     });
 
     return newMRM;

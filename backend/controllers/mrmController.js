@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import jwt from "jsonwebtoken";
 import { mrmData } from "../data/mrm.js";
 import { notificationsData } from "../data/notifications.js";
 import { activitiesData } from "../data/activities.js";
@@ -90,7 +91,22 @@ export const getAllMRMs = (req, res) => {
   try {
     loadMRMFromDisk();
     const { status, stage, role } = req.query;
-    const userRole = req.user?.role || role;
+    let userRole = role;
+
+    // Resolve user role from token or explicit headers
+    if (!userRole && req.headers["authorization"]) {
+      try {
+        const token = req.headers["authorization"].split(" ")[1];
+        if (token && token.startsWith("session-token-")) {
+          userRole = token.split("-")[2];
+        } else if (token) {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026");
+          if (decoded) userRole = decoded.role;
+        }
+      } catch {}
+    }
+    userRole = (req.user?.role || req.headers["x-user-role"] || req.headers["x-demo-role"] || userRole || "").toLowerCase();
+
     let list = [...mrmData];
 
     // Course Coordinator rule: only notified or MoM published meetings
@@ -206,7 +222,7 @@ export const createMRM = (req, res) => {
       description: (description || "").trim(),
       version: "1.0",
       versionHistory: [],
-      status: isRequestingApproval ? "Pending Approval" : "Planned",
+      status: isRequestingApproval ? "Pending Trust Head Approval" : "Planned",
       stage: isRequestingApproval ? 2 : 1,
       targetMonth: targetMonth || "November 2026",
       scheduledDate: scheduledDate || null,
@@ -303,7 +319,12 @@ export const createMRM = (req, res) => {
       });
     }
 
-    mrmData.unshift(newMRM);
+    const existingIdx = mrmData.findIndex((m) => m && m.id === newMRM.id);
+    if (existingIdx >= 0) {
+      mrmData[existingIdx] = { ...mrmData[existingIdx], ...newMRM };
+    } else {
+      mrmData.unshift(newMRM);
+    }
     saveMRMToDisk();
 
     activitiesData.unshift({
