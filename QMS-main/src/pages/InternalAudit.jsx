@@ -864,14 +864,14 @@ export default function InternalAudit() {
 
       {/* Clean Table of Audits */}
       <div className="audit-table-wrapper">
-        <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", minWidth: "980px" }}>
+        <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", minWidth: "1020px" }}>
           <colgroup>
-            <col style={{ width: "20%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "23%" }} />
-            <col style={{ width: "19%" }} />
+            <col style={{ width: "21%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "21%" }} />
+            <col style={{ width: "17%" }} />
           </colgroup>
           <thead>
             <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600", height: "42px" }}>

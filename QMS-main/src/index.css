@@ -3477,7 +3477,7 @@ textarea:focus {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed !important;
-  min-width: 900px;
+  min-width: 1020px !important;
 }
 
 .audit-table-wrapper tr {
@@ -3748,7 +3748,10 @@ html, body {
   box-sizing: border-box;
 }
 
-.audit-table-wrapper table,
+.audit-table-wrapper table {
+  min-width: 1020px !important;
+}
+
 .doc-table,
 .table {
   min-width: 640px;

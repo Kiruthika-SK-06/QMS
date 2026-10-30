@@ -17,8 +17,8 @@ import { taskService } from "../services/taskService";
 import { notificationService } from "../services/notificationService";
 import { processService } from "../services/processService";
 import { userService } from "../services/userService";
-import { mrmService, getStoredMRMs, saveStoredMRMs } from "../services/mrmService";
-import { auditService, getStoredAudits, saveStoredAudits } from "../services/auditService";
+import { mrmService, getStoredMRMs, saveStoredMRMs, sortMRMs } from "../services/mrmService";
+import { auditService, getStoredAudits, saveStoredAudits, sortAudits } from "../services/auditService";
 
 const AppContext = createContext(null);
 

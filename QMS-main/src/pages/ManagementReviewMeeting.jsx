@@ -636,6 +636,13 @@ Controlled Document - Published for all Course Staff and Auditors
             <StatCard label="Upcoming Scheduled" value={scheduledCount} icon={Mail} tone="teal" hint="Dispatched to coordinators" />
             <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official minutes recorded" />
           </>
+        ) : isTrustHead ? (
+          <>
+            <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
+            <StatCard label="Pending My Approval" value={pendingApprovalCount} icon={Clock} tone="amber" hint="Action required to review & approve" />
+            <StatCard label="Approved Meetings" value={auditorApprovedCount} icon={ShieldCheck} tone="teal" hint="Ratified meeting schedules" />
+            <StatCard label="Completed / MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official meeting minutes published" />
+          </>
         ) : (
           <>
             <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
