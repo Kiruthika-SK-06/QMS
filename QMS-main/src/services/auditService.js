@@ -21,6 +21,29 @@ function syncBackground(url, options = {}) {
   }
 }
 
+// Deterministic sort: Newly scheduled audits ALWAYS placed first, prebuilt dummy data below
+export function sortAudits(list) {
+  if (!Array.isArray(list)) return [];
+  const dummyIds = new Set(["IA-2026-001", "IA-2026-002", "IA-2026-003"]);
+
+  return [...list].sort((a, b) => {
+    const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003"));
+    const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003"));
+
+    if (aIsNew && !bIsNew) return -1;
+    if (!aIsNew && bIsNew) return 1;
+
+    if (aIsNew && bIsNew) {
+      const aTime = a.createdAt || 0;
+      const bTime = b.createdAt || 0;
+      if (bTime !== aTime) return bTime - aTime;
+      return b.id.localeCompare(a.id);
+    }
+
+    return a.id.localeCompare(b.id);
+  });
+}
+
 // Helper to read cached audits from localStorage
 export function getStoredAudits() {
   try {
@@ -28,7 +51,7 @@ export function getStoredAudits() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((a) => {
+        const cleaned = parsed.map((a) => {
           const rawSched = a.scheduledDate || "";
           const startDate = rawSched.includes(" to ")
             ? rawSched.split(" to ")[0].trim()
@@ -49,22 +72,24 @@ export function getStoredAudits() {
             }
           };
         });
+        return sortAudits(cleaned);
       }
     }
   } catch (e) {
     console.warn("Error reading qms_audits from localStorage", e);
   }
-  return initialAuditList;
+  return sortAudits(initialAuditList);
 }
 
 // Helper to save audits and broadcast to other open tabs
 export function saveStoredAudits(audits) {
   try {
-    localStorage.setItem("qms_audits", JSON.stringify(audits));
+    const sorted = sortAudits(audits);
+    localStorage.setItem("qms_audits", JSON.stringify(sorted));
     // BroadcastChannel sends instant event to other tabs on same origin
     try {
       const channel = new BroadcastChannel("qms_audit_channel");
-      channel.postMessage({ type: "AUDIT_UPDATE", audits });
+      channel.postMessage({ type: "AUDIT_UPDATE", audits: sorted });
       channel.close();
     } catch {
       // Fallback: localStorage automatically triggers window 'storage' event across tabs
@@ -74,11 +99,34 @@ export function saveStoredAudits(audits) {
   }
 }
 
-function mergeAudits(serverList, localList) {
+export function mergeAudits(serverList, localList) {
+  if (!Array.isArray(localList) || localList.length === 0) return sortAudits(Array.isArray(serverList) ? serverList : []);
+  if (!Array.isArray(serverList) || serverList.length === 0) return sortAudits(localList);
+
   const map = new Map();
-  (serverList || []).forEach((a) => a && a.id && map.set(a.id, a));
-  (localList || []).forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
-  return Array.from(map.values());
+  // 1. First populate map with localList to preserve local optimistic actions and sorting
+  for (const local of localList) {
+    if (local && local.id) map.set(local.id, local);
+  }
+
+  // 2. Reconcile with serverList without downgrading local stage
+  for (const server of serverList) {
+    if (!server || !server.id) continue;
+    const local = map.get(server.id);
+    if (!local) {
+      map.set(server.id, server);
+    } else {
+      const localStage = typeof local.stage === "number" ? local.stage : 1;
+      const serverStage = typeof server.stage === "number" ? server.stage : 1;
+      if (serverStage > localStage) {
+        map.set(server.id, { ...local, ...server, stage: serverStage });
+      } else {
+        map.set(server.id, { ...server, ...local, stage: localStage });
+      }
+    }
+  }
+
+  return sortAudits(Array.from(map.values()));
 }
 
 export const auditService = {
@@ -133,7 +181,8 @@ export const auditService = {
 
   async createAudit(payload, token) {
     const year = new Date().getFullYear();
-    const id = `IA-${year}-${String(Math.floor(100 + Math.random() * 900))}`;
+    const currentList = getStoredAudits();
+    const id = payload.id || `IA-${year}-${String(Date.now()).slice(-3)}`;
     const auditDate = payload.date || payload.startDate || new Date().toISOString().split("T")[0];
     const startDate = payload.startDate || auditDate;
     const endDate = startDate;
@@ -142,6 +191,8 @@ export const auditService = {
     const created = {
       ...payload,
       id,
+      isNew: true,
+      createdAt: Date.now(),
       date: auditDate,
       startDate,
       endDate,
@@ -167,8 +218,7 @@ export const auditService = {
     };
 
     // Instant local save and broadcast
-    const currentList = getStoredAudits();
-    const updatedList = [created, ...currentList.filter((a) => a.id !== created.id)];
+    const updatedList = sortAudits([created, ...currentList.filter((a) => a.id !== created.id)]);
     saveStoredAudits(updatedList);
 
     // Sync in background without blocking UI

@@ -74,7 +74,6 @@ export default function InternalAudit() {
 
   // Filter & Search
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterProcess, setFilterProcess] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [toast, setToast] = useState(null);
 
@@ -166,14 +165,6 @@ export default function InternalAudit() {
   // Filtered audits
   const filteredAudits = useMemo(() => {
     return visibleAudits.filter((audit) => {
-      // Process Filter
-      if (filterProcess !== "all") {
-        const auditProc = (audit.process || "").toLowerCase();
-        const selected = filterProcess.toLowerCase();
-        const matches = auditProc.includes(selected) || selected.includes(auditProc) || auditProc.includes("all processes");
-        if (!matches) return false;
-      }
-
       const isClosed =
         audit.stage >= 7 ||
         (audit.stage >= 6 && audit.qmsFinalClosure?.closed) ||
@@ -203,7 +194,7 @@ export default function InternalAudit() {
       }
       return true;
     });
-  }, [visibleAudits, filterStatus, filterProcess, searchTerm, isQMS, isTrustHead, isAuditor, isAuditee]);
+  }, [visibleAudits, filterStatus, searchTerm, isQMS, isTrustHead, isAuditor, isAuditee]);
 
   // =========================================================================
   // HANDLERS
@@ -262,6 +253,8 @@ export default function InternalAudit() {
         customAuditee: ""
       });
 
+      setFilterStatus("all");
+      setSearchTerm("");
       const created = await scheduleAudit(payload);
 
       // Real-time automatic notification to Trust Head only for approval
@@ -852,36 +845,18 @@ export default function InternalAudit() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <select
-            value={filterProcess}
-            onChange={(e) => setFilterProcess(e.target.value)}
-            style={{
-              padding: "6px 10px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              fontSize: "12px",
-              background: "#ffffff",
-              color: "#334155"
-            }}
-            title="Filter by Process"
-          >
-            <option value="all">{isAuditee ? "All My Processes" : "All Processes"} ({systemProcesses.length})</option>
-            {systemProcesses.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-
           <input
             type="text"
-            placeholder="Search audit..."
+            placeholder="Search audit by process, ID, auditor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              padding: "6px 10px",
+              padding: "6px 12px",
               borderRadius: "6px",
               border: "1px solid #cbd5e1",
               fontSize: "12px",
-              width: "180px"
+              width: "240px",
+              background: "#ffffff"
             }}
           />
         </div>

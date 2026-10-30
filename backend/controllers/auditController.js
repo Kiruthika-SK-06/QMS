@@ -136,7 +136,20 @@ export const getAllAudits = (req, res) => {
       list = list.filter((a) => a.stage >= 3);
     }
 
-    const sorted = list.sort((a, b) => b.id.localeCompare(a.id));
+    const dummyIds = new Set(["IA-2026-001", "IA-2026-002", "IA-2026-003"]);
+    const sorted = list.sort((a, b) => {
+      const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003"));
+      const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003"));
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+      if (aIsNew && bIsNew) {
+        const aTime = a.createdAt || 0;
+        const bTime = b.createdAt || 0;
+        if (bTime !== aTime) return bTime - aTime;
+        return b.id.localeCompare(a.id);
+      }
+      return a.id.localeCompare(b.id);
+    });
     res.json({ success: true, count: sorted.length, data: sorted });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -196,7 +209,7 @@ export const createAudit = (req, res) => {
     const year = new Date().getFullYear();
     const existingForYear = auditData.filter((a) => a.id.startsWith(`IA-${year}`));
     const seq = String(existingForYear.length + 1).padStart(3, "0");
-    const id = `IA-${year}-${seq}`;
+    const id = req.body.id || `IA-${year}-${seq}`;
 
     const scheduledDateStr = startDate;
     const auditorName = internalAuditor.name;
@@ -206,6 +219,8 @@ export const createAudit = (req, res) => {
 
     const newAudit = {
       id,
+      isNew: req.body.isNew !== undefined ? req.body.isNew : true,
+      createdAt: req.body.createdAt || Date.now(),
       title: title || `${process} Internal Quality Audit`,
       process,
       processId: processId || "PROC-01",

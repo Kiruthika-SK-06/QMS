@@ -47,8 +47,8 @@ export function AppProvider({ children }) {
   const [processes, setProcesses] = useState(initialProcesses);
   const [employees, setEmployees] = useState(initialEmployees);
   const [usersList, setUsersList] = useState(initialUsersList);
-  const [mrmList, setMrmList] = useState(() => getStoredMRMs());
-  const [auditList, setAuditList] = useState(() => getStoredAudits());
+  const [mrmList, setMrmList] = useState(() => sortMRMs(getStoredMRMs()));
+  const [auditList, setAuditList] = useState(() => sortAudits(getStoredAudits()));
   const [activities, setActivities] = useState(initialActivities);
   const [headOverview, setHeadOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -96,10 +96,10 @@ export function AppProvider({ children }) {
         setUsersList(liveUsers.value);
       }
       if (liveMRMs.status === "fulfilled" && Array.isArray(liveMRMs.value)) {
-        setMrmList(liveMRMs.value);
+        setMrmList(sortMRMs(liveMRMs.value));
       }
       if (liveAudits.status === "fulfilled" && Array.isArray(liveAudits.value)) {
-        setAuditList(liveAudits.value);
+        setAuditList(sortAudits(liveAudits.value));
       }
       setLastSyncTime(new Date());
     } catch (err) {
@@ -140,6 +140,14 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let sse = null;
     let heartbeat = null;
+    let sseDebounceTimer = null;
+
+    const debouncedSilentRefresh = () => {
+      if (sseDebounceTimer) clearTimeout(sseDebounceTimer);
+      sseDebounceTimer = setTimeout(() => {
+        silentRefresh();
+      }, 1500);
+    };
 
     try {
       sse = new EventSource("/api/realtime/stream");
@@ -152,10 +160,10 @@ export function AppProvider({ children }) {
         try {
           const data = JSON.parse(event.data);
           if (data.type !== "HEARTBEAT") {
-            silentRefresh();
+            debouncedSilentRefresh();
           }
         } catch {
-          silentRefresh();
+          debouncedSilentRefresh();
         }
       };
 
@@ -171,7 +179,7 @@ export function AppProvider({ children }) {
       if (!document.hidden) {
         silentRefresh();
       }
-    }, 15000);
+    }, 30000);
 
     const handleFocus = () => silentRefresh();
     window.addEventListener("focus", handleFocus);
@@ -179,6 +187,7 @@ export function AppProvider({ children }) {
     return () => {
       if (sse) sse.close();
       if (heartbeat) clearInterval(heartbeat);
+      if (sseDebounceTimer) clearTimeout(sseDebounceTimer);
       window.removeEventListener("focus", handleFocus);
     };
   }, [silentRefresh]);
@@ -192,14 +201,14 @@ export function AppProvider({ children }) {
         auditChannel = new BroadcastChannel("qms_audit_channel");
         auditChannel.onmessage = (event) => {
           if (event.data?.type === "AUDIT_UPDATE" && Array.isArray(event.data.audits)) {
-            setAuditList(event.data.audits);
+            setAuditList(sortAudits(event.data.audits));
           }
         };
 
         mrmChannel = new BroadcastChannel("qms_mrm_channel");
         mrmChannel.onmessage = (event) => {
           if (event.data?.type === "MRM_UPDATE" && Array.isArray(event.data.mrms)) {
-            setMrmList(event.data.mrms);
+            setMrmList(sortMRMs(event.data.mrms));
           }
         };
       }
@@ -212,14 +221,14 @@ export function AppProvider({ children }) {
         try {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setAuditList(parsed);
+            setAuditList(sortAudits(parsed));
           }
         } catch {}
       } else if (e.key === "qms_mrms" && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setMrmList(parsed);
+            setMrmList(sortMRMs(parsed));
           }
         } catch {}
       }
@@ -335,7 +344,7 @@ export function AppProvider({ children }) {
   const addMRM = async (mrmData) => {
     try {
       const created = await mrmService.createMRM(mrmData, token);
-      setMrmList((prev) => [created, ...prev.filter((m) => m.id !== created.id)]);
+      setMrmList((prev) => sortMRMs([created, ...prev.filter((m) => m.id !== created.id)]));
 
       // Associate and update process register for Quality Review & MRM
       setProcesses((prevProcs) =>
@@ -371,7 +380,7 @@ export function AppProvider({ children }) {
   const updateMRM = async (id, data) => {
     try {
       const updated = await mrmService.updateMRM(id, data, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
       return updated;
     } catch (err) {
       console.error("updateMRM failed:", err);
@@ -392,7 +401,7 @@ export function AppProvider({ children }) {
   const requestMRMApproval = async (id) => {
     try {
       const updated = await mrmService.requestApproval(id, token);
-      setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
       pushNotification(
         "New MRM Scheduled - Approval Required",
         `Approval requested for "${updated.title}". Please review and confirm schedule.`,
@@ -410,7 +419,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.approveMRM(id, { remarks }, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
         pushNotification(
           "MRM Approved by Trust Head",
           `Trust Head Anita Rao approved the schedule for "${updated.title}". You can now dispatch meeting notifications via email to all stakeholders.`,
@@ -433,7 +442,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.requestChangesMRM(id, { remarks }, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
         pushNotification(
           "MRM Changes Requested",
           `Trust Head requested revisions for "${updated.title}": ${remarks}`,
@@ -451,7 +460,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.rejectMRM(id, { reason }, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
       }
       return updated;
     } catch (err) {
@@ -464,7 +473,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.resubmitMRM(id, { mom, revisionNotes }, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
       }
       return updated;
     } catch (err) {
@@ -478,7 +487,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.shareMeetingEmail(id, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
         pushNotification(
           "Management Review Meeting Notice",
           `MRM "${updated.title}" scheduled on ${updated.scheduledDate} at ${updated.scheduledTime}. You are cordially invited.`,
@@ -516,7 +525,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.uploadMoMFile(id, momPayload, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
 
         // Upload and store as official Document in Document Management
         const docId = `DOC-MOM-${updated.id.replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -586,7 +595,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await mrmService.acknowledgeMRM(id, token);
       if (updated) {
-        setMrmList((prev) => prev.map((m) => (m.id === id ? updated : m)));
+        setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
       }
       return updated;
     } catch (err) {
@@ -600,7 +609,7 @@ export function AppProvider({ children }) {
     try {
       const created = await auditService.createAudit(payload, token);
       setAuditList((prev) => {
-        const next = [created, ...prev.filter((a) => a.id !== created.id)];
+        const next = sortAudits([created, ...prev.filter((a) => a.id !== created.id)]);
         saveStoredAudits(next);
         return next;
       });
@@ -615,7 +624,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await auditService.shareSchedule(id, token);
       setAuditList((prev) => {
-        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        const next = sortAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
         saveStoredAudits(next);
         return next;
       });
@@ -630,7 +639,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await auditService.confirmSchedule(id, remarks, token);
       setAuditList((prev) => {
-        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        const next = sortAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
         saveStoredAudits(next);
         return next;
       });
@@ -645,7 +654,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await auditService.submitNoticingSheet(id, payload, token);
       setAuditList((prev) => {
-        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        const next = sortAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
         saveStoredAudits(next);
         return next;
       });
@@ -660,7 +669,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await auditService.shareNCDocs(id, payload, token);
       setAuditList((prev) => {
-        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        const next = sortAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
         saveStoredAudits(next);
         return next;
       });
@@ -675,7 +684,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await auditService.auditeeClose(id, payload, token);
       setAuditList((prev) => {
-        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        const next = sortAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
         saveStoredAudits(next);
         return next;
       });
@@ -690,7 +699,7 @@ export function AppProvider({ children }) {
     try {
       const updated = await auditService.finalCloseAudit(id, remarks, token);
       setAuditList((prev) => {
-        const next = prev.map((a) => (a.id === id ? { ...a, ...updated } : a));
+        const next = sortAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
         saveStoredAudits(next);
         return next;
       });

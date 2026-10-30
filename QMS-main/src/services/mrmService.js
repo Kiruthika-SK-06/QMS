@@ -27,27 +27,51 @@ function syncBackground(url, options = {}) {
   }
 }
 
+// Deterministic sort: Newly scheduled MRMs ALWAYS placed first, prebuilt dummy data below
+export function sortMRMs(list) {
+  if (!Array.isArray(list)) return [];
+  const dummyIds = new Set(["MRM-2026-001", "MRM-2026-002", "MRM-2026-003", "MRM-2026-004"]);
+
+  return [...list].sort((a, b) => {
+    const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003") && !a.id?.endsWith("-004"));
+    const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003") && !b.id?.endsWith("-004"));
+
+    if (aIsNew && !bIsNew) return -1;
+    if (!aIsNew && bIsNew) return 1;
+
+    if (aIsNew && bIsNew) {
+      const aTime = a.createdAt || 0;
+      const bTime = b.createdAt || 0;
+      if (bTime !== aTime) return bTime - aTime;
+      return b.id.localeCompare(a.id);
+    }
+
+    return a.id.localeCompare(b.id);
+  });
+}
+
 // Helper to read cached MRMs from localStorage
 export function getStoredMRMs() {
   try {
     const saved = localStorage.getItem("qms_mrms");
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) return sortMRMs(parsed);
     }
   } catch (e) {
     console.warn("Error reading qms_mrms from localStorage", e);
   }
-  return initialMRMList;
+  return sortMRMs(initialMRMList);
 }
 
 // Helper to save MRMs and broadcast to other open tabs
 export function saveStoredMRMs(mrms) {
   try {
-    localStorage.setItem("qms_mrms", JSON.stringify(mrms));
+    const sorted = sortMRMs(mrms);
+    localStorage.setItem("qms_mrms", JSON.stringify(sorted));
     try {
       const channel = new BroadcastChannel("qms_mrm_channel");
-      channel.postMessage({ type: "MRM_UPDATE", mrms });
+      channel.postMessage({ type: "MRM_UPDATE", mrms: sorted });
       channel.close();
     } catch {}
   } catch (e) {
@@ -57,33 +81,33 @@ export function saveStoredMRMs(mrms) {
 
 // Helper to reconcile server data with local cache without deleting locally planned MRMs
 export function mergeMRMs(serverList, localList) {
-  if (!Array.isArray(localList) || localList.length === 0) return Array.isArray(serverList) ? serverList : [];
-  if (!Array.isArray(serverList) || serverList.length === 0) return localList;
+  if (!Array.isArray(localList) || localList.length === 0) return sortMRMs(Array.isArray(serverList) ? serverList : []);
+  if (!Array.isArray(serverList) || serverList.length === 0) return sortMRMs(localList);
 
   const map = new Map();
-  for (const item of serverList) {
-    if (item && item.id) map.set(item.id, item);
+  // 1. Populate map with localList first to preserve local optimistic updates and order
+  for (const local of localList) {
+    if (local && local.id) map.set(local.id, local);
   }
 
-  for (const local of localList) {
-    if (!local || !local.id) continue;
-    const serverItem = map.get(local.id);
-    if (!serverItem) {
-      map.set(local.id, local);
+  // 2. Reconcile with serverList
+  for (const server of serverList) {
+    if (!server || !server.id) continue;
+    const local = map.get(server.id);
+    if (!local) {
+      map.set(server.id, server);
     } else {
       const localStage = typeof local.stage === "number" ? local.stage : 1;
-      const serverStage = typeof serverItem.stage === "number" ? serverItem.stage : 1;
-      if (localStage >= serverStage) {
-        map.set(local.id, {
-          ...serverItem,
-          ...local,
-          stage: Math.max(localStage, serverStage)
-        });
+      const serverStage = typeof server.stage === "number" ? server.stage : 1;
+      if (serverStage > localStage) {
+        map.set(server.id, { ...local, ...server, stage: serverStage });
+      } else {
+        map.set(server.id, { ...server, ...local, stage: localStage });
       }
     }
   }
 
-  return Array.from(map.values());
+  return sortMRMs(Array.from(map.values()));
 }
 
 export const mrmService = {
@@ -138,6 +162,8 @@ export const mrmService = {
     const newMRM = {
       ...payload,
       id,
+      isNew: true,
+      createdAt: Date.now(),
       version: "1.0",
       versionHistory: [],
       status: isReq ? "Pending Approval" : "Planned",
@@ -200,7 +226,7 @@ export const mrmService = {
       ]
     };
 
-    const updatedList = [newMRM, ...currentList.filter((m) => m.id !== id)];
+    const updatedList = sortMRMs([newMRM, ...currentList.filter((m) => m.id !== id)]);
     saveStoredMRMs(updatedList);
 
     // Sync in background without blocking UI
