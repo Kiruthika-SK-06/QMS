@@ -673,6 +673,13 @@ Controlled Document - Published for all Course Staff and Auditors
                 { id: "All", label: `Review Meetings (${visibleMRMs.length})` },
                 { id: "MoM", label: `MoM Available (${momPublishedCount})` }
               ]
+            : isTrustHead
+            ? [
+                { id: "All", label: `All Meetings (${visibleMRMs.length})` },
+                { id: "Step 2", label: `Pending My Approval (${pendingApprovalCount})` },
+                { id: "Step 3", label: "Approved Meetings" },
+                { id: "Step 4", label: `Completed / MoM (${momPublishedCount})` }
+              ]
             : [
                 { id: "All", label: "All Meetings" },
                 { id: "Step 1", label: "1. Planned" },
@@ -833,59 +840,8 @@ Controlled Document - Published for all Course Staff and Auditors
                   </div>
                 </div>
 
-                {/* Progress Indicator: Course Coordinator sees clean attendance/MoM progress; Auditor sees audit milestones; QMS/Head see 4-step admin stepper */}
-                {isCourseCoordinator ? (
-                  <div style={{ margin: "14px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#16a34a", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "700" }}>
-                          <Check size={13} />
-                        </div>
-                        <div>
-                          <strong style={{ fontSize: "12px", color: "#166534", display: "block" }}>1. Meeting Scheduled & Invitation Dispatched</strong>
-                          <span style={{ fontSize: "11px", color: "#64748b" }}>You are invited to review syllabus and practical course deliverables.</span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: wf.step === 4 ? "#16a34a" : "#cbd5e1", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "700" }}>
-                          {wf.step === 4 ? <Check size={13} /> : "2"}
-                        </div>
-                        <div>
-                          <strong style={{ fontSize: "12px", color: wf.step === 4 ? "#166534" : "#475569", display: "block" }}>
-                            {wf.step === 4 ? "2. Minutes of Meeting (MoM) Published" : "2. MoM File in Preparation"}
-                          </strong>
-                          <span style={{ fontSize: "11px", color: "#64748b" }}>
-                            {wf.step === 4 ? "Official MoM document & action assignments accessible below." : "Will be published after meeting ratification."}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : isInternalAuditor ? (
-                  <div style={{ margin: "14px 0", padding: "14px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                    <div style={{ marginBottom: "8px" }}>
-                      <strong style={{ fontSize: "11.5px", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "4px" }}>
-                        Meeting Purpose & Main Context
-                      </strong>
-                      <p style={{ margin: 0, fontSize: "13.5px", color: "#1e293b", lineHeight: 1.5 }}>
-                        {mrm.description || "Comprehensive academic review of course delivery milestones, student satisfaction indices, practical curriculum modernization, and quality standard adherence."}
-                      </p>
-                    </div>
-                    {Array.isArray(mrm.agenda) && mrm.agenda.length > 0 && (
-                      <div style={{ marginTop: "10px" }}>
-                        <strong style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
-                          Discussion Agendas:
-                        </strong>
-                        <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "12.5px", color: "#334155", display: "flex", flexDirection: "column", gap: "3px" }}>
-                          {mrm.agenda.slice(0, 3).map((item, idx) => (
-                            <li key={idx}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : (
+                {/* Meeting Content: QMS Coordinator sees 4-step stepper; Trust Head, Course Coordinator, and Auditor see clean Meeting Details */}
+                {isQMSCoordinator ? (
                   <div style={{ margin: "16px 0", padding: "12px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
                       {[
@@ -950,6 +906,29 @@ Controlled Document - Published for all Course Staff and Auditors
                         );
                       })}
                     </div>
+                  </div>
+                ) : (
+                  <div style={{ margin: "14px 0", padding: "14px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <strong style={{ fontSize: "11.5px", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "4px" }}>
+                        Meeting Purpose & Review Context
+                      </strong>
+                      <p style={{ margin: 0, fontSize: "13.5px", color: "#1e293b", lineHeight: 1.5 }}>
+                        {mrm.description || "Comprehensive academic review of course delivery milestones, student satisfaction indices, practical curriculum modernization, and quality standard adherence."}
+                      </p>
+                    </div>
+                    {Array.isArray(mrm.agenda) && mrm.agenda.length > 0 && (
+                      <div style={{ marginTop: "10px" }}>
+                        <strong style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
+                          Discussion Agendas:
+                        </strong>
+                        <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "12.5px", color: "#334155", display: "flex", flexDirection: "column", gap: "3px" }}>
+                          {mrm.agenda.slice(0, 3).map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
 
