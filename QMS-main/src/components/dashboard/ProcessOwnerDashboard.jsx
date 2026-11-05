@@ -171,7 +171,7 @@ export default function ProcessOwnerDashboard() {
               <ShieldCheck size={22} />
             </div>
             <div className="overview-card-title-group">
-              <h3>External Audit</h3>
+              <h3>External Quality Audits</h3>
               <span>ISO 9001:2015 Reviews</span>
             </div>
           </div>

@@ -216,7 +216,7 @@ export default function QMGroupDashboard() {
               <ShieldCheck size={20} />
             </div>
             <div className="overview-card-title-group">
-              <h3>External Audit</h3>
+              <h3>External Quality Audits</h3>
               <span>ISO 9001:2015</span>
             </div>
           </div>
