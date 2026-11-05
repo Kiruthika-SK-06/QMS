@@ -329,23 +329,24 @@ export default function ExternalAudit() {
 
     setSubmitting(true);
     try {
+      const summaryText = ncUploadForm.summary || "External Auditor on-site non-conformance observation report";
       const findings = [
         {
           id: `NC-EXT-${Date.now().toString().slice(-2)}`,
-          type: ncUploadForm.findingType,
-          clause: ncUploadForm.findingClause,
-          description: ncUploadForm.findingDesc,
-          assignedTo: ncUploadForm.findingAssignee,
-          deadline: ncUploadForm.targetClosureDate,
+          type: ncUploadForm.findingType || "Minor NC",
+          clause: ncUploadForm.findingClause || "ISO 9001:2015 Clause 8.5",
+          description: ncUploadForm.findingDesc || summaryText,
+          assignedTo: ncUploadForm.findingAssignee || "Course Coordinator",
+          deadline: ncUploadForm.targetClosureDate || new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
           status: "Pending Action"
         }
       ];
 
       await uploadExternalAuditNCDocs(selectedAudit.id, {
-        fileName: ncUploadForm.fileName,
-        fileSize: ncUploadForm.fileSize,
-        summary: ncUploadForm.summary,
-        targetClosureDate: ncUploadForm.targetClosureDate,
+        fileName: ncUploadForm.fileName || "Scanned_NC_Document.pdf",
+        fileSize: ncUploadForm.fileSize || "1.8 MB",
+        summary: summaryText,
+        targetClosureDate: ncUploadForm.targetClosureDate || new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
         findings
       });
 
@@ -368,7 +369,7 @@ export default function ExternalAudit() {
       await closeCourseCoordinatorNC(selectedAudit.id, {
         closedBy: courseCoordCloseForm.closedBy,
         remarks: courseCoordCloseForm.remarks,
-        actionPlan: courseCoordCloseForm.actionPlan
+        actionPlan: courseCoordCloseForm.actionPlan || courseCoordCloseForm.remarks
       });
       setShowCourseCoordCloseModal(false);
       showToast("NC Document closed by Course Coordinator! External Auditor can now approve via email or office visit.");
@@ -386,7 +387,13 @@ export default function ExternalAudit() {
 
     setSubmitting(true);
     try {
-      await closeExternalAuditProcess(selectedAudit.id, closeProcessForm);
+      await closeExternalAuditProcess(selectedAudit.id, {
+        certificateNumber: closeProcessForm.certificateNumber,
+        approvalDate: closeProcessForm.approvalDate || new Date().toISOString().split("T")[0],
+        recommendation: closeProcessForm.recommendation || "Full ISO 9001:2015 certification compliance endorsed.",
+        approvalMode: closeProcessForm.approvalMode || "Office Visit & Email Confirmation",
+        remarks: closeProcessForm.remarks || "All non-conformances cleared and approved by External Auditor."
+      });
       setShowCloseProcessModal(false);
       showToast(`External Audit closed successfully! ISO 9001:2015 Certificate (${closeProcessForm.certificateNumber}) ratified.`);
     } catch (err) {
@@ -825,88 +832,31 @@ Certified Compliant with International Standards - C-DAC Quality Office
                   </div>
                 </div>
 
-                {/* Non-Conformance Notice if active (Course Coordinator & QMS Coordinator) */}
-                {audit.ncDocument && (isCourseCoordinator || isQMSCoordinator) && (
+                {/* Subtle Non-Conformance Notice for Course Coordinator if pending resolution */}
+                {audit.ncDocument && isCourseCoordinator && !audit.ncClosure?.closed && (
                   <div
                     style={{
                       margin: "12px 0",
-                      padding: "10px 14px",
-                      background: audit.ncClosure?.closed ? "#f0fdf4" : "#fffbeb",
-                      border: `1px solid ${audit.ncClosure?.closed ? "#bbf7d0" : "#fde68a"}`,
-                      borderRadius: "8px",
-                      fontSize: "12.5px",
+                      padding: "8px 12px",
+                      background: "#fffbeb",
+                      border: "1px solid #fed7aa",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      color: "#92400e",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       flexWrap: "wrap",
-                      gap: "8px"
+                      gap: "6px"
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {audit.ncClosure?.closed ? (
-                        <CheckCheck size={16} color="#16a34a" />
-                      ) : (
-                        <AlertCircle size={16} color="#d97706" />
-                      )}
-                      <div>
-                        <strong style={{ color: audit.ncClosure?.closed ? "#166534" : "#92400e" }}>
-                          {audit.ncClosure?.closed
-                            ? `NC Resolution Closed by ${audit.ncClosure.closedBy || "Course Coordinator"} (${audit.ncClosure.closedAt})`
-                            : `Scanned NC Document Shared: ${audit.ncDocument.fileName || "Scanned Paper Copy"}`}
-                        </strong>
-                        <span style={{ display: "block", color: audit.ncClosure?.closed ? "#15803d" : "#78350f", fontSize: "11.5px" }}>
-                          {audit.ncClosure?.closed
-                            ? audit.ncClosure.remarks
-                            : `Target Closure: ${audit.ncDocument.targetClosureDate} • ${audit.ncDocument.findings?.length || 0} non-conformances identified`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {!audit.ncClosure?.closed && isCourseCoordinator && (
-                      <span
-                        style={{
-                          background: "#fef3c7",
-                          color: "#92400e",
-                          padding: "3px 8px",
-                          borderRadius: "4px",
-                          fontSize: "11px",
-                          fontWeight: "700"
-                        }}
-                      >
-                        Action Required
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Closure & Certification Details if closed */}
-                {audit.externalAuditorApproval && (
-                  <div
-                    style={{
-                      margin: "12px 0",
-                      padding: "10px 14px",
-                      background: "#f0fdf4",
-                      border: "1px solid #bbf7d0",
-                      borderRadius: "8px",
-                      fontSize: "12.5px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      gap: "8px"
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <Award size={18} color="#16a34a" />
-                      <div>
-                        <strong style={{ color: "#166534" }}>
-                          ISO 9001:2015 Certificate Endorsement: {audit.externalAuditorApproval.certificateNumber}
-                        </strong>
-                        <span style={{ display: "block", color: "#15803d", fontSize: "11.5px" }}>
-                          Approved via {audit.externalAuditorApproval.approvalMode || "Office Visit"} ({audit.externalAuditorApproval.approvedAt}) &bull; {audit.externalAuditorApproval.recommendation}
-                        </span>
-                      </div>
-                    </div>
+                    <span style={{ fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      <AlertCircle size={14} color="#d97706" />
+                      Scanned NC Document Shared: {audit.ncDocument.fileName || "Scanned Paper Copy"}
+                    </span>
+                    <span style={{ fontSize: "11px", color: "#78350f" }}>
+                      Target Closure: {audit.ncDocument.targetClosureDate}
+                    </span>
                   </div>
                 )}
 
@@ -1115,75 +1065,56 @@ Certified Compliant with International Standards - C-DAC Quality Office
       {/* ========================================================================= */}
       {showLogModal && isQMSCoordinator && (
         <Modal
-          title="Log Incoming External Audit Schedule (Received via Email)"
+          title="Log Incoming External Audit Schedule"
           onClose={() => setShowLogModal(false)}
         >
           <form onSubmit={handleLogSubmit}>
-            <div style={{ marginBottom: "14px", padding: "10px 12px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontSize: "12.5px", color: "#166534" }}>
-              <strong>External Auditor Integration:</strong> Record the audit timetable received from the third-party certification body via email. Once recorded, you can share the meeting details and notice with all internal stakeholders.
-            </div>
-
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <label style={{ gridColumn: "span 2" }}>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Audit Title <span style={{ color: "#ef4444" }}>*</span>
+                  Title <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
                   required
                   value={logForm.title}
                   onChange={(e) => setLogForm({ ...logForm, title: e.target.value })}
-                  placeholder="e.g. ISO 9001:2015 Annual Surveillance Audit - Academic Programs"
+                  placeholder="e.g. ISO 9001:2015 Annual Surveillance Audit"
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
 
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  External Certification Body / Agency <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <select
-                  value={logForm.externalAgency}
-                  onChange={(e) => setLogForm({ ...logForm, externalAgency: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff" }}
-                >
-                  <option value="TÜV SÜD South Asia Certification Body">TÜV SÜD South Asia Certification Body</option>
-                  <option value="BSI Quality & Compliance Assurance">BSI Quality & Compliance Assurance</option>
-                  <option value="Bureau Veritas Certification Services">Bureau Veritas Certification Services</option>
-                  <option value="DNV GL Business Assurance">DNV GL Business Assurance</option>
-                  <option value="SGS India Quality Registrar">SGS India Quality Registrar</option>
-                </select>
-              </label>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Lead External Auditor Name <span style={{ color: "#ef4444" }}>*</span>
+                  External Auditor Name <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
                   required
                   value={logForm.auditorName}
                   onChange={(e) => setLogForm({ ...logForm, auditorName: e.target.value })}
+                  placeholder="e.g. Dr. Robert Vance"
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
 
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Auditor Official Email <span style={{ color: "#ef4444" }}>*</span>
+                  Auditor Email <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="email"
                   required
                   value={logForm.auditorEmail}
                   onChange={(e) => setLogForm({ ...logForm, auditorEmail: e.target.value })}
+                  placeholder="e.g. robert.vance@tuvsud.com"
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
 
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Scheduled Audit Date <span style={{ color: "#ef4444" }}>*</span>
+                  Date <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="date"
@@ -1196,7 +1127,7 @@ Certified Compliant with International Standards - C-DAC Quality Office
 
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Scheduled Time <span style={{ color: "#ef4444" }}>*</span>
+                  Time <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
@@ -1208,9 +1139,9 @@ Certified Compliant with International Standards - C-DAC Quality Office
                 />
               </label>
 
-              <label>
+              <label style={{ gridColumn: "span 2" }}>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Meeting Venue / Campus Office <span style={{ color: "#ef4444" }}>*</span>
+                  Venue <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
@@ -1224,24 +1155,13 @@ Certified Compliant with International Standards - C-DAC Quality Office
 
               <label style={{ gridColumn: "span 2" }}>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Email Subject (As Received)
-                </span>
-                <input
-                  type="text"
-                  value={logForm.emailSubject}
-                  onChange={(e) => setLogForm({ ...logForm, emailSubject: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
-
-              <label style={{ gridColumn: "span 2" }}>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Email Message Body Received from External Auditor
+                  Email Message Received from External Auditor
                 </span>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={logForm.emailBody}
                   onChange={(e) => setLogForm({ ...logForm, emailBody: e.target.value })}
+                  placeholder="Enter email message received from external auditor..."
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", resize: "vertical" }}
                 />
               </label>
@@ -1264,40 +1184,30 @@ Certified Compliant with International Standards - C-DAC Quality Office
       {/* ========================================================================= */}
       {showShareModal && selectedAudit && (
         <Modal
-          title={`Share External Audit Schedule: ${selectedAudit.id}`}
+          title="Share Meeting to All"
           onClose={() => setShowShareModal(false)}
         >
           <form onSubmit={handleShareSubmit}>
-            <div style={{ marginBottom: "14px", padding: "10px 12px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontSize: "12.5px", color: "#166534" }}>
-              <strong>Broadcast Meeting Notice:</strong> This will share the external audit meeting schedule and incoming email notice to <strong>all Course Coordinators, Trust Head, and the Internal Auditor</strong>.
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Notice Subject
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px", color: "var(--muted)" }}>
+                  Audit Title
                 </span>
-                <input
-                  type="text"
-                  required
-                  value={shareForm.noticeSubject}
-                  onChange={(e) => setShareForm({ ...shareForm, noticeSubject: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
+                <strong style={{ fontSize: "15px", color: "var(--ink)", display: "block" }}>
+                  {selectedAudit.title}
+                </strong>
+              </div>
 
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Instructions / Dispatch Message
-                </span>
-                <textarea
-                  rows={4}
-                  required
-                  value={shareForm.noticeMessage}
-                  onChange={(e) => setShareForm({ ...shareForm, noticeMessage: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", resize: "vertical" }}
-                />
-              </label>
+              <div style={{ padding: "14px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px" }}>
+                <strong style={{ color: "#1e40af", display: "block", marginBottom: "6px" }}>
+                  Sharing Meeting Schedule To:
+                </strong>
+                <ul style={{ margin: 0, paddingLeft: "18px", color: "#334155", lineHeight: 1.6 }}>
+                  <li>Course Coordinators</li>
+                  <li>Internal Auditor</li>
+                  <li>Trust Head</li>
+                </ul>
+              </div>
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "18px" }}>
@@ -1306,7 +1216,7 @@ Certified Compliant with International Standards - C-DAC Quality Office
               </button>
               <button type="submit" className="primary-button btn-blue" disabled={submitting}>
                 <Send size={14} style={{ marginRight: "6px" }} />
-                {submitting ? "Sharing..." : "Share Scheduled Meeting to All"}
+                {submitting ? "Sharing..." : "Share Meeting to All"}
               </button>
             </div>
           </form>
@@ -1318,88 +1228,49 @@ Certified Compliant with International Standards - C-DAC Quality Office
       {/* ========================================================================= */}
       {showUploadNCModal && selectedAudit && (
         <Modal
-          title={`Upload Scanned Copy of Paper NC Document: ${selectedAudit.id}`}
+          title="Upload NC Documents"
           onClose={() => setShowUploadNCModal(false)}
         >
           <form onSubmit={handleUploadNCSubmit}>
-            <div style={{ marginBottom: "14px", padding: "10px 12px", background: "#fffbeb", borderRadius: "8px", border: "1px solid #fde68a", fontSize: "12.5px", color: "#92400e" }}>
-              <strong>On-Site Campus Audit & Paper Handover:</strong> The External Auditor conducted the audit in person at the office and handed over the physical paper Non-Conformance document. Upload the scanned copy here. <strong>It will be shared exclusively to Course Coordinators for resolution closure.</strong>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <label style={{ gridColumn: "span 2" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Scanned NC Document File Name <span style={{ color: "#ef4444" }}>*</span>
+                  Upload NC Document from Device <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
-                  type="text"
+                  type="file"
                   required
-                  value={ncUploadForm.fileName}
-                  onChange={(e) => setNcUploadForm({ ...ncUploadForm, fileName: e.target.value })}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setNcUploadForm({
+                        ...ncUploadForm,
+                        fileName: file.name,
+                        fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+                      });
+                    }
+                  }}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
+                {ncUploadForm.fileName && (
+                  <span style={{ display: "block", marginTop: "4px", fontSize: "12px", color: "var(--muted)" }}>
+                    Selected file: {ncUploadForm.fileName} ({ncUploadForm.fileSize})
+                  </span>
+                )}
               </label>
 
-              <label style={{ gridColumn: "span 2" }}>
+              <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Auditor NC Executive Summary <span style={{ color: "#ef4444" }}>*</span>
+                  NC Summary <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <textarea
-                  rows={2}
+                  rows={4}
                   required
+                  placeholder="Enter summary of non-conformance documents..."
                   value={ncUploadForm.summary}
                   onChange={(e) => setNcUploadForm({ ...ncUploadForm, summary: e.target.value })}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", resize: "vertical" }}
-                />
-              </label>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Target Resolution Closure Date <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <input
-                  type="date"
-                  required
-                  value={ncUploadForm.targetClosureDate}
-                  onChange={(e) => setNcUploadForm({ ...ncUploadForm, targetClosureDate: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  ISO 9001 Clause Reference
-                </span>
-                <input
-                  type="text"
-                  value={ncUploadForm.findingClause}
-                  onChange={(e) => setNcUploadForm({ ...ncUploadForm, findingClause: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
-
-              <label style={{ gridColumn: "span 2" }}>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Specific NC Finding Description (for Course Coordinators) <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <input
-                  type="text"
-                  required
-                  value={ncUploadForm.findingDesc}
-                  onChange={(e) => setNcUploadForm({ ...ncUploadForm, findingDesc: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
-
-              <label style={{ gridColumn: "span 2" }}>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Assignee Course Coordinator
-                </span>
-                <input
-                  type="text"
-                  value={ncUploadForm.findingAssignee}
-                  onChange={(e) => setNcUploadForm({ ...ncUploadForm, findingAssignee: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
             </div>
@@ -1410,7 +1281,7 @@ Certified Compliant with International Standards - C-DAC Quality Office
               </button>
               <button type="submit" className="primary-button btn-blue" disabled={submitting} style={{ background: "#b45309" }}>
                 <UploadCloud size={14} style={{ marginRight: "6px" }} />
-                {submitting ? "Uploading..." : "Upload Scanned Copy & Share to Course Coord"}
+                {submitting ? "Uploading..." : "Upload NC Docs"}
               </button>
             </div>
           </form>
@@ -1422,37 +1293,34 @@ Certified Compliant with International Standards - C-DAC Quality Office
       {/* ========================================================================= */}
       {showCourseCoordCloseModal && selectedAudit && (
         <Modal
-          title={`Review & Close NC Resolution: ${selectedAudit.id}`}
+          title="Review & Close NC"
           onClose={() => setShowCourseCoordCloseModal(false)}
         >
           <form onSubmit={handleCourseCoordCloseSubmit}>
-            <div style={{ marginBottom: "14px", padding: "10px 12px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontSize: "12.5px", color: "#166534" }}>
-              <strong>Course Coordinator Action:</strong> Download the scanned paper NC doc (if not already downloaded), implement the required corrective action plan (CAPA), and submit closure below. Once closed, the External Auditor will review and provide the approval result.
-            </div>
-
-            <div style={{ marginBottom: "14px", padding: "10px 12px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12.5px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                <strong style={{ color: "#0f172a" }}>Scanned Document: {selectedAudit.ncDocument?.fileName || "NC Report"}</strong>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div style={{ padding: "10px 14px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <span style={{ display: "block", fontSize: "11.5px", color: "var(--muted)" }}>Document</span>
+                  <strong style={{ fontSize: "13px", color: "#0f172a" }}>{selectedAudit.ncDocument?.fileName || "NC Report"}</strong>
+                </div>
                 <button
                   type="button"
                   className="secondary-button"
                   onClick={() => handleDownloadNCDoc(selectedAudit)}
-                  style={{ fontSize: "11px", padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                  style={{ fontSize: "12px", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
                 >
-                  <FileDown size={12} /> Download Scanned Copy
+                  <FileDown size={14} /> Download Document
                 </button>
               </div>
-              <p style={{ margin: 0, color: "#64748b" }}>{selectedAudit.ncDocument?.summary}</p>
-            </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Course Coordinator Name / Authority <span style={{ color: "#ef4444" }}>*</span>
+                  Coordinator Name <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
                   required
+                  placeholder="Enter Course Coordinator Name"
                   value={courseCoordCloseForm.closedBy}
                   onChange={(e) => setCourseCoordCloseForm({ ...courseCoordCloseForm, closedBy: e.target.value })}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
@@ -1461,26 +1329,15 @@ Certified Compliant with International Standards - C-DAC Quality Office
 
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Corrective Action Summary & Root Cause Analysis (RCA) <span style={{ color: "#ef4444" }}>*</span>
+                  Root Cause Analysis (RCA) <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <textarea
-                  rows={3}
+                  rows={4}
                   required
+                  placeholder="Enter Root Cause Analysis (RCA) details..."
                   value={courseCoordCloseForm.remarks}
                   onChange={(e) => setCourseCoordCloseForm({ ...courseCoordCloseForm, remarks: e.target.value })}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", resize: "vertical" }}
-                />
-              </label>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Preventive Action Plan & Standard Procedure Implemented
-                </span>
-                <input
-                  type="text"
-                  value={courseCoordCloseForm.actionPlan}
-                  onChange={(e) => setCourseCoordCloseForm({ ...courseCoordCloseForm, actionPlan: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
             </div>
@@ -1491,7 +1348,7 @@ Certified Compliant with International Standards - C-DAC Quality Office
               </button>
               <button type="submit" className="primary-button btn-blue" disabled={submitting}>
                 <CheckCircle2 size={14} style={{ marginRight: "6px" }} />
-                {submitting ? "Submitting..." : "Confirm & Close NC Resolution"}
+                {submitting ? "Closing..." : "Close NC"}
               </button>
             </div>
           </form>
@@ -1503,36 +1360,19 @@ Certified Compliant with International Standards - C-DAC Quality Office
       {/* ========================================================================= */}
       {showCloseProcessModal && selectedAudit && (
         <Modal
-          title={`Record External Auditor Approval & Close Entire Process: ${selectedAudit.id}`}
+          title="Record External Auditor Approval"
           onClose={() => setShowCloseProcessModal(false)}
         >
           <form onSubmit={handleCloseProcessSubmit}>
-            <div style={{ marginBottom: "14px", padding: "10px 12px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontSize: "12.5px", color: "#166534" }}>
-              <strong>External Auditor Verdict & Process Closure:</strong> Course Coordinator has resolved the NC document. Record the approval result communicated by the External Auditor (via direct office visit or email) and officially close the entire external audit cycle.
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <label style={{ gridColumn: "span 2" }}>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Auditor Approval Communication Channel <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <select
-                  value={closeProcessForm.approvalMode}
-                  onChange={(e) => setCloseProcessForm({ ...closeProcessForm, approvalMode: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff" }}
-                >
-                  <option value="Direct Office Visit (Auditor visited office in person)">Direct Office Visit (Auditor visited office in person)</option>
-                  <option value="Email Communication (Auditor communicated approval via email)">Email Communication (Auditor communicated approval via email)</option>
-                </select>
-              </label>
-
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  ISO 9001:2015 Certificate Number <span style={{ color: "#ef4444" }}>*</span>
+                  ISO Certification Number <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="text"
                   required
+                  placeholder="e.g. ISO 9001:2015-CDAC-2026"
                   value={closeProcessForm.certificateNumber}
                   onChange={(e) => setCloseProcessForm({ ...closeProcessForm, certificateNumber: e.target.value })}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
@@ -1541,7 +1381,7 @@ Certified Compliant with International Standards - C-DAC Quality Office
 
               <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Approval Endorsement Date <span style={{ color: "#ef4444" }}>*</span>
+                  Approval Date <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <input
                   type="date"
@@ -1552,40 +1392,17 @@ Certified Compliant with International Standards - C-DAC Quality Office
                 />
               </label>
 
-              <label style={{ gridColumn: "span 2" }}>
+              <label>
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  External Auditor Official Recommendation <span style={{ color: "#ef4444" }}>*</span>
-                </span>
-                <input
-                  type="text"
-                  required
-                  value={closeProcessForm.recommendation}
-                  onChange={(e) => setCloseProcessForm({ ...closeProcessForm, recommendation: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                />
-              </label>
-
-              <label style={{ gridColumn: "span 2" }}>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  Auditor Clearance Remarks
+                  Recommendation <span style={{ color: "#ef4444" }}>*</span>
                 </span>
                 <textarea
-                  rows={2}
-                  value={closeProcessForm.remarks}
-                  onChange={(e) => setCloseProcessForm({ ...closeProcessForm, remarks: e.target.value })}
+                  rows={3}
+                  required
+                  placeholder="Enter external auditor recommendation..."
+                  value={closeProcessForm.recommendation}
+                  onChange={(e) => setCloseProcessForm({ ...closeProcessForm, recommendation: e.target.value })}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", resize: "vertical" }}
-                />
-              </label>
-
-              <label style={{ gridColumn: "span 2" }}>
-                <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
-                  QMS Coordinator Final Closure Remarks
-                </span>
-                <input
-                  type="text"
-                  value={closeProcessForm.qmsRemarks}
-                  onChange={(e) => setCloseProcessForm({ ...closeProcessForm, qmsRemarks: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>
             </div>
@@ -1596,7 +1413,7 @@ Certified Compliant with International Standards - C-DAC Quality Office
               </button>
               <button type="submit" className="primary-button btn-green" disabled={submitting}>
                 <CheckCheck size={14} style={{ marginRight: "6px" }} />
-                {submitting ? "Closing Process..." : "Close Entire Process & Ratify ISO 9001"}
+                {submitting ? "Closing Process..." : "Record Approval & Close Process"}
               </button>
             </div>
           </form>
