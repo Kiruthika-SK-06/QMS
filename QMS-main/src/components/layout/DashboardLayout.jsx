@@ -8,7 +8,17 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { currentUser } = useApp();
 
-  if (!currentUser) return <Navigate to="/login" replace />;
+  // Resilient session fallback: read synchronously from localStorage if state is transitioning
+  const effectiveUser = currentUser || (() => {
+    try {
+      const stored = localStorage.getItem("qms_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!effectiveUser) return <Navigate to="/login" replace />;
 
   return (
     <div className="app-shell">

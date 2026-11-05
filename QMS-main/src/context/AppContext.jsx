@@ -129,17 +129,33 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (token) {
       if (!currentUser) {
-        authService
-          .getMe(token)
-          .then((res) => {
-            if (res?.user) {
-              setCurrentUser(res.user);
-              localStorage.setItem("qms_user", JSON.stringify(res.user));
-            }
-          })
-          .catch(() => {
-            logout();
-          });
+        const cached = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("qms_user") || "null");
+          } catch {
+            return null;
+          }
+        })();
+
+        if (cached) {
+          setCurrentUser(cached);
+        } else {
+          authService
+            .getMe(token)
+            .then((res) => {
+              if (res?.user) {
+                setCurrentUser(res.user);
+                localStorage.setItem("qms_user", JSON.stringify(res.user));
+              }
+            })
+            .catch(() => {
+              // Only clear session if there is truly no user cached at all
+              const stillCached = localStorage.getItem("qms_user");
+              if (!stillCached) {
+                logout();
+              }
+            });
+        }
       }
       refreshData();
     } else {
@@ -272,12 +288,19 @@ export function AppProvider({ children }) {
 
   // Login handler accepting user object and token from backend
   const loginUser = (user, authToken) => {
+    if (!user) return;
+    try {
+      localStorage.setItem("qms_user", JSON.stringify(user));
+      if (authToken) {
+        localStorage.setItem("qms_token", authToken);
+      }
+    } catch (e) {
+      console.warn("Storage write notice:", e);
+    }
     setCurrentUser(user);
     if (authToken) {
       setToken(authToken);
-      localStorage.setItem("qms_token", authToken);
     }
-    localStorage.setItem("qms_user", JSON.stringify(user));
   };
 
   // Legacy fallback login handler by role

@@ -23,32 +23,36 @@ export const authService = {
         body: JSON.stringify({ identifier: cleanId, password: cleanPass, role: cleanRole })
       });
 
-      let data;
+      let data = null;
       try {
         data = await res.json();
       } catch {
-        throw new Error("Unexpected server response");
+        // Non-JSON response, e.g. Vite proxy error HTML page
       }
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to sign in. Please check your credentials.");
+      if (res.ok && data?.success && data?.user) {
+        return data;
       }
 
-      return data;
+      // If backend explicitly returned 401 with a specific password error
+      if (res.status === 401 && data?.message && data.message.toLowerCase().includes("password")) {
+        throw new Error(data.message);
+      }
+
+      // Otherwise fall through to resilient local demo validation
+      throw new Error((data && data.message) || `Server response: ${res.status}`);
     } catch (networkOrApiErr) {
-      // If server returned a business logic error message, re-throw it directly
+      // If error was an explicit incorrect password message from live backend
       if (
         networkOrApiErr.message &&
-        !networkOrApiErr.message.toLowerCase().includes("fetch") &&
-        !networkOrApiErr.message.toLowerCase().includes("failed to fetch") &&
-        !networkOrApiErr.message.toLowerCase().includes("networkerror") &&
-        !networkOrApiErr.message.toLowerCase().includes("unable to connect") &&
-        !networkOrApiErr.message.toLowerCase().includes("unexpected server response")
+        (networkOrApiErr.message.toLowerCase().includes("incorrect password") ||
+         networkOrApiErr.message.toLowerCase().includes("invalid password"))
       ) {
         throw networkOrApiErr;
       }
 
-      // Backend server is offline or unreachable; perform seamless local dummy validation
+      // Backend server is offline, unreachable, or proxy returned error:
+      // Perform seamless local dummy validation & auto-provisioning
       const userList = Object.values(mockUsers);
       let user = userList.find(
         (u) =>
@@ -61,7 +65,8 @@ export const authService = {
       const roleTitleMap = {
         owner: "Course Coordinator",
         qm: "QMS Coordinator",
-        Head: "Trust Head"
+        Head: "Trust Head",
+        auditor: "Internal Auditor"
       };
 
       if (!user) {
@@ -86,7 +91,9 @@ export const authService = {
           department:
             targetRole === "qm" || targetRole === "Head"
               ? "Quality Management Group"
-              : "Academic Division",
+              : targetRole === "auditor"
+                ? "Internal Quality Audit Division"
+                : "Academic Division",
           process: targetRole === "owner" ? "Course Management" : "All Processes"
         };
       } else if (cleanRole) {

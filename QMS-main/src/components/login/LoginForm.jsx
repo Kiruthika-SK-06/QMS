@@ -51,15 +51,16 @@ export default function LoginForm() {
         role
       });
 
-      if (res.success && res.user) {
-        // Save user and token in application context and localStorage
+      if (res && res.success && res.user) {
+        // Guarantee immediate synchronous persistence to localStorage
+        if (res.token) localStorage.setItem("qms_token", res.token);
+        if (res.user) localStorage.setItem("qms_user", JSON.stringify(res.user));
+
+        // Save user and token in application context
         if (typeof app.loginUser === "function") {
           app.loginUser(res.user, res.token);
         } else if (typeof app.login === "function") {
           app.login(res.user?.role || role);
-        } else {
-          if (res.token) localStorage.setItem("qms_token", res.token);
-          if (res.user) localStorage.setItem("qms_user", JSON.stringify(res.user));
         }
 
         // Determine destination dashboard based on verified user role
@@ -67,15 +68,13 @@ export default function LoginForm() {
         const path =
           userRole === "owner"
             ? "/process-owner/dashboard"
-            : userRole === "Head"
+            : userRole === "Head" || userRole === "auditor"
               ? "/Head/dashboard"
-              : userRole === "auditor"
-                ? "/Head/dashboard"
-                : "/qm-group/dashboard";
+              : "/qm-group/dashboard";
 
-        navigate(path);
+        navigate(path, { replace: true });
       } else {
-        setError(res.message || "Failed to sign in. Please check your credentials.");
+        setError(res?.message || "Failed to sign in. Please check your credentials.");
       }
     } catch (err) {
       console.error("Login failed:", err);

@@ -21,6 +21,23 @@ import Profile from "../pages/Profile";
 export default function AppRoutes() {
   const { currentUser } = useApp();
 
+  const effectiveUser = currentUser || (() => {
+    try {
+      const stored = localStorage.getItem("qms_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const defaultDashboard = effectiveUser
+    ? effectiveUser.role === "owner"
+      ? "/process-owner/dashboard"
+      : effectiveUser.role === "Head" || effectiveUser.role === "auditor"
+        ? "/Head/dashboard"
+        : "/qm-group/dashboard"
+    : "/login";
+
   return (
     <Routes>
       <Route
@@ -28,8 +45,8 @@ export default function AppRoutes() {
         element={<LoginPage />}
       />
 
-      {/* Opening the website always routes to the login page first */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Opening the website routes authenticated users to their dashboard, otherwise to login */}
+      <Route path="/" element={<Navigate to={defaultDashboard} replace />} />
 
       <Route element={<DashboardLayout />}>
         {/* Dashboards with new semantic routes and backward-compatible aliases */}
