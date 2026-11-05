@@ -231,7 +231,7 @@ export default function QMGroupDashboard() {
               </span>
             </li>
             <li>
-              <span className="detail-label">NC Issued:</span>
+              <span className="detail-label">Scanned NC:</span>
               <span className="detail-val">
                 {externalAuditList.filter((a) => a.stage === 3).length} For Course Coord
               </span>
@@ -239,7 +239,7 @@ export default function QMGroupDashboard() {
             <li>
               <span className="detail-label">Certified:</span>
               <span className="detail-val" style={{ color: "var(--status-green)" }}>
-                {externalAuditList.filter((a) => a.stage >= 4).length} Closed
+                {externalAuditList.filter((a) => a.stage >= 5).length} Ratified & Closed
               </span>
             </li>
           </ul>

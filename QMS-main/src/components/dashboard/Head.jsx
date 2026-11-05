@@ -71,7 +71,7 @@ export default function Head() {
     (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
   );
   const certifiedExternalAudits = accessibleExternalAudits.filter(
-    (a) => a.stage >= 4 || a.status === "Completed & Closed (ISO 9001 Certified)"
+    (a) => a.stage >= 5 || a.status === "Completed & Closed (ISO 9001 Certified)"
   );
 
   const pendingApprovalMRMs = (mrmList || []).filter(

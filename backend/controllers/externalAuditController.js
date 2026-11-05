@@ -55,11 +55,11 @@ const formatNow = () =>
 // Deterministic sort: New external audits first, dummy ones below
 export const sortExternalAuditsList = (list) => {
   if (!Array.isArray(list)) return [];
-  const dummyIds = new Set(["EA-2026-001", "EA-2026-002", "EA-2026-003"]);
+  const dummyIds = new Set(["EA-2026-001", "EA-2026-002", "EA-2026-003", "EA-2026-004", "EA-2026-005"]);
 
   return [...list].sort((a, b) => {
-    const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003"));
-    const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003"));
+    const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003") && !a.id?.endsWith("-004") && !a.id?.endsWith("-005"));
+    const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003") && !b.id?.endsWith("-004") && !b.id?.endsWith("-005"));
 
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
@@ -104,8 +104,8 @@ export const getAllExternalAudits = (req, res) => {
     }
 
     // Role-specific field privacy:
-    // User requirement: NC docs are shared with Course Coordinators ONLY.
-    // Internal Auditor and Trust Head see the external audit, but detailed course NC assignments are restricted to Course Coordinators.
+    // User requirement: Scanned NC docs are shared with Course Coordinators ONLY.
+    // Internal Auditor and Trust Head see the external audit status, but detailed NC findings/documents are restricted.
     if (userRole === "auditor" || userRole === "head") {
       list = list.map((a) => {
         if (a.ncDocument) {
@@ -113,7 +113,6 @@ export const getAllExternalAudits = (req, res) => {
             ...a,
             ncDocument: {
               ...a.ncDocument,
-              // Keep high-level summary but restrict individual course action delegations
               isRestrictedForRole: true
             }
           };
@@ -211,22 +210,22 @@ export const logIncomingExternalAuditSchedule = (req, res) => {
         email: leadAuditor?.email || "lead.auditor@tuvsud.com",
         phone: leadAuditor?.phone || "+91 98230 45678"
       },
-      targetPeriod: targetPeriod || "November 2026",
+      targetPeriod: targetPeriod || "December 2026",
       scheduledDate,
       scheduledTime: scheduledTime || "09:30 AM",
-      venue: venue || "Main Boardroom / Hybrid Video Conference",
+      venue: venue || "Main Boardroom / Campus In-Person Audit",
       department: department || "Quality Assurance & Compliance",
       process: process || "All Processes (Comprehensive Academic Quality Review)",
       stage: 1,
-      status: "Audit Schedule Received (from External Auditor)",
+      status: "Audit Schedule Received (via Email)",
 
       incomingScheduleEmail: {
         received: true,
         receivedAt: formatNow(),
-        from: `${auditorName} <${leadAuditor?.email || "lead.auditor@certification-agency.org"}>`,
+        from: `${auditorName} <${leadAuditor?.email || "lead.auditor@tuvsud.com"}>`,
         to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
         subject: incomingScheduleEmail?.subject || `Official Notice: ISO 9001:2015 External Audit Schedule (${auditId})`,
-        bodyHtml: incomingScheduleEmail?.bodyHtml || `<p>Dear Rahul Kumar (QMS Coordinator),</p><p>This email confirms that the ISO 9001:2015 External Audit for "${title.trim()}" is scheduled for <strong>${scheduledDate} at ${scheduledTime || "09:30 AM"}</strong>.</p><p>Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
+        bodyHtml: incomingScheduleEmail?.bodyHtml || `<p>Dear Rahul Kumar (QMS Coordinator),</p><p>This email confirms that the ISO 9001:2015 External Audit for "${title.trim()}" is scheduled for <strong>${scheduledDate} at ${scheduledTime || "09:30 AM"}</strong>.</p><p>The auditor will visit the office in person to audit the system. Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
         attachments: [
           {
             fileName: incomingScheduleEmail?.fileName || `ISO_9001_External_Audit_Plan_${auditId}.pdf`,
@@ -238,6 +237,7 @@ export const logIncomingExternalAuditSchedule = (req, res) => {
 
       shareWithStakeholders: null,
       ncDocument: null,
+      ncClosure: null,
       externalAuditorApproval: null,
       qmsClosure: null,
 
@@ -303,17 +303,24 @@ export const shareExternalAuditSchedule = (req, res) => {
       return res.status(404).json({ success: false, message: "External Audit not found" });
     }
 
+    if (audit.stage !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Audit schedule has already been shared to stakeholders."
+      });
+    }
+
     const { noticeSubject, noticeMessage } = req.body;
     const now = formatNow();
 
     audit.stage = 2;
-    audit.status = "Schedule Shared to All Stakeholders";
+    audit.status = "Schedule Shared (On-Site Audit Scheduled)";
     audit.shareWithStakeholders = {
       shared: true,
       sharedAt: now,
       sharedBy: "Rahul Kumar (QMS Coordinator)",
       noticeSubject: noticeSubject || `External Audit Schedule Notice: ${audit.title} on ${audit.scheduledDate}`,
-      noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${audit.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${audit.scheduledDate} at ${audit.scheduledTime}. Please prepare course files, lab records, and compliance manuals.`,
+      noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${audit.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${audit.scheduledDate} at ${audit.scheduledTime}. The auditor will visit the campus in person to audit the system.`,
       recipients: [
         { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
         { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
@@ -338,7 +345,7 @@ export const shareExternalAuditSchedule = (req, res) => {
       notificationsData.unshift({
         id: Date.now() + idx,
         title: "Official External Audit Scheduled",
-        text: `QMS Coordinator shared External Audit details for "${audit.title}" on ${audit.scheduledDate} at ${audit.scheduledTime}. Please review the schedule and agenda.`,
+        text: `QMS Coordinator shared External Audit details for "${audit.title}" on ${audit.scheduledDate} at ${audit.scheduledTime}. Auditor will visit the campus in person.`,
         time: "Just now",
         targetRole: r,
         read: false,
@@ -361,7 +368,7 @@ export const shareExternalAuditSchedule = (req, res) => {
 
     res.json({
       success: true,
-      message: "External Audit schedule and received email successfully shared to all Course Coordinators, Trust Head, and Internal Auditor",
+      message: "External Audit schedule successfully shared to Course Coordinators, Trust Head, and Internal Auditor",
       data: audit
     });
   } catch (error) {
@@ -369,13 +376,21 @@ export const shareExternalAuditSchedule = (req, res) => {
   }
 };
 
-// POST /api/external-audit/:id/upload-nc - Step 3: QMS Coordinator uploads NC document and shares to Course Coordinators ONLY
+// POST /api/external-audit/:id/upload-nc - Step 3: QMS Coordinator uploads scanned copy of paper NC doc and shares to Course Coordinators ONLY
 export const uploadExternalAuditNCDocs = (req, res) => {
   try {
     loadFromDisk();
     const audit = externalAuditData.find((a) => a.id === req.params.id);
     if (!audit) {
       return res.status(404).json({ success: false, message: "External Audit not found" });
+    }
+
+    // Constraint: Can only be done when previous step had done
+    if (audit.stage < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Previous step required: External audit schedule must be shared to stakeholders before uploading NC documents."
+      });
     }
 
     const {
@@ -389,17 +404,18 @@ export const uploadExternalAuditNCDocs = (req, res) => {
     const now = formatNow();
 
     audit.stage = 3;
-    audit.status = "NC Docs Shared with Course Coordinators";
+    audit.status = "Scanned NC Doc Uploaded (Course Coord Only)";
     audit.ncDocument = {
-      receivedFromExternalAuditor: true,
-      receivedAt: now,
+      receivedFromExternalAuditorInPerson: true,
+      receivedAtOffice: now,
+      isScannedPaperCopy: true,
       uploadedAt: now,
       uploadedBy: "Rahul Kumar (QMS Coordinator)",
       sharedWithCourseCoordinatorsOnly: true,
-      fileName: fileName || `${audit.id}_External_Audit_NC_Report.pdf`,
+      fileName: fileName || `${audit.id}_Scanned_Paper_NC_Report.pdf`,
       fileSize: fileSize || "2.1 MB",
       fileType: "application/pdf",
-      summary: summary || "Non-conformance report issued by External Auditor covering practical curriculum alignment and lab log verifications.",
+      summary: summary || "Scanned non-conformance paper report handed by External Auditor during physical campus audit covering practical curriculum alignment and lab log verifications.",
       targetClosureDate: targetClosureDate || "2026-12-15",
       findings: Array.isArray(findings) && findings.length > 0 ? findings : [
         {
@@ -415,10 +431,10 @@ export const uploadExternalAuditNCDocs = (req, res) => {
     };
 
     audit.timeline.push({
-      action: "NC Documents Received & Shared to Course Coordinators Only",
+      action: "On-Site Audit Conducted & Scanned Paper NC Uploaded",
       actor: "Rahul Kumar (QMS Coordinator)",
       timestamp: now,
-      details: `NC Report (${audit.ncDocument.fileName}) received from External Auditor via email. Uploaded and shared exclusively to Course Coordinators for corrective action.`
+      details: `External Auditor audited system in person at office and handed paper NC doc. Scanned copy (${audit.ncDocument.fileName}) uploaded and shared exclusively to Course Coordinators for resolution.`
     });
 
     saveToDisk();
@@ -426,8 +442,8 @@ export const uploadExternalAuditNCDocs = (req, res) => {
     // Push notification to Course Coordinators ONLY (user requirement)
     notificationsData.unshift({
       id: Date.now(),
-      title: "External Audit NC Document Issued",
-      text: `External Auditor submitted Non-Conformance report for "${audit.title}". QMS Coordinator uploaded the report for Course Coordinators. Please prepare Corrective Actions.`,
+      title: "Scanned External Audit NC Document Issued",
+      text: `External Auditor handed paper Non-Conformance document during campus audit. QMS Coordinator uploaded scanned copy for Course Coordinators only. Please download and close NC.`,
       time: "Just now",
       targetRole: "owner",
       read: false,
@@ -436,9 +452,9 @@ export const uploadExternalAuditNCDocs = (req, res) => {
 
     activitiesData.unshift({
       id: `ACT-${Date.now()}`,
-      title: "External NC Report Shared",
+      title: "Scanned NC Report Shared to Course Coordinators",
       detail: audit.title,
-      text: `External audit NC document uploaded and shared to Course Coordinators for corrective action.`,
+      text: `Scanned copy of paper NC doc uploaded and shared exclusively to Course Coordinators for resolution.`,
       actor: "Rahul Kumar (QMS Coordinator)",
       time: "Just now",
       tone: "amber",
@@ -449,7 +465,7 @@ export const uploadExternalAuditNCDocs = (req, res) => {
 
     res.json({
       success: true,
-      message: "NC document uploaded and shared to Course Coordinators only",
+      message: "Scanned copy of paper NC document uploaded and shared to Course Coordinators only",
       data: audit
     });
   } catch (error) {
@@ -457,7 +473,95 @@ export const uploadExternalAuditNCDocs = (req, res) => {
   }
 };
 
-// POST /api/external-audit/:id/close - Step 4: Approved by External Auditor & Closed by QMS Coordinator
+// POST /api/external-audit/:id/close-nc - Step 4: Course Coordinator downloads NC docs and closes NC resolution
+export const closeCourseCoordinatorNC = (req, res) => {
+  try {
+    loadFromDisk();
+    const audit = externalAuditData.find((a) => a.id === req.params.id);
+    if (!audit) {
+      return res.status(404).json({ success: false, message: "External Audit not found" });
+    }
+
+    // Constraint: Can only be done when previous step had done
+    if (audit.stage < 3 || !audit.ncDocument) {
+      return res.status(400).json({
+        success: false,
+        message: "Previous step required: Scanned NC document must be uploaded before Course Coordinator can close it."
+      });
+    }
+
+    const {
+      closedBy,
+      remarks,
+      actionPlan
+    } = req.body;
+
+    const now = formatNow();
+    const actorName = closedBy || "Priya Sharma (Course Coordinator)";
+
+    // Update all findings to Resolved
+    if (audit.ncDocument && Array.isArray(audit.ncDocument.findings)) {
+      audit.ncDocument.findings = audit.ncDocument.findings.map((f) => ({
+        ...f,
+        status: "Resolved",
+        resolutionRemarks: remarks || "Corrective actions implemented and verified by Course Coordinator."
+      }));
+    }
+
+    audit.stage = 4;
+    audit.status = "NC Closed by Course Coordinator (Awaiting Auditor Approval)";
+    audit.ncClosure = {
+      closed: true,
+      closedAt: now,
+      closedBy: actorName,
+      remarks: remarks || "Scanned NC document reviewed and resolved. Digital lab register counter-signature protocol deployed.",
+      actionPlan: actionPlan || "Root cause analysis completed. Standardized logging procedure established."
+    };
+
+    audit.timeline.push({
+      action: "NC Document Downloaded & Closed by Course Coordinator",
+      actor: actorName,
+      timestamp: now,
+      details: `Course Coordinator downloaded scanned NC report, completed corrective actions, and submitted resolution closure. Ready for External Auditor approval.`
+    });
+
+    saveToDisk();
+
+    // Push notification to QMS Coordinator
+    notificationsData.unshift({
+      id: Date.now(),
+      title: "Course Coordinator Closed NC Document",
+      text: `${actorName} completed corrective actions and closed the NC document for "${audit.title}". External Auditor can now approve via email or direct office visit.`,
+      time: "Just now",
+      targetRole: "qm",
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    activitiesData.unshift({
+      id: `ACT-${Date.now()}`,
+      title: "NC Closed by Course Coordinator",
+      detail: audit.title,
+      text: `Course Coordinator downloaded scanned NC doc and submitted closure. Awaiting External Auditor approval.`,
+      actor: actorName,
+      time: "Just now",
+      tone: "blue",
+      timestamp: new Date().toISOString()
+    });
+
+    notifyChange("EXTERNAL_AUDIT_NC_RESOLVED", audit);
+
+    res.json({
+      success: true,
+      message: "NC document resolution successfully closed by Course Coordinator. Ready for External Auditor approval.",
+      data: audit
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/external-audit/:id/close - Step 5: External Auditor approves (via email or direct office visit) & QMS Coordinator closes entire process
 export const closeExternalAuditProcess = (req, res) => {
   try {
     loadFromDisk();
@@ -466,25 +570,37 @@ export const closeExternalAuditProcess = (req, res) => {
       return res.status(404).json({ success: false, message: "External Audit not found" });
     }
 
+    // Constraint: Can only be done when previous step had done
+    if (audit.stage < 4) {
+      return res.status(400).json({
+        success: false,
+        message: "Previous step required: Course Coordinator must download and close the NC document resolution before the process can be closed."
+      });
+    }
+
     const {
       certificateNumber,
       recommendation,
       remarks,
-      approvalDate
+      approvalDate,
+      approvalMode,
+      qmsRemarks
     } = req.body;
 
     const now = formatNow();
-    const certNum = certificateNumber || `ISO9001-${audit.externalAgency.slice(0, 3).toUpperCase()}-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+    const certNum = certificateNumber || `ISO9001-${(audit.externalAgency || "CERT").slice(0, 3).toUpperCase()}-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+    const mode = approvalMode || "Direct Office Visit (Auditor visited office in person)";
 
-    audit.stage = 4;
+    audit.stage = 5;
     audit.status = "Completed & Closed (ISO 9001 Certified)";
     audit.externalAuditorApproval = {
       approved: true,
       approvedAt: approvalDate || now,
+      approvalMode: mode,
       decision: "Certified & Conformance Endorsed",
       certificateNumber: certNum,
       recommendation: recommendation || "Unconditional recommendation for issuance and continuation of ISO 9001:2015 Quality Management Certificate.",
-      remarks: remarks || "External Auditor verified all corrective actions. Audit officially cleared with ISO 9001:2015 compliance endorsed.",
+      remarks: remarks || `External Auditor verified all corrective actions (communicated via ${mode}). Audit officially cleared with ISO 9001:2015 compliance endorsed.`,
       externalLetterFileName: `${audit.id}_ISO9001_Certification_Clearance.pdf`
     };
 
@@ -492,21 +608,21 @@ export const closeExternalAuditProcess = (req, res) => {
       closed: true,
       closedAt: now,
       closedBy: "Rahul Kumar (QMS Coordinator)",
-      remarks: "External Audit lifecycle completed and closed in full conformance with ISO 9001:2015."
+      remarks: qmsRemarks || `External Audit lifecycle completed and closed in full conformance with ISO 9001:2015 following auditor approval received via ${mode}.`
     };
 
     audit.timeline.push({
       action: "Audit Approved by External Auditor",
       actor: `${audit.leadAuditor?.name || "Lead External Auditor"} (${audit.externalAgency})`,
       timestamp: approvalDate || now,
-      details: `External Auditor approved resolution and endorsed ISO 9001:2015 Certificate (${certNum}).`
+      details: `External Auditor communicated approval result (${mode}) and endorsed ISO 9001:2015 Certificate (${certNum}).`
     });
 
     audit.timeline.push({
       action: "External Audit Process Officially Closed",
       actor: "Rahul Kumar (QMS Coordinator)",
       timestamp: now,
-      details: `Full process closed by QMS Coordinator. Quality Management System ISO 9001:2015 certification ratified for all divisions.`
+      details: `Full process closed by QMS Coordinator. All previous stages validated. ISO 9001:2015 certification ratified for all divisions.`
     });
 
     saveToDisk();
@@ -516,7 +632,7 @@ export const closeExternalAuditProcess = (req, res) => {
       notificationsData.unshift({
         id: Date.now() + idx,
         title: "External Audit Successfully Closed - ISO 9001 Certified!",
-        text: `External Auditor approved "${audit.title}" with Certificate ${certNum}. The entire process is officially closed by QMS Coordinator.`,
+        text: `External Auditor approved "${audit.title}" (${mode}) with Certificate ${certNum}. The entire process is officially closed by QMS Coordinator.`,
         time: "Just now",
         targetRole: r,
         read: false,
@@ -528,7 +644,7 @@ export const closeExternalAuditProcess = (req, res) => {
       id: `ACT-${Date.now()}`,
       title: "ISO 9001 External Audit Closed",
       detail: audit.title,
-      text: `External audit approved by External Auditor and officially closed with ISO 9001:2015 certification (${certNum}).`,
+      text: `External audit approved by External Auditor (${mode}) and officially closed with ISO 9001:2015 certification (${certNum}).`,
       actor: "Rahul Kumar (QMS Coordinator)",
       time: "Just now",
       tone: "green",
@@ -539,7 +655,7 @@ export const closeExternalAuditProcess = (req, res) => {
 
     res.json({
       success: true,
-      message: "External Audit process approved by External Auditor and successfully closed by QMS Coordinator",
+      message: `External Audit process approved by External Auditor (${mode}) and successfully closed by QMS Coordinator`,
       data: audit
     });
   } catch (error) {

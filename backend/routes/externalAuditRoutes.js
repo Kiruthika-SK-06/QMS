@@ -5,6 +5,7 @@ import {
   logIncomingExternalAuditSchedule,
   shareExternalAuditSchedule,
   uploadExternalAuditNCDocs,
+  closeCourseCoordinatorNC,
   closeExternalAuditProcess
 } from "../controllers/externalAuditController.js";
 import { authenticateToken } from "../middleware/authMiddleware.js";
@@ -16,6 +17,8 @@ router.post("/sync", syncExternalAudits);
 router.post("/", authenticateToken, logIncomingExternalAuditSchedule);
 router.post("/:id/share-schedule", authenticateToken, shareExternalAuditSchedule);
 router.post("/:id/upload-nc", authenticateToken, uploadExternalAuditNCDocs);
+router.post("/:id/close-nc", authenticateToken, closeCourseCoordinatorNC);
+router.post("/:id/resolve-nc", authenticateToken, closeCourseCoordinatorNC);
 router.post("/:id/close", authenticateToken, closeExternalAuditProcess);
 
 export default router;

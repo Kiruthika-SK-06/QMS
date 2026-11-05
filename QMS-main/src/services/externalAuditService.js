@@ -1,7 +1,13 @@
 // Frontend service for External Quality Audit (ISO 9001:2015) with cross-tab real-time sync and localStorage persistence
-// Constraint: External Auditor has no system login or dashboard.
-// External Auditor communicates strictly via external email with QMS Coordinator.
-// QMS Coordinator initiates, shares, uploads NC docs to course coordinators only, and closes process.
+// Exact 5-Step Workflow:
+// 1. External Auditor schedules and emails schedule to QMS Coordinator only.
+// 2. QMS Coordinator shares scheduled meeting to all: Trust Head, Course Coord, and Internal Auditor.
+//    External Auditor comes directly to the office to audit the system and gives NC doc in paper to QMS Coordinator.
+// 3. QMS Coordinator uploads scanned copy of paper NC doc and shares it ONLY to Course Coordinators.
+// 4. Course Coordinator downloads scanned NC docs and closes the NC resolution.
+// 5. External Auditor communicates approval result to QMS Coordinator through email or directly coming to office.
+//    Once QMS Coordinator gets approval, QMS Coordinator closes the entire process (ISO 9001 Certified).
+// Constraint: Each step can only be performed after the previous step is completed. External Auditor has NO system login or dashboard.
 
 import { initialExternalAuditList } from "../data/mockData";
 
@@ -33,11 +39,11 @@ function syncBackground(url, options = {}) {
 // Deterministic sort: Newly logged/scheduled External Audits ALWAYS placed first, prebuilt dummy data below
 export function sortExternalAudits(list) {
   if (!Array.isArray(list)) return [];
-  const dummyIds = new Set(["EA-2026-001", "EA-2026-002", "EA-2026-003"]);
+  const dummyIds = new Set(["EA-2026-001", "EA-2026-002", "EA-2026-003", "EA-2026-004", "EA-2026-005"]);
 
   return [...list].sort((a, b) => {
-    const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003"));
-    const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003"));
+    const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003") && !a.id?.endsWith("-004") && !a.id?.endsWith("-005"));
+    const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003") && !b.id?.endsWith("-004") && !b.id?.endsWith("-005"));
 
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
@@ -101,12 +107,10 @@ export function mergeExternalAudits(serverList, localList) {
     if (!local) {
       map.set(server.id, server);
     } else {
-      const localStage = typeof local.stage === "number" ? local.stage : 1;
-      const serverStage = typeof server.stage === "number" ? server.stage : 1;
+      const serverStage = Number(server.stage) || 1;
+      const localStage = Number(local.stage) || 1;
       if (serverStage >= localStage) {
-        map.set(server.id, { ...local, ...server, stage: serverStage });
-      } else {
-        map.set(server.id, { ...server, ...local, stage: localStage });
+        map.set(server.id, { ...local, ...server });
       }
     }
   }
@@ -115,89 +119,74 @@ export function mergeExternalAudits(serverList, localList) {
 }
 
 export const externalAuditService = {
-  getStoredExternalAudits,
-  saveStoredExternalAudits,
-  mergeExternalAudits,
-
-  async fetchExternalAudits(token, role) {
-    const cached = getStoredExternalAudits();
-    let currentRole = role;
-    if (!currentRole) {
-      try {
-        const u = JSON.parse(localStorage.getItem("qms_user") || "null");
-        if (u?.role) currentRole = u.role;
-      } catch {}
-    }
-
+  // Fetch audits with fallback
+  async fetchExternalAudits(role, token) {
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
-      const res = await fetch(API_BASE, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(currentRole ? { "x-user-role": currentRole, "x-demo-role": currentRole } : {})
-        },
-        signal: controller.signal
-      });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error("Failed to load External Audits list");
-      const data = await res.json();
-      if (Array.isArray(data.data) && data.data.length > 0) {
-        const merged = mergeExternalAudits(data.data, cached);
-        saveStoredExternalAudits(merged);
-        return merged;
+      const headers = {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(role ? { "x-user-role": role, "x-demo-role": role } : {})
+      };
+
+      const res = await fetch(`${API_BASE}?role=${encodeURIComponent(role || "")}`, { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const serverData = json.data || json;
+        if (Array.isArray(serverData)) {
+          const local = getStoredExternalAudits();
+          const merged = mergeExternalAudits(serverData, local);
+          saveStoredExternalAudits(merged);
+          return merged;
+        }
       }
-      return cached;
-    } catch {
-      return cached;
+    } catch (err) {
+      console.warn("fetchExternalAudits background fetch failed, using local cache:", err);
     }
+    return getStoredExternalAudits();
   },
 
-  // 1. QMS Coordinator logs incoming External Audit schedule received via email
-  async logReceivedSchedule(payload, token) {
+  // 1. QMS Coordinator logs incoming email schedule
+  async logSchedule(auditData, token) {
     const currentList = getStoredExternalAudits();
-    const year = new Date().getFullYear();
-    const id = payload.id || `EA-${year}-${String(Date.now()).slice(-3)}`;
-    const auditorName = payload.leadAuditor?.name || payload.auditorName || "Dr. Robert Vance";
-    const agencyName = payload.externalAgency || "TÜV SÜD South Asia Certification Body";
-    const scheduledDate = payload.scheduledDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-    const scheduledTime = payload.scheduledTime || "09:30 AM";
     const now = formatNow();
+    const auditId = auditData.id || `EA-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
+    const auditorName = auditData.auditorName || auditData.leadAuditor?.name || "Dr. Robert Vance";
+    const agencyName = auditData.externalAgency || "TÜV SÜD South Asia Certification Body";
 
     const newAudit = {
-      ...payload,
-      id,
+      id: auditId,
       isNew: true,
       createdAt: Date.now(),
-      title: payload.title || `ISO 9001:2015 Annual External Surveillance Audit (${year})`,
-      scope: payload.scope || "Comprehensive audit of academic course delivery, practical laboratory training, syllabus coverage, and ISO 9001:2015 Clauses 4-10 conformity.",
+      title: (auditData.title || "ISO 9001:2015 External Surveillance Audit").trim(),
+      scope: (auditData.scope || "Annual ISO 9001:2015 Surveillance Audit covering academic delivery, laboratory procedures, and quality standard conformity.").trim(),
       externalAgency: agencyName,
       leadAuditor: {
         name: auditorName,
-        title: payload.leadAuditor?.title || "Lead External Auditor (ISO 9001:2015)",
+        title: auditData.auditorTitle || "Lead External Auditor (ISO 9001:2015)",
         agency: agencyName,
-        email: payload.leadAuditor?.email || payload.auditorEmail || "lead.auditor@certification-agency.org",
-        phone: payload.leadAuditor?.phone || "+91 98230 45678"
+        email: auditData.auditorEmail || "lead.auditor@tuvsud.com",
+        phone: auditData.auditorPhone || "+91 98230 45678"
       },
-      targetPeriod: payload.targetPeriod || "November 2026",
-      scheduledDate,
-      scheduledTime,
-      venue: payload.venue || "Main Boardroom / Hybrid Video Conference",
-      department: payload.department || "Quality Assurance & Compliance",
-      process: payload.process || "All Processes (Comprehensive Academic Quality Review)",
+      targetPeriod: auditData.targetPeriod || "December 2026",
+      scheduledDate: auditData.scheduledDate,
+      scheduledTime: auditData.scheduledTime || "09:30 AM",
+      venue: auditData.venue || "Main Boardroom / Campus In-Person Audit",
+      department: auditData.department || "Quality Assurance & Compliance",
+      process: auditData.process || "All Processes (Comprehensive Academic Quality Review)",
       stage: 1,
-      status: "Audit Schedule Received (from External Auditor)",
+      status: "Audit Schedule Received (via Email)",
 
       incomingScheduleEmail: {
         received: true,
         receivedAt: now,
-        from: `${auditorName} <${payload.leadAuditor?.email || payload.auditorEmail || "lead.auditor@certification-agency.org"}>`,
+        from: `${auditorName} <${auditData.auditorEmail || "lead.auditor@tuvsud.com"}>`,
         to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
-        subject: payload.emailSubject || `Official Notice: ISO 9001:2015 External Audit Schedule (${id})`,
-        bodyHtml: payload.emailBody || `<p>Dear Rahul Kumar (QMS Coordinator),</p><p>This email serves as official confirmation that the ISO 9001:2015 External Audit for "${payload.title}" is scheduled on <strong>${scheduledDate} starting at ${scheduledTime}</strong>.</p><p>Please notify your course coordinators, trust head, and internal auditors. The detailed audit plan is attached.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
+        subject: auditData.emailSubject || `Official Notice: ISO 9001:2015 External Audit Schedule (${auditId})`,
+        bodyHtml: auditData.emailBody
+          ? `<p>${auditData.emailBody.replace(/\n/g, "<br/>")}</p>`
+          : `<p>Dear Rahul Kumar (QMS Coordinator),</p><p>This email confirms that the ISO 9001:2015 External Audit is scheduled for <strong>${auditData.scheduledDate} at ${auditData.scheduledTime || "09:30 AM"}</strong>.</p><p>The auditor will visit the office in person to audit the system. Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
         attachments: [
           {
-            fileName: payload.planFileName || `ISO_9001_External_Audit_Plan_${id}.pdf`,
+            fileName: auditData.planFileName || `ISO_9001_External_Audit_Plan_${auditId}.pdf`,
             fileSize: "1.8 MB",
             fileType: "application/pdf"
           }
@@ -206,6 +195,7 @@ export const externalAuditService = {
 
       shareWithStakeholders: null,
       ncDocument: null,
+      ncClosure: null,
       externalAuditorApproval: null,
       qmsClosure: null,
 
@@ -214,12 +204,12 @@ export const externalAuditService = {
           action: "Audit Schedule Received via Email",
           actor: `${auditorName} (External Auditor - ${agencyName})`,
           timestamp: now,
-          details: `External audit schedule received via email by QMS Coordinator. Scheduled for ${scheduledDate} at ${scheduledTime}.`
+          details: `External audit schedule and plan received via email by QMS Coordinator. Scheduled for ${auditData.scheduledDate} at ${auditData.scheduledTime || "09:30 AM"}.`
         }
       ]
     };
 
-    const updatedList = sortExternalAudits([newAudit, ...currentList.filter((a) => a.id !== id)]);
+    const updatedList = [newAudit, ...currentList.filter((a) => a.id !== newAudit.id)];
     saveStoredExternalAudits(updatedList);
 
     syncBackground(API_BASE, {
@@ -236,24 +226,25 @@ export const externalAuditService = {
     return newAudit;
   },
 
-  // 2. QMS Coordinator shares received email & schedule to Course Coordinators, Trust Head, and Internal Auditor
-  async shareScheduleToAll(id, { noticeSubject = "", noticeMessage = "" } = {}, token) {
+  // 2. QMS Coordinator shares scheduled meeting to all: Trust Head, Course Coord, and Internal Auditor
+  async shareSchedule(id, shareNotice = {}, token) {
     const currentList = getStoredExternalAudits();
     const existing = currentList.find((a) => a.id === id);
     if (!existing) return null;
 
     const now = formatNow();
+    const { noticeSubject, noticeMessage } = shareNotice;
 
     const updated = {
       ...existing,
       stage: 2,
-      status: "Schedule Shared to All Stakeholders",
+      status: "Schedule Shared (On-Site Audit Scheduled)",
       shareWithStakeholders: {
         shared: true,
         sharedAt: now,
         sharedBy: "Rahul Kumar (QMS Coordinator)",
         noticeSubject: noticeSubject || `External Audit Schedule Notice: ${existing.title} on ${existing.scheduledDate}`,
-        noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${existing.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${existing.scheduledDate} at ${existing.scheduledTime}. Please prepare course files, lab records, and compliance manuals.`,
+        noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${existing.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${existing.scheduledDate} at ${existing.scheduledTime}. The auditor will visit the campus in person to audit the system.`,
         recipients: [
           { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
           { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
@@ -290,7 +281,7 @@ export const externalAuditService = {
     return updated;
   },
 
-  // 3. QMS Coordinator uploads NC document and shares to Course Coordinators ONLY
+  // 3. QMS Coordinator uploads scanned copy of paper NC doc and shares to Course Coordinators ONLY
   async uploadNCDocs(id, ncData, token) {
     const currentList = getStoredExternalAudits();
     const existing = currentList.find((a) => a.id === id);
@@ -301,17 +292,18 @@ export const externalAuditService = {
     const updated = {
       ...existing,
       stage: 3,
-      status: "NC Docs Shared with Course Coordinators",
+      status: "Scanned NC Doc Uploaded (Course Coord Only)",
       ncDocument: {
-        receivedFromExternalAuditor: true,
-        receivedAt: now,
+        receivedFromExternalAuditorInPerson: true,
+        receivedAtOffice: now,
+        isScannedPaperCopy: true,
         uploadedAt: now,
         uploadedBy: "Rahul Kumar (QMS Coordinator)",
         sharedWithCourseCoordinatorsOnly: true,
-        fileName: ncData.fileName || `${existing.id}_External_Audit_NC_Report.pdf`,
+        fileName: ncData.fileName || `${existing.id}_Scanned_Paper_NC_Report.pdf`,
         fileSize: ncData.fileSize || "2.1 MB",
         fileType: "application/pdf",
-        summary: ncData.summary || "Non-conformance report issued by External Auditor covering practical curriculum alignment and lab log verifications.",
+        summary: ncData.summary || "Scanned copy of physical paper NC document handed over by External Auditor during campus office audit.",
         targetClosureDate: ncData.targetClosureDate || "2026-12-15",
         findings: Array.isArray(ncData.findings) && ncData.findings.length > 0 ? ncData.findings : [
           {
@@ -328,10 +320,10 @@ export const externalAuditService = {
       timeline: [
         ...(existing.timeline || []),
         {
-          action: "NC Documents Received & Shared to Course Coordinators Only",
+          action: "On-Site Audit Conducted & Scanned Paper NC Uploaded",
           actor: "Rahul Kumar (QMS Coordinator)",
           timestamp: now,
-          details: `NC Report (${ncData.fileName || `${existing.id}_External_Audit_NC_Report.pdf`}) received from External Auditor via email. Uploaded and shared exclusively to Course Coordinators for corrective action.`
+          details: `External Auditor visited office in person to audit system and handed paper NC document. Scanned copy (${ncData.fileName || `${existing.id}_Scanned_Paper_NC_Report.pdf`}) uploaded and shared exclusively to Course Coordinators for resolution.`
         }
       ]
     };
@@ -353,7 +345,65 @@ export const externalAuditService = {
     return updated;
   },
 
-  // 4. External Auditor approves & QMS Coordinator closes entire process
+  // 4. Course Coordinator downloads scanned NC docs and closes NC resolution
+  async closeCourseCoordinatorNC(id, resolutionData = {}, token) {
+    const currentList = getStoredExternalAudits();
+    const existing = currentList.find((a) => a.id === id);
+    if (!existing) return null;
+
+    const now = formatNow();
+    const actorName = resolutionData.closedBy || "Priya Sharma (Course Coordinator)";
+
+    const updatedFindings = (existing.ncDocument?.findings || []).map((f) => ({
+      ...f,
+      status: "Resolved",
+      resolutionRemarks: resolutionData.remarks || "Root cause analysis completed. Digital counter-signature archiving protocol standardized."
+    }));
+
+    const updated = {
+      ...existing,
+      stage: 4,
+      status: "NC Closed by Course Coordinator (Awaiting Auditor Approval)",
+      ncDocument: existing.ncDocument ? {
+        ...existing.ncDocument,
+        findings: updatedFindings
+      } : null,
+      ncClosure: {
+        closed: true,
+        closedAt: now,
+        closedBy: actorName,
+        remarks: resolutionData.remarks || "Scanned NC document reviewed and resolved. Digital lab register counter-signature protocol deployed.",
+        actionPlan: resolutionData.actionPlan || "Root cause analysis completed. Standardized logging procedure established."
+      },
+      timeline: [
+        ...(existing.timeline || []),
+        {
+          action: "NC Document Downloaded & Closed by Course Coordinator",
+          actor: actorName,
+          timestamp: now,
+          details: `Course Coordinator downloaded scanned NC report, completed corrective actions, and submitted resolution closure. Ready for External Auditor approval.`
+        }
+      ]
+    };
+
+    const updatedList = currentList.map((a) => (a.id === id ? updated : a));
+    saveStoredExternalAudits(updatedList);
+
+    syncBackground(`${API_BASE}/${id}/close-nc`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "owner",
+        "x-demo-role": "owner",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(resolutionData)
+    });
+
+    return updated;
+  },
+
+  // 5. External Auditor communicates approval (via email or direct office visit) & QMS Coordinator closes entire process
   async closeExternalAudit(id, closureData = {}, token) {
     const currentList = getStoredExternalAudits();
     const existing = currentList.find((a) => a.id === id);
@@ -361,25 +411,27 @@ export const externalAuditService = {
 
     const now = formatNow();
     const certNum = closureData.certificateNumber || `ISO9001-${(existing.externalAgency || "CERT").slice(0, 3).toUpperCase()}-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+    const mode = closureData.approvalMode || "Direct Office Visit (Auditor visited office in person)";
 
     const updated = {
       ...existing,
-      stage: 4,
+      stage: 5,
       status: "Completed & Closed (ISO 9001 Certified)",
       externalAuditorApproval: {
         approved: true,
         approvedAt: closureData.approvalDate || now,
+        approvalMode: mode,
         decision: "Certified & Conformance Endorsed",
         certificateNumber: certNum,
         recommendation: closureData.recommendation || "Unconditional recommendation for issuance and continuation of ISO 9001:2015 Quality Management Certificate.",
-        remarks: closureData.remarks || "External Auditor verified all corrective actions. Audit officially cleared with ISO 9001:2015 compliance endorsed.",
+        remarks: closureData.remarks || `External Auditor verified all corrective actions (communicated via ${mode}). Audit officially cleared with ISO 9001:2015 compliance endorsed.`,
         externalLetterFileName: `${existing.id}_ISO9001_Certification_Clearance.pdf`
       },
       qmsClosure: {
         closed: true,
         closedAt: now,
         closedBy: "Rahul Kumar (QMS Coordinator)",
-        remarks: closureData.qmsRemarks || "External Audit lifecycle completed and closed in full conformance with ISO 9001:2015."
+        remarks: closureData.qmsRemarks || `External Audit lifecycle completed and closed in full conformance with ISO 9001:2015 following auditor approval received via ${mode}.`
       },
       timeline: [
         ...(existing.timeline || []),
@@ -387,13 +439,13 @@ export const externalAuditService = {
           action: "Audit Approved by External Auditor",
           actor: `${existing.leadAuditor?.name || "Lead External Auditor"} (${existing.externalAgency})`,
           timestamp: closureData.approvalDate || now,
-          details: `External Auditor approved resolution and endorsed ISO 9001:2015 Certificate (${certNum}).`
+          details: `External Auditor communicated approval result (${mode}) and endorsed ISO 9001:2015 Certificate (${certNum}).`
         },
         {
           action: "External Audit Process Officially Closed",
           actor: "Rahul Kumar (QMS Coordinator)",
           timestamp: now,
-          details: `Full process closed by QMS Coordinator. Quality Management System ISO 9001:2015 certification ratified for all divisions.`
+          details: `Full process closed by QMS Coordinator. All previous stages validated. ISO 9001:2015 certification ratified for all divisions.`
         }
       ]
     };

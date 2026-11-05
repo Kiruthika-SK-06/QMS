@@ -822,7 +822,31 @@ export function AppProvider({ children }) {
     }
   };
 
-  // 4. External Auditor approves & QMS Coordinator closes entire process
+  // 4. Course Coordinator downloads scanned NC docs and closes NC resolution
+  const closeCourseCoordinatorNC = async (id, resolutionData = {}) => {
+    try {
+      const updated = await externalAuditService.closeCourseCoordinatorNC(id, resolutionData, token);
+      if (updated) {
+        setExternalAuditList((prev) => {
+          const next = sortExternalAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+          saveStoredExternalAudits(next);
+          return next;
+        });
+
+        pushNotification(
+          "External Audit NC Closed by Course Coordinator",
+          `Course Coordinator closed NC findings for "${updated.title}". Awaiting External Auditor approval (via email or direct office visit).`,
+          "qm"
+        );
+      }
+      return updated;
+    } catch (err) {
+      console.error("closeCourseCoordinatorNC error:", err);
+      throw err;
+    }
+  };
+
+  // 5. External Auditor approves & QMS Coordinator closes entire process
   const closeExternalAuditProcess = async (id, closureData = {}) => {
     try {
       const updated = await externalAuditService.closeExternalAudit(id, closureData, token);
@@ -1059,6 +1083,7 @@ export function AppProvider({ children }) {
         logExternalAuditSchedule,
         shareExternalAuditSchedule,
         uploadExternalAuditNCDocs,
+        closeCourseCoordinatorNC,
         closeExternalAuditProcess,
         activities,
         headOverview,

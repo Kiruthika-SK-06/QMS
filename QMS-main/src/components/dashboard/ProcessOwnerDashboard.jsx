@@ -42,8 +42,12 @@ export default function ProcessOwnerDashboard() {
     (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
   );
 
-  const ncDocumentsCount = accessibleExternalAudits.filter(
-    (a) => a.stage === 3 || !!a.ncDocument
+  const pendingNCCount = accessibleExternalAudits.filter(
+    (a) => a.stage === 3 && !a.ncClosure?.closed
+  ).length;
+
+  const resolvedNCCount = accessibleExternalAudits.filter(
+    (a) => a.stage >= 4
   ).length;
 
   return (
@@ -176,14 +180,14 @@ export default function ProcessOwnerDashboard() {
           </div>
           <ul className="overview-card-details">
             <li>
-              <span className="detail-label">NC Documents:</span>
-              <span className="detail-val" style={{ color: ncDocumentsCount > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {ncDocumentsCount > 0 ? `${ncDocumentsCount} Issued for CC` : "None"}
+              <span className="detail-label">NC Awaiting Closure:</span>
+              <span className="detail-val" style={{ color: pendingNCCount > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {pendingNCCount > 0 ? `${pendingNCCount} Action Required` : "None"}
               </span>
             </li>
             <li>
-              <span className="detail-label">Schedule Status:</span>
-              <span className="detail-val">Shared by QMS</span>
+              <span className="detail-label">NC Resolved:</span>
+              <span className="detail-val">{resolvedNCCount} Closed</span>
             </li>
             <li>
               <span className="detail-label">Next Audit:</span>
