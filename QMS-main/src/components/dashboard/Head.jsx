@@ -67,14 +67,6 @@ export default function Head() {
 
   const sortedMRMs = sortMRMs(mrmList);
 
-  const accessibleExternalAudits = (externalAuditList || []).filter(
-    (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
-  );
-  const currentExternalAudit = accessibleExternalAudits[0] || (externalAuditList || [])[0];
-  const certifiedExternalAudits = accessibleExternalAudits.filter(
-    (a) => a.stage >= 5 || a.status === "Completed & Closed (ISO 9001 Certified)"
-  );
-
   const pendingApprovalMRMs = (mrmList || []).filter(
     (m) =>
       m.status === "Pending Trust Head Approval" ||
@@ -104,8 +96,8 @@ export default function Head() {
           description="Quality assurance inspection, noticing sheet verification, and review meeting Minutes of Meeting (MoM) access."
         />
 
-        {/* Core Cards for Auditor: Internal Audit, MRM, and External Audit */}
-        <div className="overview-cards-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+        {/* Core Cards for Auditor: Internal Audit and MRM */}
+        <div className="overview-cards-grid">
           {/* Card 1: Internal Quality Audit */}
           <NavLink to="/internal-audit" className="overview-context-card">
             <div className="overview-card-header">
@@ -114,84 +106,18 @@ export default function Head() {
               </div>
               <div className="overview-card-title-group">
                 <h3>Internal Audit</h3>
-                <span>IQA Inspections & Noticing Sheets</span>
               </div>
             </div>
             <div className="overview-card-metric">
               {auditList.length} <small>Total Audits</small>
             </div>
-            <ul className="overview-card-details">
-              <li>
-                <span className="detail-label">Awaiting Inspection:</span>
-                <span className="detail-val" style={{ color: auditsAwaitingNoticing.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                  {auditsAwaitingNoticing.length} Ready for Noticing
-                </span>
-              </li>
-              <li>
-                <span className="detail-label">In Progress:</span>
-                <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} Active Stages</span>
-              </li>
-              <li>
-                <span className="detail-label">Standard:</span>
-                <span className="detail-val">ISO 9001:2015 Clause 9.2</span>
-              </li>
-            </ul>
             <div className="overview-card-footer">
               <span>Open Internal Audit</span>
               <ArrowRight size={14} />
             </div>
           </NavLink>
 
-          {/* Card 2: External Quality Audits */}
-          <div className="overview-context-card">
-            <div className="overview-card-header">
-              <div className="overview-card-icon blue">
-                <ShieldCheck size={22} />
-              </div>
-              <div className="overview-card-title-group">
-                <h3>External Quality Audits</h3>
-              </div>
-            </div>
-            <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
-              {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
-            </div>
-            <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
-              <li>
-                <span className="detail-label">Audit Date:</span>
-                <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
-              </li>
-              <li>
-                <span className="detail-label">Time:</span>
-                <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
-              </li>
-              <li>
-                <span className="detail-label">Auditor Name:</span>
-                <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
-              </li>
-            </ul>
-            <NavLink
-              to="/external-audit"
-              className="primary-button btn-blue"
-              style={{
-                marginTop: "auto",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                width: "100%",
-                padding: "9px 12px",
-                fontSize: "12.5px",
-                fontWeight: "600",
-                textDecoration: "none",
-                borderRadius: "6px"
-              }}
-            >
-              <span>View External Audit</span>
-              <ArrowRight size={14} />
-            </NavLink>
-          </div>
-
-          {/* Card 3: MRM & MoM Downloads */}
+          {/* Card 2: MRM & MoM Downloads */}
           <NavLink to="/mrm" className="overview-context-card">
             <div className="overview-card-header">
               <div className="overview-card-icon purple">
@@ -199,28 +125,11 @@ export default function Head() {
               </div>
               <div className="overview-card-title-group">
                 <h3>MRM & MoM Downloads</h3>
-                <span>Review Meetings Evidence</span>
               </div>
             </div>
             <div className="overview-card-metric">
               {publishedMRMs.length} <small>MoMs Available</small>
             </div>
-            <ul className="overview-card-details">
-              <li>
-                <span className="detail-label">Latest Meeting:</span>
-                <span className="detail-val">{sortedMRMs[0]?.scheduledDate || "None"}</span>
-              </li>
-              <li>
-                <span className="detail-label">MoM Status:</span>
-                <span className="detail-val" style={{ color: "var(--status-green)" }}>
-                  {publishedMRMs.length} Published for Download
-                </span>
-              </li>
-              <li>
-                <span className="detail-label">Compliance Evidence:</span>
-                <span className="detail-val">Audit Ready</span>
-              </li>
-            </ul>
             <div className="overview-card-footer">
               <span>View MRMs & Download MoM</span>
               <ArrowRight size={14} />
@@ -369,8 +278,8 @@ export default function Head() {
         description="Executive governance, institutional quality performance, and review meeting ratification."
       />
 
-      {/* Main Context Overview Cards: MRM, External Audit, Process Overview, Docs Management, Internal Audit */}
-      <div className="overview-cards-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
+      <div className="overview-cards-grid four-col">
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
@@ -379,28 +288,11 @@ export default function Head() {
             </div>
             <div className="overview-card-title-group">
               <h3>MRM</h3>
-              <span>Review Meetings</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {mrmList.length} <small>Sessions</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Next Session:</span>
-              <span className="detail-val">{sortedMRMs[0]?.scheduledDate || "None"}</span>
-            </li>
-            <li>
-              <span className="detail-label">Status:</span>
-              <span className="detail-val" style={{ color: pendingApprovalMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {pendingApprovalMRMs.length > 0 ? `${pendingApprovalMRMs.length} Awaiting Approval` : "All Ratified"}
-              </span>
-            </li>
-            <li>
-              <span className="detail-label">Governance:</span>
-              <span className="detail-val">Executive Sign-off</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>View MRM Schedule</span>
             <ArrowRight size={13} />
@@ -415,26 +307,11 @@ export default function Head() {
             </div>
             <div className="overview-card-title-group">
               <h3>Process Overview</h3>
-              <span>Institutional Quality</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {totalProcesses} <small>Processes</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Adherence Rate:</span>
-              <span className="detail-val" style={{ color: "var(--status-green)" }}>{overallProgress}% On Track</span>
-            </li>
-            <li>
-              <span className="detail-label">In Progress:</span>
-              <span className="detail-val">{inProgressProcesses} Active</span>
-            </li>
-            <li>
-              <span className="detail-label">Completed:</span>
-              <span className="detail-val">{completedProcesses} Concluded</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>Explore Processes</span>
             <ArrowRight size={13} />
@@ -449,26 +326,11 @@ export default function Head() {
             </div>
             <div className="overview-card-title-group">
               <h3>Docs Management</h3>
-              <span>Controlled Library</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {documents.length || 12} <small>Controlled</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Quality Policy:</span>
-              <span className="detail-val">ISO 9001:2015</span>
-            </li>
-            <li>
-              <span className="detail-label">Authority:</span>
-              <span className="detail-val">Executive Cell</span>
-            </li>
-            <li>
-              <span className="detail-label">Status:</span>
-              <span className="detail-val" style={{ color: "var(--status-green)" }}>Active & Released</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>Open Library</span>
             <ArrowRight size={13} />
@@ -483,82 +345,16 @@ export default function Head() {
             </div>
             <div className="overview-card-title-group">
               <h3>Internal Audit</h3>
-              <span>Schedule Ratification</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {auditList.length} <small>Audits</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Awaiting Approval:</span>
-              <span className="detail-val" style={{ color: pendingAuditApprovals.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {pendingAuditApprovals.length} Schedule(s)
-              </span>
-            </li>
-            <li>
-              <span className="detail-label">In Progress:</span>
-              <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} Active Stages</span>
-            </li>
-            <li>
-              <span className="detail-label">Concluded:</span>
-              <span className="detail-val">{auditList.filter((a) => a.stage === 7).length} Completed</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>Open Internal Audit</span>
             <ArrowRight size={13} />
           </div>
         </NavLink>
-
-        {/* Card 5: External Quality Audits */}
-        <div className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon blue">
-              <ShieldCheck size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>External Quality Audits</h3>
-            </div>
-          </div>
-          <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
-            {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
-          </div>
-          <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
-            <li>
-              <span className="detail-label">Audit Date:</span>
-              <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
-            </li>
-            <li>
-              <span className="detail-label">Time:</span>
-              <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
-            </li>
-            <li>
-              <span className="detail-label">Auditor Name:</span>
-              <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
-            </li>
-          </ul>
-          <NavLink
-            to="/external-audit"
-            className="primary-button btn-blue"
-            style={{
-              marginTop: "auto",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              width: "100%",
-              padding: "9px 12px",
-              fontSize: "12.5px",
-              fontWeight: "600",
-              textDecoration: "none",
-              borderRadius: "6px"
-            }}
-          >
-            <span>View External Audit</span>
-            <ArrowRight size={14} />
-          </NavLink>
-        </div>
       </div>
 
       {/* Row: Institutional Process and Scheduled MRM */}

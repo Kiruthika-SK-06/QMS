@@ -44,7 +44,6 @@ export default function QMGroupDashboard() {
 
   const readyToShareAudits = (auditList || []).filter((a) => a.stage === 2.5);
   const readyToCloseAudits = (auditList || []).filter((a) => a.stage === 6);
-  const currentExternalAudit = (externalAuditList || [])[0];
 
   // Flatten version audit records
   const auditTrailRecords = (documents || []).flatMap((doc) =>
@@ -67,7 +66,7 @@ export default function QMGroupDashboard() {
       />
 
       {/* Context Overview Cards */}
-      <div className="overview-cards-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+      <div className="overview-cards-grid four-col">
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
@@ -76,28 +75,11 @@ export default function QMGroupDashboard() {
             </div>
             <div className="overview-card-title-group">
               <h3>MRM</h3>
-              <span>Review Meetings</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {mrmList.length} <small>Sessions</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Next Session:</span>
-              <span className="detail-val">{sortMRMs(mrmList)[0]?.scheduledDate || "None"}</span>
-            </li>
-            <li>
-              <span className="detail-label">To Share:</span>
-              <span className="detail-val" style={{ color: readyToShareMRMs.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {readyToShareMRMs.length} Pending
-              </span>
-            </li>
-            <li>
-              <span className="detail-label">MoM Released:</span>
-              <span className="detail-val">{mrmList.filter((m) => !!m.momFile || m.status === "MoM Uploaded").length}</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>View MRMs</span>
             <ArrowRight size={13} />
@@ -112,26 +94,11 @@ export default function QMGroupDashboard() {
             </div>
             <div className="overview-card-title-group">
               <h3>Process Overview</h3>
-              <span>Quality SOPs</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {processes.length} <small>Processes</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Coordinators:</span>
-              <span className="detail-val">{courseCoordinatorsCount} Assigned</span>
-            </li>
-            <li>
-              <span className="detail-label">Status:</span>
-              <span className="detail-val" style={{ color: "var(--status-green)" }}>100% Operational</span>
-            </li>
-            <li>
-              <span className="detail-label">Adherence:</span>
-              <span className="detail-val">98% On Track</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>Explore Processes</span>
             <ArrowRight size={13} />
@@ -146,28 +113,11 @@ export default function QMGroupDashboard() {
             </div>
             <div className="overview-card-title-group">
               <h3>Docs Management</h3>
-              <span>Controlled Docs</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {documents.length} <small>Controlled</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">Live Active:</span>
-              <span className="detail-val">{documents.length - pendingReviews}</span>
-            </li>
-            <li>
-              <span className="detail-label">Review Queue:</span>
-              <span className="detail-val" style={{ color: pendingReviews > 0 ? "var(--status-amber)" : "var(--muted)" }}>
-                {pendingReviews} in queue
-              </span>
-            </li>
-            <li>
-              <span className="detail-label">Standard:</span>
-              <span className="detail-val">ISO 9001:2015</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>Open Library</span>
             <ArrowRight size={13} />
@@ -182,82 +132,16 @@ export default function QMGroupDashboard() {
             </div>
             <div className="overview-card-title-group">
               <h3>Internal Audit</h3>
-              <span>IQA Cycles</span>
             </div>
           </div>
           <div className="overview-card-metric">
             {auditList.length} <small>Audits</small>
           </div>
-          <ul className="overview-card-details">
-            <li>
-              <span className="detail-label">In Progress:</span>
-              <span className="detail-val">{auditList.filter((a) => a.stage < 7).length} Active</span>
-            </li>
-            <li>
-              <span className="detail-label">Pending Action:</span>
-              <span className="detail-val" style={{ color: readyToShareAudits.length + readyToCloseAudits.length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {readyToShareAudits.length + readyToCloseAudits.length} QMS Pending
-              </span>
-            </li>
-            <li>
-              <span className="detail-label">Closed:</span>
-              <span className="detail-val">{auditList.filter((a) => a.stage === 7).length} Complete</span>
-            </li>
-          </ul>
           <div className="overview-card-footer">
             <span>Open Audit</span>
             <ArrowRight size={13} />
           </div>
         </NavLink>
-
-        {/* Card 5: External Quality Audits */}
-        <div className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon blue">
-              <ShieldCheck size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>External Quality Audits</h3>
-            </div>
-          </div>
-          <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
-            {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
-          </div>
-          <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
-            <li>
-              <span className="detail-label">Audit Date:</span>
-              <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
-            </li>
-            <li>
-              <span className="detail-label">Time:</span>
-              <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
-            </li>
-            <li>
-              <span className="detail-label">Auditor Name:</span>
-              <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
-            </li>
-          </ul>
-          <NavLink
-            to="/external-audit"
-            className="primary-button btn-blue"
-            style={{
-              marginTop: "auto",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              width: "100%",
-              padding: "9px 12px",
-              fontSize: "12.5px",
-              fontWeight: "600",
-              textDecoration: "none",
-              borderRadius: "6px"
-            }}
-          >
-            <span>View External Audit</span>
-            <ArrowRight size={14} />
-          </NavLink>
-        </div>
       </div>
 
       {/* Row: Audit Trails and User Management */}
