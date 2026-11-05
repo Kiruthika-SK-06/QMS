@@ -41,6 +41,7 @@ export default function ProcessOwnerDashboard() {
   const accessibleExternalAudits = (externalAuditList || []).filter(
     (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
   );
+  const currentExternalAudit = accessibleExternalAudits[0] || (externalAuditList || [])[0];
 
   const pendingNCCount = accessibleExternalAudits.filter(
     (a) => a.stage === 3 && !a.ncClosure?.closed
@@ -164,41 +165,54 @@ export default function ProcessOwnerDashboard() {
           </div>
         </NavLink>
 
-        {/* Card 4: External Quality Audit (ISO 9001:2015 & NC Documents) */}
-        <NavLink to="/external-audit" className="overview-context-card">
+        {/* Card 4: External Quality Audits */}
+        <div className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon green">
               <ShieldCheck size={22} />
             </div>
             <div className="overview-card-title-group">
               <h3>External Quality Audits</h3>
-              <span>ISO 9001:2015 Reviews</span>
             </div>
           </div>
-          <div className="overview-card-metric">
-            {accessibleExternalAudits.length} <small>Notified Audits</small>
+          <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
+            {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
           </div>
-          <ul className="overview-card-details">
+          <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
             <li>
-              <span className="detail-label">NC Awaiting Closure:</span>
-              <span className="detail-val" style={{ color: pendingNCCount > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {pendingNCCount > 0 ? `${pendingNCCount} Action Required` : "None"}
-              </span>
+              <span className="detail-label">Audit Date:</span>
+              <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
             </li>
             <li>
-              <span className="detail-label">NC Resolved:</span>
-              <span className="detail-val">{resolvedNCCount} Closed</span>
+              <span className="detail-label">Time:</span>
+              <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
             </li>
             <li>
-              <span className="detail-label">Next Audit:</span>
-              <span className="detail-val">{accessibleExternalAudits[0]?.scheduledDate || "None upcoming"}</span>
+              <span className="detail-label">Auditor Name:</span>
+              <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
             </li>
           </ul>
-          <div className="overview-card-footer">
-            <span>View External Audits & NC</span>
+          <NavLink
+            to="/external-audit"
+            className="primary-button btn-blue"
+            style={{
+              marginTop: "auto",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              width: "100%",
+              padding: "9px 12px",
+              fontSize: "12.5px",
+              fontWeight: "600",
+              textDecoration: "none",
+              borderRadius: "6px"
+            }}
+          >
+            <span>View External Audit</span>
             <ArrowRight size={14} />
-          </div>
-        </NavLink>
+          </NavLink>
+        </div>
       </div>
 
       {/* Row: Tasks and Internal Audit with brief details */}

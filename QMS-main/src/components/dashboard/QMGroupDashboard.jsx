@@ -44,6 +44,7 @@ export default function QMGroupDashboard() {
 
   const readyToShareAudits = (auditList || []).filter((a) => a.stage === 2.5);
   const readyToCloseAudits = (auditList || []).filter((a) => a.stage === 6);
+  const currentExternalAudit = (externalAuditList || [])[0];
 
   // Flatten version audit records
   const auditTrailRecords = (documents || []).flatMap((doc) =>
@@ -209,45 +210,54 @@ export default function QMGroupDashboard() {
           </div>
         </NavLink>
 
-        {/* Card 5: External Quality Audit (ISO 9001:2015) */}
-        <NavLink to="/external-audit" className="overview-context-card">
+        {/* Card 5: External Quality Audits */}
+        <div className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon blue">
               <ShieldCheck size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>External Quality Audits</h3>
-              <span>ISO 9001:2015</span>
             </div>
           </div>
-          <div className="overview-card-metric">
-            {externalAuditList.length} <small>Audits</small>
+          <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
+            {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
           </div>
-          <ul className="overview-card-details">
+          <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
             <li>
-              <span className="detail-label">Schedule Ready:</span>
-              <span className="detail-val" style={{ color: externalAuditList.filter((a) => a.stage === 1).length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
-                {externalAuditList.filter((a) => a.stage === 1).length} Incoming Email
-              </span>
+              <span className="detail-label">Audit Date:</span>
+              <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
             </li>
             <li>
-              <span className="detail-label">Scanned NC:</span>
-              <span className="detail-val">
-                {externalAuditList.filter((a) => a.stage === 3).length} For Course Coord
-              </span>
+              <span className="detail-label">Time:</span>
+              <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
             </li>
             <li>
-              <span className="detail-label">Certified:</span>
-              <span className="detail-val" style={{ color: "var(--status-green)" }}>
-                {externalAuditList.filter((a) => a.stage >= 5).length} Ratified & Closed
-              </span>
+              <span className="detail-label">Auditor Name:</span>
+              <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
             </li>
           </ul>
-          <div className="overview-card-footer">
-            <span>External Audits</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+          <NavLink
+            to="/external-audit"
+            className="primary-button btn-blue"
+            style={{
+              marginTop: "auto",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              width: "100%",
+              padding: "9px 12px",
+              fontSize: "12.5px",
+              fontWeight: "600",
+              textDecoration: "none",
+              borderRadius: "6px"
+            }}
+          >
+            <span>View External Audit</span>
+            <ArrowRight size={14} />
+          </NavLink>
+        </div>
       </div>
 
       {/* Row: Audit Trails and User Management */}

@@ -70,6 +70,7 @@ export default function Head() {
   const accessibleExternalAudits = (externalAuditList || []).filter(
     (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
   );
+  const currentExternalAudit = accessibleExternalAudits[0] || (externalAuditList || [])[0];
   const certifiedExternalAudits = accessibleExternalAudits.filter(
     (a) => a.stage >= 5 || a.status === "Completed & Closed (ISO 9001 Certified)"
   );
@@ -141,41 +142,54 @@ export default function Head() {
             </div>
           </NavLink>
 
-          {/* Card 2: External Quality Audit (ISO 9001:2015) */}
-          <NavLink to="/external-audit" className="overview-context-card">
+          {/* Card 2: External Quality Audits */}
+          <div className="overview-context-card">
             <div className="overview-card-header">
               <div className="overview-card-icon blue">
                 <ShieldCheck size={22} />
               </div>
               <div className="overview-card-title-group">
                 <h3>External Quality Audits</h3>
-                <span>ISO 9001:2015 Third-Party</span>
               </div>
             </div>
-            <div className="overview-card-metric">
-              {accessibleExternalAudits.length} <small>Cert Cycles</small>
+            <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
+              {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
             </div>
-            <ul className="overview-card-details">
+            <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
               <li>
-                <span className="detail-label">Schedule Status:</span>
-                <span className="detail-val">Shared by QMS</span>
+                <span className="detail-label">Audit Date:</span>
+                <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
               </li>
               <li>
-                <span className="detail-label">Latest Date:</span>
-                <span className="detail-val">{accessibleExternalAudits[0]?.scheduledDate || "None"}</span>
+                <span className="detail-label">Time:</span>
+                <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
               </li>
               <li>
-                <span className="detail-label">Certification:</span>
-                <span className="detail-val" style={{ color: "var(--status-green)" }}>
-                  {certifiedExternalAudits.length} Ratified
-                </span>
+                <span className="detail-label">Auditor Name:</span>
+                <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
               </li>
             </ul>
-            <div className="overview-card-footer">
-              <span>View External Audits</span>
+            <NavLink
+              to="/external-audit"
+              className="primary-button btn-blue"
+              style={{
+                marginTop: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                width: "100%",
+                padding: "9px 12px",
+                fontSize: "12.5px",
+                fontWeight: "600",
+                textDecoration: "none",
+                borderRadius: "6px"
+              }}
+            >
+              <span>View External Audit</span>
               <ArrowRight size={14} />
-            </div>
-          </NavLink>
+            </NavLink>
+          </div>
 
           {/* Card 3: MRM & MoM Downloads */}
           <NavLink to="/mrm" className="overview-context-card">
@@ -497,43 +511,54 @@ export default function Head() {
           </div>
         </NavLink>
 
-        {/* Card 5: External Quality Audit (ISO 9001:2015) */}
-        <NavLink to="/external-audit" className="overview-context-card">
+        {/* Card 5: External Quality Audits */}
+        <div className="overview-context-card">
           <div className="overview-card-header">
             <div className="overview-card-icon blue">
               <ShieldCheck size={20} />
             </div>
             <div className="overview-card-title-group">
               <h3>External Quality Audits</h3>
-              <span>ISO 9001:2015</span>
             </div>
           </div>
-          <div className="overview-card-metric">
-            {accessibleExternalAudits.length} <small>Audits</small>
+          <div style={{ marginBottom: "10px", fontSize: "13px", fontWeight: "700", color: "var(--ink)", lineHeight: 1.4 }}>
+            {currentExternalAudit?.title || "ISO 9001:2015 Annual Surveillance Audit"}
           </div>
-          <ul className="overview-card-details">
+          <ul className="overview-card-details" style={{ margin: "0 0 14px 0" }}>
             <li>
-              <span className="detail-label">Audit Agency:</span>
-              <span className="detail-val">
-                {accessibleExternalAudits[0]?.externalAgency ? accessibleExternalAudits[0].externalAgency.split(" ")[0] : "TÜV SÜD"}
-              </span>
+              <span className="detail-label">Audit Date:</span>
+              <span className="detail-val">{currentExternalAudit?.scheduledDate || "Pending"}</span>
             </li>
             <li>
-              <span className="detail-label">Confirmed Date:</span>
-              <span className="detail-val">{accessibleExternalAudits[0]?.scheduledDate || "None"}</span>
+              <span className="detail-label">Time:</span>
+              <span className="detail-val">{currentExternalAudit?.scheduledTime || "09:30 AM"}</span>
             </li>
             <li>
-              <span className="detail-label">Ratification:</span>
-              <span className="detail-val" style={{ color: "var(--status-green)" }}>
-                {certifiedExternalAudits.length} Endorsed
-              </span>
+              <span className="detail-label">Auditor Name:</span>
+              <span className="detail-val">{currentExternalAudit?.leadAuditor?.name || "Dr. Robert Vance"}</span>
             </li>
           </ul>
-          <div className="overview-card-footer">
-            <span>View External Audits</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+          <NavLink
+            to="/external-audit"
+            className="primary-button btn-blue"
+            style={{
+              marginTop: "auto",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              width: "100%",
+              padding: "9px 12px",
+              fontSize: "12.5px",
+              fontWeight: "600",
+              textDecoration: "none",
+              borderRadius: "6px"
+            }}
+          >
+            <span>View External Audit</span>
+            <ArrowRight size={14} />
+          </NavLink>
+        </div>
       </div>
 
       {/* Row: Institutional Process and Scheduled MRM */}
