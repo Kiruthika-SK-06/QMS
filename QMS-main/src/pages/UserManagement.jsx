@@ -373,50 +373,13 @@ export default function UserManagement() {
                 return (
                   <tr key={user.id || user.username || user.employeeId}>
                     <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div
-                          style={{
-                            width: "38px",
-                            height: "38px",
-                            borderRadius: "50%",
-                            background: roleBadgeTone.bg,
-                            border: `1px solid ${roleBadgeTone.border}`,
-                            color: roleBadgeTone.color,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: "700",
-                            fontSize: "13px",
-                            flexShrink: 0
-                          }}
-                        >
-                          {user.initials || "U"}
-                        </div>
-                        <div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <strong>{user.name}</strong>
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "3px",
-                                fontSize: "11px",
-                                padding: "1px 6px",
-                                borderRadius: "4px",
-                                background: "#f1f5f9",
-                                border: "1px solid #cbd5e1",
-                                color: "#334155",
-                                fontWeight: "600"
-                              }}
-                            >
-                              <IdCard size={11} />
-                              {user.employeeId || user.id}
-                            </span>
-                          </div>
-                          <small style={{ color: "#64748b", display: "block" }}>
-                            <code>@{user.username || user.email?.split("@")[0]}</code>
-                          </small>
-                        </div>
+                      <div>
+                        <strong style={{ display: "block", color: "var(--ink)", fontSize: "13.5px" }}>
+                          {user.name || user.username}
+                        </strong>
+                        <span style={{ display: "block", color: "#64748b", fontSize: "12px", marginTop: "2px" }}>
+                          Emp ID: {user.employeeId || user.id}
+                        </span>
                       </div>
                     </td>
                     <td>
@@ -457,79 +420,69 @@ export default function UserManagement() {
                     <td>
                       <StatusBadge status={user.status || "Active"} />
                     </td>
-                    <td>
-                      <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
-                        <button
-                          type="button"
-                          className="row-action"
-                          onClick={() => setViewingProfile(user)}
-                          style={{
-                            cursor: "pointer",
-                            color: "#334155",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px"
-                          }}
-                        >
-                          <Eye size={13} /> View Details
-                        </button>
+                    <td style={{ verticalAlign: "top" }}>
+                      {canEdit ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+                          <button
+                            type="button"
+                            className="row-action"
+                            onClick={() => openEditModal(user)}
+                            style={{
+                              cursor: "pointer",
+                              color: "var(--navy)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              fontWeight: "600",
+                              fontSize: "12px",
+                              padding: "2px 0"
+                            }}
+                          >
+                            <Edit2 size={12} /> Edit
+                          </button>
 
-                        {/* Edit, Toggle, and Delete are ONLY rendered for QMS Coordinator */}
-                        {canEdit && (
-                          <>
+                          <button
+                            type="button"
+                            className="row-action"
+                            onClick={() => handleToggleStatus(user)}
+                            style={{
+                              cursor: "pointer",
+                              color: user.status === "Active" ? "#d97706" : "#16a34a",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              fontSize: "12px",
+                              padding: "2px 0"
+                            }}
+                            title={user.status === "Active" ? "Deactivate account" : "Activate account"}
+                          >
+                            <Power size={12} />
+                            {user.status === "Active" ? "Deactivate" : "Activate"}
+                          </button>
+
+                          {currentUser?.username !== user.username && (
                             <button
                               type="button"
                               className="row-action"
-                              onClick={() => openEditModal(user)}
+                              onClick={() => setDeleteConfirmUser(user)}
                               style={{
                                 cursor: "pointer",
-                                color: "var(--navy)",
+                                color: "#ef4444",
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: "4px",
-                                fontWeight: "600"
+                                gap: "5px",
+                                fontSize: "12px",
+                                padding: "2px 0"
                               }}
+                              title="Delete user"
                             >
-                              <Edit2 size={13} /> Edit
+                              <Trash2 size={12} /> Delete
                             </button>
-
-                            <button
-                              type="button"
-                              className="row-action"
-                              onClick={() => handleToggleStatus(user)}
-                              style={{
-                                cursor: "pointer",
-                                color: user.status === "Active" ? "#d97706" : "#16a34a",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px"
-                              }}
-                              title={user.status === "Active" ? "Deactivate account" : "Activate account"}
-                            >
-                              <Power size={13} />
-                              {user.status === "Active" ? "Deactivate" : "Activate"}
-                            </button>
-
-                            {currentUser?.username !== user.username && (
-                              <button
-                                type="button"
-                                className="row-action"
-                                onClick={() => setDeleteConfirmUser(user)}
-                                style={{
-                                  cursor: "pointer",
-                                  color: "#ef4444",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px"
-                                }}
-                                title="Delete user"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>Read-only</span>
+                      )}
                     </td>
                   </tr>
                 );

@@ -93,21 +93,6 @@ export default function DocumentTable({ items = [], review = false, onEdit, onDe
                         View
                       </NavLink>
 
-                      {canReview && isReviewable && (
-                        <button
-                          type="button"
-                          className="row-action"
-                          onClick={() => {
-                            setReviewingDoc(document);
-                            setReviewComments(document.reviewComments || "");
-                          }}
-                          style={{ cursor: "pointer", color: "var(--status-blue)", fontWeight: "600" }}
-                          title="Review and record approval decision"
-                        >
-                          Review
-                        </button>
-                      )}
-
                       {canEdit && (
                         <button
                           type="button"
@@ -129,6 +114,32 @@ export default function DocumentTable({ items = [], review = false, onEdit, onDe
                           title={`Delete ${document.name}`}
                         >
                           Delete
+                        </button>
+                      )}
+
+                      {/* Corner Review Action for QMS Coordinator and Trust Head */}
+                      {canReview && isReviewable && (
+                        <button
+                          type="button"
+                          className="row-action"
+                          onClick={() => {
+                            setReviewingDoc(document);
+                            setReviewComments(document.reviewComments || "");
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            color: "#0369a1",
+                            background: "#e0f2fe",
+                            border: "1px solid #bae6fd",
+                            borderRadius: "4px",
+                            padding: "2px 8px",
+                            fontSize: "11.5px",
+                            fontWeight: "700",
+                            marginLeft: "6px"
+                          }}
+                          title="Review and record approval decision"
+                        >
+                          Review
                         </button>
                       )}
                     </div>

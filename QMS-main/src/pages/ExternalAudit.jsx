@@ -872,23 +872,8 @@ Certified Compliant with International Standards - C-DAC Quality Office
                     borderTop: "1px solid #f1f5f9"
                   }}
                 >
-                  {/* Left: View incoming email & details */}
+                  {/* Left: View details */}
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    {audit.incomingScheduleEmail && (
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => {
-                          setSelectedAudit(audit);
-                          setShowEmailModal(true);
-                        }}
-                        style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12.5px" }}
-                      >
-                        <Mail size={14} color="#4f46e5" />
-                        <span>View Incoming Email</span>
-                      </button>
-                    )}
-
                     <button
                       type="button"
                       className="secondary-button"
