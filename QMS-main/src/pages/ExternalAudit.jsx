@@ -761,154 +761,152 @@ Certified Compliant with International Standards - C-DAC Quality Office
                   </div>
                 </div>
 
-                {/* Workflow Stepper: Only shown to QMS Coordinator and Internal Auditor */}
-                {(isQMSCoordinator || isInternalAuditor) && (
-                  <div style={{ margin: "16px 0", padding: "14px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-                      {[
-                        { num: 1, title: "1. Email Schedule Received", sub: "Ext. Auditor -> QMS" },
-                        { num: 2, title: "2. Shared & On-Site Audit", sub: "Auditor Visits Office" },
-                        { num: 3, title: "3. Scanned NC Uploaded", sub: "Course Coord Only" },
-                        { num: 4, title: "4. NC Closed by CC", sub: "Downloaded & Resolved" },
-                        { num: 5, title: "5. Auditor Approved & Closed", sub: "Email / Office Visit" }
-                      ].map((stepItem, idx) => {
-                        const isComplete = wf.step > stepItem.num;
-                        const isCurrent = wf.step === stepItem.num;
+                {/* 5-Step Workflow Stepper Progress Tracker */}
+                <div style={{ margin: "16px 0", padding: "14px 16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+                    {[
+                      { num: 1, title: "1. Email Schedule Received", sub: "Ext. Auditor -> QMS" },
+                      { num: 2, title: "2. Shared & On-Site Audit", sub: "Auditor Visits Office" },
+                      { num: 3, title: "3. Scanned NC Uploaded", sub: "Course Coord Only" },
+                      { num: 4, title: "4. NC Closed by CC", sub: "Downloaded & Resolved" },
+                      { num: 5, title: "5. Auditor Approved & Closed", sub: "Email / Office Visit" }
+                    ].map((stepItem, idx) => {
+                      const isComplete = wf.step > stepItem.num;
+                      const isCurrent = wf.step === stepItem.num;
 
-                        return (
-                          <React.Fragment key={stepItem.num}>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2, flex: 1 }}>
-                              <div
-                                style={{
-                                  width: "26px",
-                                  height: "26px",
-                                  borderRadius: "50%",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "11px",
-                                  fontWeight: "700",
-                                  background: isComplete ? "#16a34a" : isCurrent ? "#2563eb" : "#cbd5e1",
-                                  color: "#ffffff",
-                                  boxShadow: isCurrent ? "0 0 0 4px rgba(37, 99, 235, 0.2)" : "none",
-                                  transition: "all 0.2s ease"
-                                }}
-                              >
-                                {isComplete ? <Check size={13} /> : stepItem.num}
-                              </div>
-                              <span
-                                style={{
-                                  fontSize: "10.5px",
-                                  fontWeight: isCurrent ? "700" : "500",
-                                  color: isCurrent ? "#1e40af" : isComplete ? "#166534" : "#64748b",
-                                  marginTop: "4px",
-                                  textAlign: "center"
-                                }}
-                              >
-                                {stepItem.title}
-                              </span>
-                              <span style={{ fontSize: "9.5px", color: "#94a3b8", textAlign: "center" }}>{stepItem.sub}</span>
+                      return (
+                        <React.Fragment key={stepItem.num}>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2, flex: 1 }}>
+                            <div
+                              style={{
+                                width: "26px",
+                                height: "26px",
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                background: isComplete ? "#16a34a" : isCurrent ? "#2563eb" : "#cbd5e1",
+                                color: "#ffffff",
+                                boxShadow: isCurrent ? "0 0 0 4px rgba(37, 99, 235, 0.2)" : "none",
+                                transition: "all 0.2s ease"
+                              }}
+                            >
+                              {isComplete ? <Check size={13} /> : stepItem.num}
                             </div>
+                            <span
+                              style={{
+                                fontSize: "10.5px",
+                                fontWeight: isCurrent ? "700" : "500",
+                                color: isCurrent ? "#1e40af" : isComplete ? "#166534" : "#64748b",
+                                marginTop: "4px",
+                                textAlign: "center"
+                              }}
+                            >
+                              {stepItem.title}
+                            </span>
+                            <span style={{ fontSize: "9.5px", color: "#94a3b8", textAlign: "center" }}>{stepItem.sub}</span>
+                          </div>
 
-                            {idx < 4 && (
-                              <div
-                                style={{
-                                  flex: 0.8,
-                                  height: "2px",
-                                  background: wf.step > stepItem.num ? "#16a34a" : "#e2e8f0",
-                                  margin: "0 4px 18px 4px"
-                                }}
-                              />
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
+                          {idx < 4 && (
+                            <div
+                              style={{
+                                flex: 0.8,
+                                height: "2px",
+                                background: wf.step > stepItem.num ? "#16a34a" : "#e2e8f0",
+                                margin: "0 4px 18px 4px"
+                              }}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
 
-                {/* Non-Conformance Section if present (Course Coordinator & QMS Coordinator only) */}
+                {/* Non-Conformance Notice if active (Course Coordinator & QMS Coordinator) */}
                 {audit.ncDocument && (isCourseCoordinator || isQMSCoordinator) && (
-                  <div style={{ margin: "14px 0", padding: "12px 14px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "8px", fontSize: "13px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
-                      <strong style={{ fontSize: "12px", color: "#b45309", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <AlertCircle size={14} />
-                        Scanned Paper NC Document (Office Handover & Shared to Course Coordinator Only)
-                      </strong>
-                      <span style={{ fontSize: "11px", color: "#64748b" }}>
-                        Target Closure: {audit.ncDocument.targetClosureDate}
-                      </span>
-                    </div>
-                    <p style={{ margin: "0 0 8px 0", fontSize: "12.5px", color: "#475569" }}>
-                      {audit.ncDocument.summary}
-                    </p>
-                    {(audit.ncDocument.findings || []).map((f) => (
-                      <div
-                        key={f.id}
-                        style={{
-                          background: "#ffffff",
-                          padding: "8px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #fed7aa",
-                          fontSize: "12px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "8px",
-                          marginBottom: "6px"
-                        }}
-                      >
-                        <div>
-                          <span style={{ fontWeight: "700", color: "#9a3412", marginRight: "6px" }}>{f.id}:</span>
-                          <span style={{ color: "#1e293b" }}>{f.description}</span>
-                          <span style={{ color: "#64748b", marginLeft: "6px" }}>({f.clause})</span>
-                        </div>
-                        <span
-                          style={{
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            fontSize: "11px",
-                            background: f.status === "Resolved" ? "#dcfce7" : "#ffedd5",
-                            color: f.status === "Resolved" ? "#166534" : "#c2410c",
-                            fontWeight: "600",
-                            flexShrink: 0
-                          }}
-                        >
-                          {f.status}
+                  <div
+                    style={{
+                      margin: "12px 0",
+                      padding: "10px 14px",
+                      background: audit.ncClosure?.closed ? "#f0fdf4" : "#fffbeb",
+                      border: `1px solid ${audit.ncClosure?.closed ? "#bbf7d0" : "#fde68a"}`,
+                      borderRadius: "8px",
+                      fontSize: "12.5px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "8px"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {audit.ncClosure?.closed ? (
+                        <CheckCheck size={16} color="#16a34a" />
+                      ) : (
+                        <AlertCircle size={16} color="#d97706" />
+                      )}
+                      <div>
+                        <strong style={{ color: audit.ncClosure?.closed ? "#166534" : "#92400e" }}>
+                          {audit.ncClosure?.closed
+                            ? `NC Resolution Closed by ${audit.ncClosure.closedBy || "Course Coordinator"} (${audit.ncClosure.closedAt})`
+                            : `Scanned NC Document Shared: ${audit.ncDocument.fileName || "Scanned Paper Copy"}`}
+                        </strong>
+                        <span style={{ display: "block", color: audit.ncClosure?.closed ? "#15803d" : "#78350f", fontSize: "11.5px" }}>
+                          {audit.ncClosure?.closed
+                            ? audit.ncClosure.remarks
+                            : `Target Closure: ${audit.ncDocument.targetClosureDate} • ${audit.ncDocument.findings?.length || 0} non-conformances identified`}
                         </span>
                       </div>
-                    ))}
+                    </div>
 
-                    {/* Course Coordinator Closure Banner if closed */}
-                    {audit.ncClosure?.closed && (
-                      <div style={{ marginTop: "8px", padding: "8px 10px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "6px", fontSize: "12px" }}>
-                        <strong style={{ color: "#166534", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                          <CheckCheck size={14} color="#16a34a" />
-                          Resolved & Closed by Course Coordinator ({audit.ncClosure.closedBy}) on {audit.ncClosure.closedAt}
-                        </strong>
-                        <p style={{ margin: "3px 0 0 0", color: "#15803d" }}>
-                          {audit.ncClosure.remarks}
-                        </p>
-                      </div>
+                    {!audit.ncClosure?.closed && isCourseCoordinator && (
+                      <span
+                        style={{
+                          background: "#fef3c7",
+                          color: "#92400e",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          fontWeight: "700"
+                        }}
+                      >
+                        Action Required
+                      </span>
                     )}
                   </div>
                 )}
 
                 {/* Closure & Certification Details if closed */}
                 {audit.externalAuditorApproval && (
-                  <div style={{ margin: "14px 0", padding: "12px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", fontSize: "13px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
-                      <span style={{ color: "#166534", fontWeight: "700", fontSize: "12.5px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <Award size={15} color="#16a34a" />
-                        ISO 9001:2015 Certificate Endorsement: {audit.externalAuditorApproval.certificateNumber}
-                      </span>
-                      <span style={{ fontSize: "11.5px", color: "#166534" }}>
-                        Mode: {audit.externalAuditorApproval.approvalMode || "Office Visit"} ({audit.externalAuditorApproval.approvedAt})
-                      </span>
+                  <div
+                    style={{
+                      margin: "12px 0",
+                      padding: "10px 14px",
+                      background: "#f0fdf4",
+                      border: "1px solid #bbf7d0",
+                      borderRadius: "8px",
+                      fontSize: "12.5px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "8px"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Award size={18} color="#16a34a" />
+                      <div>
+                        <strong style={{ color: "#166534" }}>
+                          ISO 9001:2015 Certificate Endorsement: {audit.externalAuditorApproval.certificateNumber}
+                        </strong>
+                        <span style={{ display: "block", color: "#15803d", fontSize: "11.5px" }}>
+                          Approved via {audit.externalAuditorApproval.approvalMode || "Office Visit"} ({audit.externalAuditorApproval.approvedAt}) &bull; {audit.externalAuditorApproval.recommendation}
+                        </span>
+                      </div>
                     </div>
-                    <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#15803d" }}>
-                      {audit.externalAuditorApproval.recommendation}
-                    </p>
                   </div>
                 )}
 
