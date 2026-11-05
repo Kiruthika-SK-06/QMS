@@ -11,6 +11,7 @@ import Processes from "../pages/Processes";
 import UserManagement from "../pages/UserManagement";
 import ManagementReviewMeeting from "../pages/ManagementReviewMeeting";
 import InternalAudit from "../pages/InternalAudit";
+import ExternalAudit from "../pages/ExternalAudit";
 import Reviews from "../pages/Reviews";
 import VersionHistoryPage from "../pages/VersionHistoryPage";
 import Notifications from "../pages/Notifications";
@@ -47,6 +48,7 @@ export default function AppRoutes() {
         <Route path="/user-management" element={<UserManagement />} />
         <Route path="/mrm" element={<ManagementReviewMeeting />} />
         <Route path="/internal-audit" element={<InternalAudit />} />
+        <Route path="/external-audit" element={<ExternalAudit />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/version-history" element={<VersionHistoryPage />} />
         <Route path="/notifications" element={<Notifications />} />

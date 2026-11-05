@@ -19,6 +19,12 @@ import { processService } from "../services/processService";
 import { userService } from "../services/userService";
 import { mrmService, getStoredMRMs, saveStoredMRMs, sortMRMs } from "../services/mrmService";
 import { auditService, getStoredAudits, saveStoredAudits, sortAudits } from "../services/auditService";
+import {
+  externalAuditService,
+  getStoredExternalAudits,
+  saveStoredExternalAudits,
+  sortExternalAudits
+} from "../services/externalAuditService";
 
 const AppContext = createContext(null);
 
@@ -49,6 +55,7 @@ export function AppProvider({ children }) {
   const [usersList, setUsersList] = useState(initialUsersList);
   const [mrmList, setMrmList] = useState(() => sortMRMs(getStoredMRMs()));
   const [auditList, setAuditList] = useState(() => sortAudits(getStoredAudits()));
+  const [externalAuditList, setExternalAuditList] = useState(() => sortExternalAudits(getStoredExternalAudits()));
   const [activities, setActivities] = useState(initialActivities);
   const [headOverview, setHeadOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -58,7 +65,7 @@ export function AppProvider({ children }) {
   // Silent background fetch that updates live data without full-page loading indicators
   const silentRefresh = useCallback(async () => {
     try {
-      const [docs, tsks, notifs, procs, emps, acts, headData, liveUsers, liveMRMs, liveAudits] = await Promise.allSettled([
+      const [docs, tsks, notifs, procs, emps, acts, headData, liveUsers, liveMRMs, liveAudits, liveExternalAudits] = await Promise.allSettled([
         documentService.fetchDocuments(),
         taskService.fetchTasks(),
         notificationService.fetchNotifications(token),
@@ -68,7 +75,8 @@ export function AppProvider({ children }) {
         processService.fetchHeadOverview(),
         userService.fetchUsers(),
         mrmService.fetchMRMs(token, currentUser?.role),
-        auditService.fetchAudits(token)
+        auditService.fetchAudits(token),
+        externalAuditService.fetchExternalAudits(token, currentUser?.role)
       ]);
 
       if (docs.status === "fulfilled" && Array.isArray(docs.value)) {
@@ -100,6 +108,9 @@ export function AppProvider({ children }) {
       }
       if (liveAudits.status === "fulfilled" && Array.isArray(liveAudits.value)) {
         setAuditList(sortAudits(liveAudits.value));
+      }
+      if (liveExternalAudits.status === "fulfilled" && Array.isArray(liveExternalAudits.value)) {
+        setExternalAuditList(sortExternalAudits(liveExternalAudits.value));
       }
       setLastSyncTime(new Date());
     } catch (err) {
@@ -196,6 +207,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let auditChannel = null;
     let mrmChannel = null;
+    let externalAuditChannel = null;
     try {
       if (typeof BroadcastChannel !== "undefined") {
         auditChannel = new BroadcastChannel("qms_audit_channel");
@@ -209,6 +221,13 @@ export function AppProvider({ children }) {
         mrmChannel.onmessage = (event) => {
           if (event.data?.type === "MRM_UPDATE" && Array.isArray(event.data.mrms)) {
             setMrmList(sortMRMs(event.data.mrms));
+          }
+        };
+
+        externalAuditChannel = new BroadcastChannel("qms_external_audit_channel");
+        externalAuditChannel.onmessage = (event) => {
+          if (event.data?.type === "EXTERNAL_AUDIT_UPDATE" && Array.isArray(event.data.audits)) {
+            setExternalAuditList(sortExternalAudits(event.data.audits));
           }
         };
       }
@@ -231,6 +250,13 @@ export function AppProvider({ children }) {
             setMrmList(sortMRMs(parsed));
           }
         } catch {}
+      } else if (e.key === "qms_external_audits" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setExternalAuditList(sortExternalAudits(parsed));
+          }
+        } catch {}
       }
     };
 
@@ -239,6 +265,7 @@ export function AppProvider({ children }) {
     return () => {
       if (auditChannel) auditChannel.close();
       if (mrmChannel) mrmChannel.close();
+      if (externalAuditChannel) externalAuditChannel.close();
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
@@ -710,6 +737,126 @@ export function AppProvider({ children }) {
     }
   };
 
+  // ==================== EXTERNAL QUALITY AUDIT (ISO 9001:2015) ACTIONS ====================
+  // Constraint: External Auditor has no login or dashboard.
+  // All communication is via email with QMS Coordinator. QMS Coordinator initiates all system workflows.
+
+  // 1. QMS Coordinator logs incoming External Audit schedule received via email
+  const logExternalAuditSchedule = async (payload) => {
+    try {
+      const created = await externalAuditService.logReceivedSchedule(payload, token);
+      setExternalAuditList((prev) => {
+        const next = sortExternalAudits([created, ...prev.filter((a) => a.id !== created.id)]);
+        saveStoredExternalAudits(next);
+        return next;
+      });
+      pushNotification(
+        "External Audit Schedule Received",
+        `External Auditor (${created.leadAuditor?.name || "Lead Auditor"}) sent schedule for "${created.title}". Ready to share to Course Coordinators, Trust Head, and Internal Auditor.`,
+        "qm"
+      );
+      return created;
+    } catch (err) {
+      console.error("logExternalAuditSchedule error:", err);
+      throw err;
+    }
+  };
+
+  // 2. QMS Coordinator shares received email & schedule to Course Coordinators, Trust Head, and Internal Auditor
+  const shareExternalAuditSchedule = async (id, { noticeSubject, noticeMessage } = {}) => {
+    try {
+      const updated = await externalAuditService.shareScheduleToAll(id, { noticeSubject, noticeMessage }, token);
+      if (updated) {
+        setExternalAuditList((prev) => {
+          const next = sortExternalAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+          saveStoredExternalAudits(next);
+          return next;
+        });
+
+        // Push notification to all Course Coordinators, Trust Head, and Internal Auditor
+        pushNotification(
+          "Official External Audit Scheduled",
+          `ISO 9001:2015 External Audit scheduled on ${updated.scheduledDate} at ${updated.scheduledTime} by ${updated.externalAgency}. Please prepare course files & compliance folders.`,
+          "Head"
+        );
+        pushNotification(
+          "Official External Audit Scheduled",
+          `ISO 9001:2015 External Audit scheduled on ${updated.scheduledDate} at ${updated.scheduledTime} by ${updated.externalAgency}. Please prepare course files & compliance folders.`,
+          "owner"
+        );
+        pushNotification(
+          "Official External Audit Scheduled",
+          `ISO 9001:2015 External Audit scheduled on ${updated.scheduledDate} at ${updated.scheduledTime} by ${updated.externalAgency}. Quality inspection alignment required.`,
+          "auditor"
+        );
+      }
+      return updated;
+    } catch (err) {
+      console.error("shareExternalAuditSchedule error:", err);
+      throw err;
+    }
+  };
+
+  // 3. QMS Coordinator uploads NC document received from External Auditor and shares to Course Coordinators ONLY
+  const uploadExternalAuditNCDocs = async (id, ncData) => {
+    try {
+      const updated = await externalAuditService.uploadNCDocs(id, ncData, token);
+      if (updated) {
+        setExternalAuditList((prev) => {
+          const next = sortExternalAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+          saveStoredExternalAudits(next);
+          return next;
+        });
+
+        // User requirement: Share NC docs to Course Coordinators ONLY
+        pushNotification(
+          "External Audit NC Document Issued",
+          `External Auditor Non-Conformance document uploaded for "${updated.title}". Please review findings and complete Corrective Action Plan.`,
+          "owner"
+        );
+      }
+      return updated;
+    } catch (err) {
+      console.error("uploadExternalAuditNCDocs error:", err);
+      throw err;
+    }
+  };
+
+  // 4. External Auditor approves & QMS Coordinator closes entire process
+  const closeExternalAuditProcess = async (id, closureData = {}) => {
+    try {
+      const updated = await externalAuditService.closeExternalAudit(id, closureData, token);
+      if (updated) {
+        setExternalAuditList((prev) => {
+          const next = sortExternalAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+          saveStoredExternalAudits(next);
+          return next;
+        });
+
+        const certNum = updated.externalAuditorApproval?.certificateNumber || "ISO-9001:2015";
+        pushNotification(
+          "External Audit Successfully Closed - ISO 9001 Certified!",
+          `External Auditor approved "${updated.title}" with Certificate ${certNum}. The entire process is officially closed by QMS Coordinator.`,
+          "Head"
+        );
+        pushNotification(
+          "External Audit Successfully Closed - ISO 9001 Certified!",
+          `External Auditor approved "${updated.title}" with Certificate ${certNum}. The entire process is officially closed by QMS Coordinator.`,
+          "owner"
+        );
+        pushNotification(
+          "External Audit Successfully Closed - ISO 9001 Certified!",
+          `External Auditor approved "${updated.title}" with Certificate ${certNum}. The entire process is officially closed by QMS Coordinator.`,
+          "auditor"
+        );
+      }
+      return updated;
+    } catch (err) {
+      console.error("closeExternalAuditProcess error:", err);
+      throw err;
+    }
+  };
+
   // ==================== TASK & DOCUMENT ACTIONS ====================
   const addTask = async (taskData) => {
     try {
@@ -908,6 +1055,11 @@ export function AppProvider({ children }) {
         shareNCDocs,
         submitAuditeeClosure,
         finalCloseAudit,
+        externalAuditList,
+        logExternalAuditSchedule,
+        shareExternalAuditSchedule,
+        uploadExternalAuditNCDocs,
+        closeExternalAuditProcess,
         activities,
         headOverview,
         loading,

@@ -12,6 +12,7 @@ import employeeRoutes from "./routes/employeeRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import mrmRoutes from "./routes/mrmRoutes.js";
 import auditRoutes from "./routes/auditRoutes.js";
+import externalAuditRoutes from "./routes/externalAuditRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -76,6 +77,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/mrm", mrmRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/internal-audit", auditRoutes);
+app.use("/api/external-audit", externalAuditRoutes);
 app.use("/api/employees", employeeRoutes);
 
 // 404 Fallback

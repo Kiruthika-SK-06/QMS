@@ -55,7 +55,7 @@ const defaultProcessData = [
 ];
 
 export default function Head() {
-  const { headOverview, processes = [], documents = [], mrmList = [], auditList = [], currentUser } = useApp();
+  const { headOverview, processes = [], documents = [], mrmList = [], auditList = [], externalAuditList = [], currentUser } = useApp();
   const isAuditor = currentUser?.role === "auditor";
   const isTrustHead = currentUser?.role === "Head";
 
@@ -66,6 +66,13 @@ export default function Head() {
   const inProgressProcesses = list.filter((p) => p.status === "In Progress" || p.status === "Active").length;
 
   const sortedMRMs = sortMRMs(mrmList);
+
+  const accessibleExternalAudits = (externalAuditList || []).filter(
+    (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
+  );
+  const certifiedExternalAudits = accessibleExternalAudits.filter(
+    (a) => a.stage >= 4 || a.status === "Completed & Closed (ISO 9001 Certified)"
+  );
 
   const pendingApprovalMRMs = (mrmList || []).filter(
     (m) =>
@@ -96,8 +103,8 @@ export default function Head() {
           description="Quality assurance inspection, noticing sheet verification, and review meeting Minutes of Meeting (MoM) access."
         />
 
-        {/* 2 Core Cards for Auditor: Internal Audit & MRM */}
-        <div className="overview-cards-grid">
+        {/* Core Cards for Auditor: Internal Audit, MRM, and External Audit */}
+        <div className="overview-cards-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           {/* Card 1: Internal Quality Audit */}
           <NavLink to="/internal-audit" className="overview-context-card">
             <div className="overview-card-header">
@@ -134,7 +141,43 @@ export default function Head() {
             </div>
           </NavLink>
 
-          {/* Card 2: MRM & MoM Downloads */}
+          {/* Card 2: External Quality Audit (ISO 9001:2015) */}
+          <NavLink to="/external-audit" className="overview-context-card">
+            <div className="overview-card-header">
+              <div className="overview-card-icon blue">
+                <ShieldCheck size={22} />
+              </div>
+              <div className="overview-card-title-group">
+                <h3>External Audit</h3>
+                <span>ISO 9001:2015 Third-Party</span>
+              </div>
+            </div>
+            <div className="overview-card-metric">
+              {accessibleExternalAudits.length} <small>Cert Cycles</small>
+            </div>
+            <ul className="overview-card-details">
+              <li>
+                <span className="detail-label">Schedule Status:</span>
+                <span className="detail-val">Shared by QMS</span>
+              </li>
+              <li>
+                <span className="detail-label">Latest Date:</span>
+                <span className="detail-val">{accessibleExternalAudits[0]?.scheduledDate || "None"}</span>
+              </li>
+              <li>
+                <span className="detail-label">Certification:</span>
+                <span className="detail-val" style={{ color: "var(--status-green)" }}>
+                  {certifiedExternalAudits.length} Ratified
+                </span>
+              </li>
+            </ul>
+            <div className="overview-card-footer">
+              <span>View External Audits</span>
+              <ArrowRight size={14} />
+            </div>
+          </NavLink>
+
+          {/* Card 3: MRM & MoM Downloads */}
           <NavLink to="/mrm" className="overview-context-card">
             <div className="overview-card-header">
               <div className="overview-card-icon purple">
@@ -312,8 +355,8 @@ export default function Head() {
         description="Executive governance, institutional quality performance, and review meeting ratification."
       />
 
-      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
-      <div className="overview-cards-grid four-col">
+      {/* Main Context Overview Cards: MRM, External Audit, Process Overview, Docs Management, Internal Audit */}
+      <div className="overview-cards-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
@@ -450,6 +493,44 @@ export default function Head() {
           </ul>
           <div className="overview-card-footer">
             <span>Open Internal Audit</span>
+            <ArrowRight size={13} />
+          </div>
+        </NavLink>
+
+        {/* Card 5: External Quality Audit (ISO 9001:2015) */}
+        <NavLink to="/external-audit" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon blue">
+              <ShieldCheck size={20} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>External Audit</h3>
+              <span>ISO 9001:2015</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {accessibleExternalAudits.length} <small>Audits</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Audit Agency:</span>
+              <span className="detail-val">
+                {accessibleExternalAudits[0]?.externalAgency ? accessibleExternalAudits[0].externalAgency.split(" ")[0] : "TÜV SÜD"}
+              </span>
+            </li>
+            <li>
+              <span className="detail-label">Confirmed Date:</span>
+              <span className="detail-val">{accessibleExternalAudits[0]?.scheduledDate || "None"}</span>
+            </li>
+            <li>
+              <span className="detail-label">Ratification:</span>
+              <span className="detail-val" style={{ color: "var(--status-green)" }}>
+                {certifiedExternalAudits.length} Endorsed
+              </span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>View External Audits</span>
             <ArrowRight size={13} />
           </div>
         </NavLink>

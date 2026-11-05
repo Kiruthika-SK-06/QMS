@@ -24,7 +24,8 @@ export default function QMGroupDashboard() {
     employees = [],
     usersList = [],
     mrmList = [],
-    auditList = []
+    auditList = [],
+    externalAuditList = []
   } = useApp();
 
   const courseCoordinatorsCount = (usersList || employees || []).filter(
@@ -64,8 +65,8 @@ export default function QMGroupDashboard() {
         description="Oversee quality governance, process monitoring, Management Review Meetings, and compliance oversight."
       />
 
-      {/* 4 Main Context Overview Cards in a single row */}
-      <div className="overview-cards-grid four-col">
+      {/* Context Overview Cards */}
+      <div className="overview-cards-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
@@ -204,6 +205,46 @@ export default function QMGroupDashboard() {
           </ul>
           <div className="overview-card-footer">
             <span>Open Audit</span>
+            <ArrowRight size={13} />
+          </div>
+        </NavLink>
+
+        {/* Card 5: External Quality Audit (ISO 9001:2015) */}
+        <NavLink to="/external-audit" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon blue">
+              <ShieldCheck size={20} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>External Audit</h3>
+              <span>ISO 9001:2015</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {externalAuditList.length} <small>Audits</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">Schedule Ready:</span>
+              <span className="detail-val" style={{ color: externalAuditList.filter((a) => a.stage === 1).length > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {externalAuditList.filter((a) => a.stage === 1).length} Incoming Email
+              </span>
+            </li>
+            <li>
+              <span className="detail-label">NC Issued:</span>
+              <span className="detail-val">
+                {externalAuditList.filter((a) => a.stage === 3).length} For Course Coord
+              </span>
+            </li>
+            <li>
+              <span className="detail-label">Certified:</span>
+              <span className="detail-val" style={{ color: "var(--status-green)" }}>
+                {externalAuditList.filter((a) => a.stage >= 4).length} Closed
+              </span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>External Audits</span>
             <ArrowRight size={13} />
           </div>
         </NavLink>

@@ -25,6 +25,7 @@ export const navByRole = {
       ["My Processes", "/processes", BookOpen],
       ["Management Review Meeting", "/mrm", CalendarCheck],
       ["Internal Audit", "/internal-audit", ClipboardCheck],
+      ["External Audit", "/external-audit", ShieldCheck],
       ["Tasks", "/tasks", ClipboardList]
     ]],
     ["MONITORING", [
@@ -44,6 +45,7 @@ export const navByRole = {
       ["Document Management", "/documents", FileText],
       ["User Management", "/user-management", UserCheck],
       ["Internal Audit", "/internal-audit", ClipboardCheck],
+      ["External Audit", "/external-audit", ShieldCheck],
       ["Management Review Meeting", "/mrm", CalendarCheck],
       ["Processes", "/processes", BookOpen],
       ["Tasks", "/tasks", ClipboardList]
@@ -63,6 +65,7 @@ export const navByRole = {
     ]],
     ["EXECUTIVE OVERSIGHT", [
       ["Internal Audit", "/internal-audit", ClipboardCheck],
+      ["External Audit", "/external-audit", ShieldCheck],
       ["MRM Approvals", "/mrm", ShieldCheck],
       ["User Management", "/user-management", UserCheck],
       ["Document Oversight", "/documents", FileText],
@@ -82,6 +85,7 @@ export const navByRole = {
     ]],
     ["QUALITY AUDIT & MRM", [
       ["Internal Audit", "/internal-audit", ClipboardCheck],
+      ["External Audit", "/external-audit", ShieldCheck],
       ["Management Review Meeting", "/mrm", CalendarCheck]
     ]],
     ["ACCOUNT", [

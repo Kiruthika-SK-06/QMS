@@ -15,7 +15,7 @@ import SectionHeader from "../common/SectionHeader";
 import StatusBadge from "../common/StatusBadge";
 
 export default function ProcessOwnerDashboard() {
-  const { documents = [], processes = [], mrmList = [], tasks = [], auditList = [] } = useApp();
+  const { documents = [], processes = [], mrmList = [], tasks = [], auditList = [], externalAuditList = [] } = useApp();
 
   const awaitingReview = documents.filter(
     (d) => d.status === "Under Review" || d.status === "Changes Requested"
@@ -37,6 +37,15 @@ export default function ProcessOwnerDashboard() {
     (m) => !!m.momFile || m.status === "MoM Uploaded"
   ).length;
 
+  // Filter External Audits accessible to Course Coordinator (stage >= 2)
+  const accessibleExternalAudits = (externalAuditList || []).filter(
+    (a) => a.stage >= 2 || a.shareWithStakeholders?.shared || a.status !== "Audit Schedule Received (from External Auditor)"
+  );
+
+  const ncDocumentsCount = accessibleExternalAudits.filter(
+    (a) => a.stage === 3 || !!a.ncDocument
+  ).length;
+
   return (
     <>
       <PageIntro
@@ -45,8 +54,8 @@ export default function ProcessOwnerDashboard() {
         description="Manage and track course processes, review scheduled Management Review Meetings (MRM), and access controlled documents."
       />
 
-      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management */}
-      <div className="overview-cards-grid">
+      {/* Main Context Overview Cards: MRM, External Audit, Process Overview, Docs Management */}
+      <div className="overview-cards-grid four-col">
         {/* Card 1: MRM */}
         <NavLink to="/mrm" className="overview-context-card">
           <div className="overview-card-header">
@@ -147,6 +156,42 @@ export default function ProcessOwnerDashboard() {
           </ul>
           <div className="overview-card-footer">
             <span>Open Document Library</span>
+            <ArrowRight size={14} />
+          </div>
+        </NavLink>
+
+        {/* Card 4: External Quality Audit (ISO 9001:2015 & NC Documents) */}
+        <NavLink to="/external-audit" className="overview-context-card">
+          <div className="overview-card-header">
+            <div className="overview-card-icon green">
+              <ShieldCheck size={22} />
+            </div>
+            <div className="overview-card-title-group">
+              <h3>External Audit</h3>
+              <span>ISO 9001:2015 Reviews</span>
+            </div>
+          </div>
+          <div className="overview-card-metric">
+            {accessibleExternalAudits.length} <small>Notified Audits</small>
+          </div>
+          <ul className="overview-card-details">
+            <li>
+              <span className="detail-label">NC Documents:</span>
+              <span className="detail-val" style={{ color: ncDocumentsCount > 0 ? "var(--status-amber)" : "var(--ink)" }}>
+                {ncDocumentsCount > 0 ? `${ncDocumentsCount} Issued for CC` : "None"}
+              </span>
+            </li>
+            <li>
+              <span className="detail-label">Schedule Status:</span>
+              <span className="detail-val">Shared by QMS</span>
+            </li>
+            <li>
+              <span className="detail-label">Next Audit:</span>
+              <span className="detail-val">{accessibleExternalAudits[0]?.scheduledDate || "None upcoming"}</span>
+            </li>
+          </ul>
+          <div className="overview-card-footer">
+            <span>View External Audits & NC</span>
             <ArrowRight size={14} />
           </div>
         </NavLink>
