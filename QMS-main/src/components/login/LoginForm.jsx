@@ -8,7 +8,7 @@ import RolePicker from "./RolePicker";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
 export default function LoginForm() {
-  const { loginUser } = useApp();
+  const app = useApp();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -53,7 +53,14 @@ export default function LoginForm() {
 
       if (res.success && res.user) {
         // Save user and token in application context and localStorage
-        loginUser(res.user, res.token);
+        if (typeof app.loginUser === "function") {
+          app.loginUser(res.user, res.token);
+        } else if (typeof app.login === "function") {
+          app.login(res.user?.role || role);
+        } else {
+          if (res.token) localStorage.setItem("qms_token", res.token);
+          if (res.user) localStorage.setItem("qms_user", JSON.stringify(res.user));
+        }
 
         // Determine destination dashboard based on verified user role
         const userRole = res.user.role;

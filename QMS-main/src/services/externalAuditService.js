@@ -9,7 +9,7 @@
 //    Once QMS Coordinator gets approval, QMS Coordinator closes the entire process (ISO 9001 Certified).
 // Constraint: Each step can only be performed after the previous step is completed. External Auditor has NO system login or dashboard.
 
-import { initialExternalAuditList } from "../data/mockData";
+import { initialExternalAuditList } from "../data/mockData.js";
 
 const API_BASE = "/api/external-audit";
 
@@ -29,7 +29,7 @@ function syncBackground(url, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2500);
     fetch(url, { ...options, signal: controller.signal })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => clearTimeout(timeoutId));
   } catch {
     // Ignore offline errors
@@ -80,7 +80,7 @@ export function saveStoredExternalAudits(audits) {
       const channel = new BroadcastChannel("qms_external_audit_channel");
       channel.postMessage({ type: "EXTERNAL_AUDIT_UPDATE", audits: sorted });
       channel.close();
-    } catch {}
+    } catch { }
 
     syncBackground(`${API_BASE}/sync`, {
       method: "POST",
@@ -119,8 +119,21 @@ export function mergeExternalAudits(serverList, localList) {
 }
 
 export const externalAuditService = {
-  // Fetch audits with fallback
-  async fetchExternalAudits(role, token) {
+  // Fetch audits with fallback (supports both fetchExternalAudits(token, role) and fetchExternalAudits(role, token))
+  async fetchExternalAudits(arg1, arg2) {
+    let token = null;
+    let role = null;
+    if (typeof arg1 === "string" && (arg1.startsWith("session-token-") || arg1.startsWith("eyJ") || arg1.includes("."))) {
+      token = arg1;
+      role = arg2;
+    } else if (typeof arg2 === "string" && (arg2.startsWith("session-token-") || arg2.startsWith("eyJ") || arg2.includes("."))) {
+      role = arg1;
+      token = arg2;
+    } else {
+      role = arg1;
+      token = arg2;
+    }
+
     try {
       const headers = {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -144,7 +157,11 @@ export const externalAuditService = {
     return getStoredExternalAudits();
   },
 
-  // 1. QMS Coordinator logs incoming email schedule
+  // 1. QMS Coordinator logs incoming email schedule (supporting both method names)
+  async logReceivedSchedule(auditData, token) {
+    return this.logSchedule(auditData, token);
+  },
+
   async logSchedule(auditData, token) {
     const currentList = getStoredExternalAudits();
     const now = formatNow();
@@ -226,7 +243,11 @@ export const externalAuditService = {
     return newAudit;
   },
 
-  // 2. QMS Coordinator shares scheduled meeting to all: Trust Head, Course Coord, and Internal Auditor
+  // 2. QMS Coordinator shares scheduled meeting to all (supports both method names)
+  async shareScheduleToAll(id, shareNotice = {}, token) {
+    return this.shareSchedule(id, shareNotice, token);
+  },
+
   async shareSchedule(id, shareNotice = {}, token) {
     const currentList = getStoredExternalAudits();
     const existing = currentList.find((a) => a.id === id);

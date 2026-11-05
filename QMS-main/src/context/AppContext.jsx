@@ -744,7 +744,8 @@ export function AppProvider({ children }) {
   // 1. QMS Coordinator logs incoming External Audit schedule received via email
   const logExternalAuditSchedule = async (payload) => {
     try {
-      const created = await externalAuditService.logReceivedSchedule(payload, token);
+      const logFn = externalAuditService.logReceivedSchedule || externalAuditService.logSchedule;
+      const created = await logFn.call(externalAuditService, payload, token);
       setExternalAuditList((prev) => {
         const next = sortExternalAudits([created, ...prev.filter((a) => a.id !== created.id)]);
         saveStoredExternalAudits(next);
@@ -765,7 +766,8 @@ export function AppProvider({ children }) {
   // 2. QMS Coordinator shares received email & schedule to Course Coordinators, Trust Head, and Internal Auditor
   const shareExternalAuditSchedule = async (id, { noticeSubject, noticeMessage } = {}) => {
     try {
-      const updated = await externalAuditService.shareScheduleToAll(id, { noticeSubject, noticeMessage }, token);
+      const shareFn = externalAuditService.shareScheduleToAll || externalAuditService.shareSchedule;
+      const updated = await shareFn.call(externalAuditService, id, { noticeSubject, noticeMessage }, token);
       if (updated) {
         setExternalAuditList((prev) => {
           const next = sortExternalAudits(prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
