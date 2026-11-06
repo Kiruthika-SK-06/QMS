@@ -12,35 +12,52 @@
      ========================================================= */
 
   /* 1. Core Brand Colors */
-  --navy: #026594;            /* Signature C-DAC Logo Blue - Primary Brand Blue */
-  --navy-deep: #013a57;       /* Deep Anchor Navy (Sidebar base, button hover) */
-  --navy-light: #027eb8;      /* Secondary Navy (Subtle highlights, active borders) */
-  --navy-accent: #0090bf;     /* Signature Blue Accent (Indicators, active tabs) */
-  --navy-subtle: #e8f5fa;     /* Light Blue Surface Tint (Icon boxes, active cards) */
-  --navy-hover: #014d73;      /* Darker Navy on hover */
-  --navy-border: #89d6e8;     /* Subtle Navy Border */
+  --navy: #026594;
+  /* Signature C-DAC Logo Blue - Primary Brand Blue */
+  --navy-deep: #013a57;
+  /* Deep Anchor Navy (Sidebar base, button hover) */
+  --navy-light: #027eb8;
+  /* Secondary Navy (Subtle highlights, active borders) */
+  --navy-accent: #0090bf;
+  /* Signature Blue Accent (Indicators, active tabs) */
+  --navy-subtle: #e8f5fa;
+  /* Light Blue Surface Tint (Icon boxes, active cards) */
+  --navy-hover: #014d73;
+  /* Darker Navy on hover */
+  --navy-border: #1b89b1;
+  /* Subtle Navy Border */
 
   /* System aliases */
   --navy-2: #027eb8;
   --blue: #026594;
   --blue-dark: #014d73;
-  --cyan: #0090bf;
+  --cyan: #45c2db;
 
   /* 2. Content Surfaces & Canvas */
-  --surface: #ffffff;         /* Clean Crisp White for cards, forms, tables, modals */
-  --surface-alt: #f8fafc;     /* Subtle alternate row / hover tint */
-  --canvas: #f4f7f9;          /* Page background (Matches login panel #f7fafb) */
+  --surface: #ffffff;
+  /* Clean Crisp White for cards, forms, tables, modals */
+  --surface-alt: #f8fafc;
+  /* Subtle alternate row / hover tint */
+  --canvas: #f4f7f9;
+  /* Page background (Matches login panel #f7fafb) */
 
   /* 3. Neutral Borders & Dividers */
-  --line: #e2e8ee;            /* Standard component border */
-  --line-soft: #edf2f6;       /* Soft inner divider */
-  --line-focus: #026594;      /* Active focus ring */
+  --line: #e2e8ee;
+  /* Standard component border */
+  --line-soft: #edf2f6;
+  /* Soft inner divider */
+  --line-focus: #0090bf;
+  /* Active focus ring */
 
   /* 4. Professional High-Contrast Typography */
-  --ink: #0f2233;             /* Dark Navy-Slate for primary body text & headings */
-  --ink-soft: #2e4354;        /* Secondary headings, form labels */
-  --muted: #5d7182;           /* Secondary labels, descriptions, timestamps */
-  --muted-2: #8da0b0;         /* Table headers, helper text, placeholders */
+  --ink: #0f2233;
+  /* Dark Navy-Slate for primary body text & headings */
+  --ink-soft: #2e4354;
+  /* Secondary headings, form labels */
+  --muted: #5d7182;
+  /* Secondary labels, descriptions, timestamps */
+  --muted-2: #8da0b0;
+  /* Table headers, helper text, placeholders */
 
   /* 5. Restrained Accessible Semantic Status Tokens (Muted pastels, not neon) */
   --status-green: #166534;
@@ -55,9 +72,9 @@
   --status-red-bg: #fee2e2;
   --status-red-border: #fecaca;
 
-  --status-blue: #026594;
-  --status-blue-bg: #e8f5fa;
-  --status-blue-border: #b8e2f2;
+  --status-blue: #1e40af;
+  --status-blue-bg: #dbeafe;
+  --status-blue-border: #bfdbfe;
 
   --status-neutral: #475569;
   --status-neutral-bg: #f1f5f9;
@@ -71,7 +88,7 @@
   --red: #991b1b;
   --red-bg: #fee2e2;
   --teal: #026594;
-  --teal-bg: #e8f5fa;
+  --teal-bg: #edf4fa;
 
   /* 6. Radii */
   --radius-sm: 7px;
@@ -178,6 +195,7 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -196,6 +214,7 @@ a {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -206,6 +225,7 @@ a {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -216,6 +236,7 @@ a {
     opacity: 0;
     transform: scale(0.96) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -227,6 +248,7 @@ a {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -234,9 +256,12 @@ a {
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(11, 52, 87, 0.35);
   }
+
   50% {
     box-shadow: 0 0 0 7px rgba(11, 52, 87, 0);
   }
@@ -246,9 +271,11 @@ a {
   0% {
     transform: scale(0.85);
   }
+
   50% {
     transform: scale(1.18);
   }
+
   100% {
     transform: scale(1);
   }
@@ -258,6 +285,7 @@ a {
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -268,6 +296,7 @@ a {
     opacity: 0;
     transform: scale(0.96) translateY(12px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -278,15 +307,19 @@ a {
   0% {
     transform: rotate(25deg) translateX(-150%);
   }
+
   100% {
     transform: rotate(25deg) translateX(450%);
   }
 }
 
 @keyframes floatGentle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-4px);
   }
@@ -296,49 +329,51 @@ a {
   0% {
     box-shadow: 0 0 0 0 rgba(11, 52, 87, 0.45);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(11, 52, 87, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(11, 52, 87, 0);
   }
 }
 
-.page-content > * {
+.page-content>* {
   animation: fadeInUp var(--dur-slow) var(--ease) both;
 }
 
-.stats-grid > *,
-.stats-grid.six > *,
-.stats-grid.seven > * {
+.stats-grid>*,
+.stats-grid.six>*,
+.stats-grid.seven>* {
   animation: fadeInUp 400ms var(--ease) both;
 }
 
-.stats-grid > *:nth-child(1) {
+.stats-grid>*:nth-child(1) {
   animation-delay: 0ms;
 }
 
-.stats-grid > *:nth-child(2) {
+.stats-grid>*:nth-child(2) {
   animation-delay: 40ms;
 }
 
-.stats-grid > *:nth-child(3) {
+.stats-grid>*:nth-child(3) {
   animation-delay: 80ms;
 }
 
-.stats-grid > *:nth-child(4) {
+.stats-grid>*:nth-child(4) {
   animation-delay: 120ms;
 }
 
-.stats-grid > *:nth-child(5) {
+.stats-grid>*:nth-child(5) {
   animation-delay: 160ms;
 }
 
-.stats-grid > *:nth-child(6) {
+.stats-grid>*:nth-child(6) {
   animation-delay: 200ms;
 }
 
-.stats-grid > *:nth-child(7) {
+.stats-grid>*:nth-child(7) {
   animation-delay: 240ms;
 }
 
@@ -346,14 +381,37 @@ tbody tr {
   animation: fadeIn 250ms var(--ease) both;
 }
 
-tbody tr:nth-child(1) { animation-delay: 20ms; }
-tbody tr:nth-child(2) { animation-delay: 45ms; }
-tbody tr:nth-child(3) { animation-delay: 70ms; }
-tbody tr:nth-child(4) { animation-delay: 95ms; }
-tbody tr:nth-child(5) { animation-delay: 120ms; }
-tbody tr:nth-child(6) { animation-delay: 145ms; }
-tbody tr:nth-child(7) { animation-delay: 170ms; }
-tbody tr:nth-child(8) { animation-delay: 195ms; }
+tbody tr:nth-child(1) {
+  animation-delay: 20ms;
+}
+
+tbody tr:nth-child(2) {
+  animation-delay: 45ms;
+}
+
+tbody tr:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+tbody tr:nth-child(4) {
+  animation-delay: 95ms;
+}
+
+tbody tr:nth-child(5) {
+  animation-delay: 120ms;
+}
+
+tbody tr:nth-child(6) {
+  animation-delay: 145ms;
+}
+
+tbody tr:nth-child(7) {
+  animation-delay: 170ms;
+}
+
+tbody tr:nth-child(8) {
+  animation-delay: 195ms;
+}
 
 /* =========================================================
    APP SHELL
@@ -372,7 +430,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
   position: fixed;
   inset: 0 auto 0 0;
   width: 268px;
-  background: linear-gradient(180deg, #014d73 0%, #026594 50%, #027eb8 100%);
+  background: linear-gradient(180deg, #012234 0%, #013550 50%, #01476d 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 4px 0 24px rgba(3, 22, 39, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   color: #dbe9f0;
@@ -577,7 +635,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
 .nav-link em {
   margin-left: auto;
   background: var(--navy-accent);
-  color: #013a57;
+  color: #013550;
   font-size: 10px;
   font-style: normal;
   font-weight: 700;
@@ -835,7 +893,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
 .header-search:focus-within,
 .search-field:focus-within {
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(2, 101, 148, 0.18);
+  box-shadow: 0 0 0 3px rgba(11, 52, 87, 0.12);
   background: white;
 }
 
@@ -1290,12 +1348,10 @@ h2 {
   left: -60%;
   width: 40%;
   height: 200%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.24) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.24) 50%,
+      transparent 100%);
   transform: rotate(25deg);
   opacity: 0;
   pointer-events: none;
@@ -1413,7 +1469,7 @@ h2 {
 .btn-secondary:hover {
   background: #f0f6fa !important;
   border-color: #026594 !important;
-  color: #013a57 !important;
+  color: #013550 !important;
   transform: translateY(-1.5px);
   box-shadow:
     0 4px 12px rgba(11, 52, 87, 0.08),
@@ -1422,7 +1478,7 @@ h2 {
 
 .secondary-button:hover svg,
 .btn-secondary:hover svg {
-  color: #013a57;
+  color: #013550;
   transform: scale(1.05);
 }
 
@@ -2404,7 +2460,7 @@ textarea:focus {
 }
 
 .login-visual {
-  background: linear-gradient(145deg, #014d73 0%, #026594 50%, #027eb8 100%);
+  background: linear-gradient(145deg, #012234 0%, #013550 50%, #01476d 100%);
   color: white;
   padding: 44px 8%;
   display: flex;
@@ -2711,7 +2767,7 @@ textarea:focus {
 
 .role-dropdown-trigger.active-focus {
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(2, 101, 148, 0.18);
+  box-shadow: 0 0 0 3px rgba(11, 52, 87, 0.12);
 }
 
 .role-trigger-inner {
@@ -3235,13 +3291,13 @@ textarea:focus {
   }
 
   .login-card>.brand .brand-logo-img {
-  height: 48px;
-  width: auto;
-  max-width: 150px;
-  object-fit: contain;
-}
+    height: 48px;
+    width: auto;
+    max-width: 150px;
+    object-fit: contain;
+  }
 
-.login-card>.brand {
+  .login-card>.brand {
     margin-bottom: 30px;
   }
 
@@ -3803,7 +3859,8 @@ textarea:focus {
    ========================================================= */
 
 /* Ensure whole viewport never experiences horizontal scroll */
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -3853,6 +3910,7 @@ html, body {
 }
 
 @media (max-width: 768px) {
+
   .overview-cards-grid,
   .overview-cards-grid.four-col {
     grid-template-columns: 1fr !important;
@@ -3900,6 +3958,7 @@ html, body {
 }
 
 @media (max-width: 640px) {
+
   /* Inside modals, stack multi-column form grids cleanly to single column */
   .modal [style*="gridTemplateColumns"],
   .modal [style*="grid-template-columns"],
@@ -3935,7 +3994,9 @@ html, body {
   }
 
   /* Form inputs fit screen */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     max-width: 100%;
     box-sizing: border-box;
   }
