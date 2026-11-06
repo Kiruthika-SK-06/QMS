@@ -34,74 +34,46 @@ export const authService = {
         return data;
       }
 
-      // If backend explicitly returned 401 with a specific password error
-      if (res.status === 401 && data?.message && data.message.toLowerCase().includes("password")) {
+      // If backend explicitly returned error (401, 403, 404, etc.)
+      if (data && data.message) {
         throw new Error(data.message);
       }
 
-      // Otherwise fall through to resilient local demo validation
       throw new Error((data && data.message) || `Server response: ${res.status}`);
     } catch (networkOrApiErr) {
-      // If error was an explicit incorrect password message from live backend
+      // If error came from backend with specific message (e.g. unregistered user or incorrect password), propagate directly
       if (
         networkOrApiErr.message &&
-        (networkOrApiErr.message.toLowerCase().includes("incorrect password") ||
-         networkOrApiErr.message.toLowerCase().includes("invalid password"))
+        !networkOrApiErr.message.includes("Failed to fetch") &&
+        !networkOrApiErr.message.includes("NetworkError")
       ) {
         throw networkOrApiErr;
       }
 
-      // Backend server is offline, unreachable, or proxy returned error:
-      // Perform seamless local dummy validation & auto-provisioning
+      // Backend server is offline:
+      // STRICT DATABASE AUTHENTICATION: Only recognize users registered in the database!
       const userList = Object.values(mockUsers);
-      let user = userList.find(
+      const user = userList.find(
         (u) =>
           (u.email && u.email.toLowerCase() === cleanId) ||
           (u.username && u.username.toLowerCase() === cleanId) ||
+          (u.employeeId && u.employeeId.toLowerCase() === cleanId) ||
           (Array.isArray(u.aliases) && u.aliases.some((a) => a.toLowerCase() === cleanId))
       );
 
-      const targetRole = cleanRole || (user ? user.role : "owner");
-      const roleTitleMap = {
-        owner: "Course Coordinator",
-        qm: "QMS Coordinator",
-        Head: "Trust Head",
-        auditor: "Internal Auditor"
-      };
-
+      // STRICT: Reject unregistered identifiers immediately! NO dummy auto-provisioning!
       if (!user) {
-        const namePart = cleanId.includes("@")
-          ? cleanId.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-          : cleanId.replace(/\b\w/g, (c) => c.toUpperCase());
+        throw new Error(`User '${cleanId}' is not registered in the system database. Please enter a valid username or Employee ID.`);
+      }
 
-        user = {
-          id: `USR-${Date.now().toString().slice(-4)}`,
-          username: cleanId.includes("@") ? cleanId.split("@")[0] : cleanId,
-          email: cleanId.includes("@") ? cleanId : `${cleanId}@cdac.in`,
-          password: cleanPass,
-          name: namePart || "Authorized User",
-          role: targetRole,
-          roleTitle: roleTitleMap[targetRole] || "Course Coordinator",
-          initials: (namePart || "AU")
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase(),
-          department:
-            targetRole === "qm" || targetRole === "Head"
-              ? "Quality Management Group"
-              : targetRole === "auditor"
-                ? "Internal Quality Audit Division"
-                : "Academic Division",
-          process: targetRole === "owner" ? "Course Management" : "All Processes"
-        };
-      } else if (cleanRole) {
-        user = {
-          ...user,
-          role: cleanRole,
-          roleTitle: roleTitleMap[cleanRole] || user.roleTitle
-        };
+      // Check password if provided in database record
+      if (user.password && cleanPass && user.password !== cleanPass) {
+        throw new Error("Incorrect password. Please verify your credentials.");
+      }
+
+      // Verify role consistency if role was selected
+      if (cleanRole && user.role !== cleanRole) {
+        throw new Error(`User '${user.name}' is registered as ${user.roleTitle || user.role}, not the selected role.`);
       }
 
       const { password: _, ...userWithoutPassword } = user;

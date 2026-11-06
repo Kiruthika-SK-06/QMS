@@ -12,19 +12,19 @@
      ========================================================= */
 
   /* 1. Core Brand Colors */
-  --navy: #0b3457;            /* Signature Primary C-DAC Navy Blue */
-  --navy-deep: #041c30;       /* Deep Anchor Navy (Sidebar base, button hover) */
-  --navy-light: #14547f;      /* Secondary Navy (Subtle highlights, active borders) */
-  --navy-accent: #79b4e4;     /* Signature Soft Blue Accent (Indicators, active tabs) */
-  --navy-subtle: #edf4fa;     /* Light Blue Surface Tint (Icon boxes, active cards) */
-  --navy-hover: #072640;      /* Darker Navy on hover */
-  --navy-border: #c8d9e6;     /* Subtle Navy Border */
+  --navy: #0090bf;            /* 4th Blue from uploaded palette - Primary Brand Blue */
+  --navy-deep: #03045a;       /* Deep Anchor Navy (Sidebar base, button hover) */
+  --navy-light: #0172b0;      /* Secondary Navy (Subtle highlights, active borders) */
+  --navy-accent: #45c2db;     /* Signature Blue Accent (Indicators, active tabs) */
+  --navy-subtle: #e6f4fa;     /* Light Blue Surface Tint (Icon boxes, active cards) */
+  --navy-hover: #0172b0;      /* Darker Navy on hover */
+  --navy-border: #89d6e8;     /* Subtle Navy Border */
 
   /* System aliases */
-  --navy-2: #14547f;
-  --blue: #0b3457;
-  --blue-dark: #041c30;
-  --cyan: #14547f;
+  --navy-2: #0172b0;
+  --blue: #0090bf;
+  --blue-dark: #023c85;
+  --cyan: #45c2db;
 
   /* 2. Content Surfaces & Canvas */
   --surface: #ffffff;         /* Clean Crisp White for cards, forms, tables, modals */
@@ -34,7 +34,7 @@
   /* 3. Neutral Borders & Dividers */
   --line: #e2e8ee;            /* Standard component border */
   --line-soft: #edf2f6;       /* Soft inner divider */
-  --line-focus: #0b3457;      /* Active focus ring */
+  --line-focus: #0090bf;      /* Active focus ring */
 
   /* 4. Professional High-Contrast Typography */
   --ink: #0f2233;             /* Dark Navy-Slate for primary body text & headings */
@@ -416,6 +416,31 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
   line-height: 1.3;
 }
 
+.brand-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-compact .brand-logo-img {
+  height: 30px;
+  max-width: 44px;
+}
+
+.sidebar .brand-logo-img {
+  background: #ffffff;
+  padding: 4px 6px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
 .brand-mark {
   display: grid;
   grid-template-columns: repeat(2, 17px);
@@ -437,7 +462,32 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-.brand-compact .brand-mark {
+.brand-compact .brand-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-compact .brand-logo-img {
+  height: 30px;
+  max-width: 44px;
+}
+
+.sidebar .brand-logo-img {
+  background: #ffffff;
+  padding: 4px 6px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.brand-mark {
   transform: none;
 }
 
@@ -2433,6 +2483,13 @@ textarea:focus {
   animation: fadeInUp var(--dur-slow) var(--ease) both;
 }
 
+.login-card>.brand .brand-logo-img {
+  height: 48px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+}
+
 .login-card>.brand {
   color: var(--navy);
   margin-bottom: 24px;
@@ -3169,7 +3226,14 @@ textarea:focus {
     font-size: 38px;
   }
 
-  .login-card>.brand {
+  .login-card>.brand .brand-logo-img {
+  height: 48px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+}
+
+.login-card>.brand {
     margin-bottom: 30px;
   }
 

@@ -13,9 +13,18 @@ import userRoutes from "./routes/userRoutes.js";
 import mrmRoutes from "./routes/mrmRoutes.js";
 import auditRoutes from "./routes/auditRoutes.js";
 import externalAuditRoutes from "./routes/externalAuditRoutes.js";
+import { connectDB, getDBStatus } from "./config/db.js";
+import { seedDatabase } from "./config/seed.js";
 
 // Load environment variables
 dotenv.config();
+
+// Connect to MongoDB & Seed Database
+connectDB().then((connected) => {
+  if (connected) {
+    seedDatabase();
+  }
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -59,8 +68,13 @@ app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
     message: "QMS Backend API is running smoothly",
+    database: getDBStatus(),
     timestamp: new Date().toISOString()
   });
+});
+
+app.get("/api/db-status", (req, res) => {
+  res.json(getDBStatus());
 });
 
 // Real-Time Event Stream (SSE)

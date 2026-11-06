@@ -57,9 +57,9 @@ export default function LoginForm() {
         if (res.user) localStorage.setItem("qms_user", JSON.stringify(res.user));
 
         // Save user and token in application context
-        if (typeof app.loginUser === "function") {
+        if (app && typeof app.loginUser === "function") {
           app.loginUser(res.user, res.token);
-        } else if (typeof app.login === "function") {
+        } else if (app && typeof app.login === "function") {
           app.login(res.user?.role || role);
         }
 
