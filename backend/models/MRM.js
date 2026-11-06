@@ -21,3 +21,4 @@ const mrmSchema = new mongoose.Schema(
 
 export const MRM = mongoose.models.MRM || mongoose.model("MRM", mrmSchema);
 export default MRM;
+

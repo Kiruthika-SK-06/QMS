@@ -15,3 +15,4 @@ const employeeSchema = new mongoose.Schema(
 
 export const Employee = mongoose.models.Employee || mongoose.model("Employee", employeeSchema);
 export default Employee;
+

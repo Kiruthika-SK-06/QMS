@@ -17,3 +17,4 @@ const processSchema = new mongoose.Schema(
 
 export const Process = mongoose.models.Process || mongoose.model("Process", processSchema);
 export default Process;
+

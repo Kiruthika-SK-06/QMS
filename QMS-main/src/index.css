@@ -12,19 +12,19 @@
      ========================================================= */
 
   /* 1. Core Brand Colors */
-  --navy: #0090bf;            /* 4th Blue from uploaded palette - Primary Brand Blue */
-  --navy-deep: #03045a;       /* Deep Anchor Navy (Sidebar base, button hover) */
-  --navy-light: #0172b0;      /* Secondary Navy (Subtle highlights, active borders) */
-  --navy-accent: #45c2db;     /* Signature Blue Accent (Indicators, active tabs) */
-  --navy-subtle: #e6f4fa;     /* Light Blue Surface Tint (Icon boxes, active cards) */
-  --navy-hover: #0172b0;      /* Darker Navy on hover */
+  --navy: #026594;            /* Signature C-DAC Logo Blue - Primary Brand Blue */
+  --navy-deep: #013a57;       /* Deep Anchor Navy (Sidebar base, button hover) */
+  --navy-light: #027eb8;      /* Secondary Navy (Subtle highlights, active borders) */
+  --navy-accent: #0090bf;     /* Signature Blue Accent (Indicators, active tabs) */
+  --navy-subtle: #e8f5fa;     /* Light Blue Surface Tint (Icon boxes, active cards) */
+  --navy-hover: #014d73;      /* Darker Navy on hover */
   --navy-border: #89d6e8;     /* Subtle Navy Border */
 
   /* System aliases */
-  --navy-2: #0172b0;
-  --blue: #0090bf;
-  --blue-dark: #023c85;
-  --cyan: #45c2db;
+  --navy-2: #027eb8;
+  --blue: #026594;
+  --blue-dark: #014d73;
+  --cyan: #0090bf;
 
   /* 2. Content Surfaces & Canvas */
   --surface: #ffffff;         /* Clean Crisp White for cards, forms, tables, modals */
@@ -34,7 +34,7 @@
   /* 3. Neutral Borders & Dividers */
   --line: #e2e8ee;            /* Standard component border */
   --line-soft: #edf2f6;       /* Soft inner divider */
-  --line-focus: #0090bf;      /* Active focus ring */
+  --line-focus: #026594;      /* Active focus ring */
 
   /* 4. Professional High-Contrast Typography */
   --ink: #0f2233;             /* Dark Navy-Slate for primary body text & headings */
@@ -55,9 +55,9 @@
   --status-red-bg: #fee2e2;
   --status-red-border: #fecaca;
 
-  --status-blue: #1e40af;
-  --status-blue-bg: #dbeafe;
-  --status-blue-border: #bfdbfe;
+  --status-blue: #026594;
+  --status-blue-bg: #e8f5fa;
+  --status-blue-border: #b8e2f2;
 
   --status-neutral: #475569;
   --status-neutral-bg: #f1f5f9;
@@ -70,8 +70,8 @@
   --amber-bg: #fef3c7;
   --red: #991b1b;
   --red-bg: #fee2e2;
-  --teal: #0b3457;
-  --teal-bg: #edf4fa;
+  --teal: #026594;
+  --teal-bg: #e8f5fa;
 
   /* 6. Radii */
   --radius-sm: 7px;
@@ -372,7 +372,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
   position: fixed;
   inset: 0 auto 0 0;
   width: 268px;
-  background: linear-gradient(180deg, #0172b0 0%, #0090bf 60%, #007da8 100%);
+  background: linear-gradient(180deg, #014d73 0%, #026594 50%, #027eb8 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 4px 0 24px rgba(3, 22, 39, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   color: #dbe9f0;
@@ -577,7 +577,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
 .nav-link em {
   margin-left: auto;
   background: var(--navy-accent);
-  color: #041c30;
+  color: #013a57;
   font-size: 10px;
   font-style: normal;
   font-weight: 700;
@@ -835,7 +835,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
 .header-search:focus-within,
 .search-field:focus-within {
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(11, 52, 87, 0.12);
+  box-shadow: 0 0 0 3px rgba(2, 101, 148, 0.18);
   background: white;
 }
 
@@ -923,7 +923,7 @@ tbody tr:nth-child(8) { animation-delay: 195ms; }
 .large-avatar {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #104874 0%, #0b3457 100%);
+  background: linear-gradient(135deg, #027eb8 0%, #026594 100%);
   color: #ffffff;
   font-weight: 700;
   border-radius: 50%;
@@ -1232,11 +1232,11 @@ h2 {
 .primary-button,
 .btn,
 .btn-primary {
-  --btn-bg-top: #0e3f68;
-  --btn-bg-bottom: #0b3457;
-  --btn-border: #082944;
+  --btn-bg-top: #027eb8;
+  --btn-bg-bottom: #026594;
+  --btn-border: #01537a;
   --btn-text: #ffffff;
-  --btn-shadow: rgba(11, 52, 87, 0.28);
+  --btn-shadow: rgba(2, 101, 148, 0.35);
   --btn-highlight: rgba(255, 255, 255, 0.20);
 
   position: relative;
@@ -1314,8 +1314,8 @@ h2 {
 .btn:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
-  background: linear-gradient(180deg, #0b3457 0%, #041c30 100%) !important;
-  border-color: #041c30 !important;
+  background: linear-gradient(180deg, #01557d 0%, #013e5d 100%) !important;
+  border-color: #01334d !important;
   color: #ffffff !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
@@ -1378,7 +1378,7 @@ h2 {
   border-radius: 7px;
 
   background: #ffffff !important;
-  color: #0b3457 !important;
+  color: #026594 !important;
 
   font-size: 13px;
   font-weight: 600;
@@ -1405,15 +1405,15 @@ h2 {
 .secondary-button svg,
 .btn-secondary svg {
   flex-shrink: 0;
-  color: #0b3457;
+  color: #026594;
   transition: transform 180ms ease, color 160ms ease;
 }
 
 .secondary-button:hover,
 .btn-secondary:hover {
   background: #f0f6fa !important;
-  border-color: #0b3457 !important;
-  color: #041c30 !important;
+  border-color: #026594 !important;
+  color: #013a57 !important;
   transform: translateY(-1.5px);
   box-shadow:
     0 4px 12px rgba(11, 52, 87, 0.08),
@@ -1422,7 +1422,7 @@ h2 {
 
 .secondary-button:hover svg,
 .btn-secondary:hover svg {
-  color: #041c30;
+  color: #013a57;
   transform: scale(1.05);
 }
 
@@ -1430,7 +1430,7 @@ h2 {
 .btn-secondary:active {
   transform: translateY(0.5px) scale(0.985);
   background: #e4edf5 !important;
-  border-color: #0b3457 !important;
+  border-color: #026594 !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
   transition-duration: 60ms;
 }
@@ -1466,9 +1466,9 @@ h2 {
 [data-tone="purple"],
 [data-tone="teal"],
 [data-tone="amber"] {
-  background: linear-gradient(180deg, #0e3f68 0%, #0b3457 100%) !important;
+  background: linear-gradient(180deg, #027eb8 0%, #026594 100%) !important;
   color: #ffffff !important;
-  border-color: #082944 !important;
+  border-color: #01537a !important;
 }
 
 .btn-blue:hover,
@@ -1483,8 +1483,8 @@ h2 {
 .primary-button.btn-teal:hover,
 .primary-button.amber:hover,
 .primary-button.btn-amber:hover {
-  background: linear-gradient(180deg, #0b3457 0%, #041c30 100%) !important;
-  border-color: #041c30 !important;
+  background: linear-gradient(180deg, #01557d 0%, #013e5d 100%) !important;
+  border-color: #01334d !important;
   color: #ffffff !important;
 }
 
@@ -1868,7 +1868,7 @@ td small {
 
 .chart-bar span {
   width: 40px;
-  background: linear-gradient(180deg, #19679f 0%, #0b3457 100%);
+  background: linear-gradient(180deg, #027eb8 0%, #026594 100%);
   border-radius: 6px 6px 0 0;
   box-shadow: 0 2px 8px rgba(11, 52, 87, 0.2);
   transition: height 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms ease;
@@ -1877,7 +1877,7 @@ td small {
 
 .chart-bar:hover span {
   transform: scaleY(1.05);
-  background: linear-gradient(180deg, #79b4e4 0%, #0b3457 100%);
+  background: linear-gradient(180deg, #0090bf 0%, #026594 100%);
 }
 
 .chart-bar small {
@@ -2404,7 +2404,7 @@ textarea:focus {
 }
 
 .login-visual {
-  background: linear-gradient(145deg, #0172b0 0%, #0090bf 55%, #0090bf 100%);
+  background: linear-gradient(145deg, #014d73 0%, #026594 50%, #027eb8 100%);
   color: white;
   padding: 44px 8%;
   display: flex;
@@ -2711,7 +2711,7 @@ textarea:focus {
 
 .role-dropdown-trigger.active-focus {
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(11, 52, 87, 0.12);
+  box-shadow: 0 0 0 3px rgba(2, 101, 148, 0.18);
 }
 
 .role-trigger-inner {
@@ -3676,7 +3676,7 @@ textarea:focus {
 
 .overview-card-icon.blue {
   background: #edf4fa;
-  color: #0b3457;
+  color: #026594;
 }
 
 .overview-card-icon.teal {

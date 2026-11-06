@@ -25,3 +25,4 @@ const externalAuditSchema = new mongoose.Schema(
 
 export const ExternalAudit = mongoose.models.ExternalAudit || mongoose.model("ExternalAudit", externalAuditSchema);
 export default ExternalAudit;
+

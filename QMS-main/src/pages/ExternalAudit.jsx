@@ -436,29 +436,28 @@ ${nc.summary || "Physical non-conformance paper report handed over by External A
 
 AUDIT FINDINGS & NON-CONFORMANCE ITEMS:
 ${(nc.findings || [])
-  .map(
-    (f, idx) =>
-      `Item #${idx + 1} [${f.type}]:
+        .map(
+          (f, idx) =>
+            `Item #${idx + 1} [${f.type}]:
   Finding ID   : ${f.id}
   ISO Clause   : ${f.clause}
   Description  : ${f.description}
   Assigned To  : ${f.assignedTo}
   Target Date  : ${f.deadline}
   Status       : ${f.status}${f.resolutionRemarks ? `\n  Resolution   : ${f.resolutionRemarks}` : ""}`
-  )
-  .join("\n\n")}
+        )
+        .join("\n\n")}
 
-${
-  audit.ncClosure?.closed
-    ? `======================================================================
+${audit.ncClosure?.closed
+        ? `======================================================================
 COURSE COORDINATOR CLOSURE DETAILS:
 Closed By     : ${audit.ncClosure.closedBy}
 Closed At     : ${audit.ncClosure.closedAt}
 Action Plan   : ${audit.ncClosure.actionPlan || "N/A"}
 Resolution Note: ${audit.ncClosure.remarks}
 ======================================================================`
-    : ""
-}
+        : ""
+      }
 
 NOTE: This document is distributed exclusively to Course Coordinators
 for immediate Root Cause Analysis (RCA) and Corrective Action Plan (CAPA).
@@ -628,24 +627,24 @@ Certified Compliant with International Standards - C-DAC Quality Office
         <div className="tabs" style={{ overflowX: "auto" }}>
           {(isQMSCoordinator
             ? [
-                { id: "All", label: `All External Audits (${visibleAudits.length})` },
-                { id: "Step 1", label: `1. Schedule Received (${receivedCount})` },
-                { id: "Step 2", label: `2. Shared to All (${sharedCount})` },
-                { id: "Step 3", label: `3. Scanned NC Uploaded (${ncUploadedCount})` },
-                { id: "Step 4", label: `4. NC Closed by CC (${ncClosedByCCCount})` },
-                { id: "Step 5", label: `5. Certified & Closed (${certifiedCount})` }
-              ]
+              { id: "All", label: `All External Audits (${visibleAudits.length})` },
+              { id: "Step 1", label: `1. Schedule Received (${receivedCount})` },
+              { id: "Step 2", label: `2. Shared to All (${sharedCount})` },
+              { id: "Step 3", label: `3. Scanned NC Uploaded (${ncUploadedCount})` },
+              { id: "Step 4", label: `4. NC Closed by CC (${ncClosedByCCCount})` },
+              { id: "Step 5", label: `5. Certified & Closed (${certifiedCount})` }
+            ]
             : [
-                { id: "All", label: `All Audits (${visibleAudits.length})` },
-                { id: "Step 2", label: `Scheduled (${sharedCount})` },
-                ...(isCourseCoordinator
-                  ? [
-                      { id: "Step 3", label: `Scanned NC (${ncUploadedCount})` },
-                      { id: "Step 4", label: `NC Closed (${ncClosedByCCCount})` }
-                    ]
-                  : []),
-                { id: "Step 5", label: `ISO 9001 Certified (${certifiedCount})` }
-              ]
+              { id: "All", label: `All Audits (${visibleAudits.length})` },
+              { id: "Step 2", label: `Scheduled (${sharedCount})` },
+              ...(isCourseCoordinator
+                ? [
+                  { id: "Step 3", label: `Scanned NC (${ncUploadedCount})` },
+                  { id: "Step 4", label: `NC Closed (${ncClosedByCCCount})` }
+                ]
+                : []),
+              { id: "Step 5", label: `ISO 9001 Certified (${certifiedCount})` }
+            ]
           ).map((tab) => (
             <button
               key={tab.id}
