@@ -5,90 +5,95 @@
    ========================================================= */
 :root {
   /* =========================================================
-     C-DAC QMS NAVY-BLUE BRAND DESIGN SYSTEM
-     Calibrated to match the login page visual identity:
-     #041c30 (Deep Navy) -> #0b3457 (Brand Navy 60%) -> #14547f (Secondary Navy 100%)
-     #79b4e4 (Signature Blue Accent) | #f7fafb (Clean Canvas)
+     C-DAC QMS AZURE 5-COLOR ENTERPRISE SYSTEM
+     1. #F1F7F9 - Clean Ice Canvas / Soft Glare-Free Surfaces
+     2. #749DC8 - Muted Slate Periwinkle Accent / Indicators / Borders
+     3. #0A61C9 - Vibrant Electric Cobalt / Primary CTA & Active Brands
+     4. #064089 - Deep Ocean Navy / Hover Depth / Table Headers
+     5. #07326A - Midnight Navy Anchor / Sidebar / Typography Headings
      ========================================================= */
 
   /* 1. Core Brand Colors */
-  --navy: #1665a0;
-  /* Signature C-DAC Logo Blue - Primary Brand Blue */
-  --navy-deep: #0e446d;
-  /* Deep Anchor Navy (Sidebar base, button hover) */
-  --navy-light: #1daae2;
-  /* Secondary Navy (Subtle highlights, active borders) */
-  --navy-accent: #1daae2;
+  --navy: #0A61C9;
+  /* Signature Cobalt Blue - Primary Brand Blue */
+  --navy-deep: #07326A;
+  /* Deep Anchor Midnight Navy (Sidebar base, heading ink) */
+  --navy-light: #749DC8;
+  /* Slate Periwinkle Accent (Subtle highlights, active borders) */
+  --navy-accent: #0A61C9;
   /* Signature Blue Accent (Indicators, active tabs) */
-  --navy-subtle: #e8f6fd;
-  /* Light Blue Surface Tint (Icon boxes, active cards) */
-  --navy-hover: #0f4e7c;
-  /* Darker Navy on hover */
-  --navy-border: #1b89b1;
-  /* Subtle Navy Border */
+  --navy-subtle: #E8F2FA;
+  /* Light Ice Blue Surface Tint */
+  --navy-hover: #064089;
+  /* Deep Ocean Navy on hover */
+  --navy-border: #749DC8;
+  /* Muted Slate Border */
 
   /* System aliases */
-  --navy-2: #1daae2;
-  --blue: #1665a0;
-  --blue-dark: #0f4e7c;
-  --cyan: #52cdf7;
+  --navy-2: #064089;
+  --blue: #0A61C9;
+  --blue-dark: #07326A;
+  --blue-ocean: #064089;
+  --blue-slate: #749DC8;
+  --cyan: #749DC8;
+  --canvas-ice: #F1F7F9;
 
   /* 2. Content Surfaces & Canvas */
   --surface: #ffffff;
   /* Clean Crisp White for cards, forms, tables, modals */
-  --surface-alt: #f8fafc;
+  --surface-alt: #f8fbfc;
   /* Subtle alternate row / hover tint */
-  --canvas: #f4f7f9;
-  /* Page background (Matches login panel #f7fafb) */
+  --canvas: #F1F7F9;
+  /* Page background (Pure Ice Canvas #F1F7F9) */
 
   /* 3. Neutral Borders & Dividers */
-  --line: #e2e8ee;
+  --line: #DFE8EE;
   /* Standard component border */
-  --line-soft: #edf2f6;
+  --line-soft: #EBF1F5;
   /* Soft inner divider */
-  --line-focus: #1daae2;
+  --line-focus: #0A61C9;
   /* Active focus ring */
 
   /* 4. Professional High-Contrast Typography */
-  --ink: #0f2233;
-  /* Dark Navy-Slate for primary body text & headings */
-  --ink-soft: #2e4354;
+  --ink: #07326A;
+  /* Midnight Navy for primary body text & headings */
+  --ink-soft: #1E4675;
   /* Secondary headings, form labels */
-  --muted: #5d7182;
+  --muted: #567899;
   /* Secondary labels, descriptions, timestamps */
-  --muted-2: #8da0b0;
+  --muted-2: #749DC8;
   /* Table headers, helper text, placeholders */
 
-  /* 5. Restrained Accessible Semantic Status Tokens (Muted pastels, not neon) */
-  --status-green: #166534;
-  --status-green-bg: #dcfce7;
-  --status-green-border: #bbf7d0;
+  /* 5. Restrained Accessible Semantic Status Tokens */
+  --status-green: #0DAE4B;
+  --status-green-bg: #DCFCE7;
+  --status-green-border: #BBF7D0;
 
-  --status-amber: #92400e;
-  --status-amber-bg: #fef3c7;
-  --status-amber-border: #fde68a;
+  --status-amber: #B45309;
+  --status-amber-bg: #FEF3C7;
+  --status-amber-border: #FDE68A;
 
-  --status-red: #991b1b;
-  --status-red-bg: #fee2e2;
-  --status-red-border: #fecaca;
+  --status-red: #DC2626;
+  --status-red-bg: #FEE2E2;
+  --status-red-border: #FECACA;
 
-  --status-blue: #1e40af;
-  --status-blue-bg: #dbeafe;
-  --status-blue-border: #bfdbfe;
+  --status-blue: #0A61C9;
+  --status-blue-bg: #E8F2FA;
+  --status-blue-border: #749DC8;
 
-  --status-neutral: #475569;
-  --status-neutral-bg: #f1f5f9;
-  --status-neutral-border: #e2e8f0;
+  --status-neutral: #567899;
+  --status-neutral-bg: #F1F7F9;
+  --status-neutral-border: #DFE8EE;
 
   /* Legacy semantic variables harmonized */
-  --green: #0dae4b;
-  --green-bg: #dcfce7;
-  --amber: #92400e;
-  --amber-bg: #fef3c7;
-  --red: #991b1b;
-  --red-bg: #fee2e2;
-  --teal: #1665a0;
-  --teal-bg: #e8f6fd;
+  --green: #0DAE4B;
+  --green-bg: #DCFCE7;
+  --amber: #B45309;
+  --amber-bg: #FEF3C7;
+  --red: #DC2626;
+  --red-bg: #FEE2E2;
+  --teal: #0A61C9;
+  --teal-bg: #E8F2FA;
 
   /* 6. Radii */
   --radius-sm: 7px;
@@ -430,7 +435,7 @@ tbody tr:nth-child(8) {
   position: fixed;
   inset: 0 auto 0 0;
   width: 268px;
-  background: linear-gradient(180deg, #1665a0 0%, #11578b 100%);
+  background: linear-gradient(180deg, #07326A 0%, #064089 65%, #052F63 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 4px 0 24px rgba(3, 22, 39, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   color: #dbe9f0;
@@ -889,19 +894,19 @@ tbody tr:nth-child(8) {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #1665a0;
-  background: #ddf4fd !important;
+  color: #07326A;
+  background: #E8F2FA !important;
   border: none !important;
   padding: 0 16px;
   border-radius: 9999px !important;
   transition: all var(--dur-fast) var(--ease);
-  box-shadow: inset 0 1px 2px rgba(22, 101, 160, 0.08);
+  box-shadow: inset 0 1px 2px rgba(7, 50, 106, 0.06);
 }
 
 .header-search:focus-within,
 .search-field:focus-within {
-  background: #edf8fe !important;
-  box-shadow: 0 0 0 3px rgba(29, 170, 226, 0.28) !important;
+  background: #F1F7F9 !important;
+  box-shadow: 0 0 0 3px rgba(10, 97, 201, 0.25) !important;
   border: none !important;
 }
 
@@ -929,7 +934,7 @@ tbody tr:nth-child(8) {
   background: transparent !important;
   font-size: 13px;
   font-weight: 500;
-  color: #1665a0 !important;
+  color: #07326A !important;
 }
 
 .icon-button,
@@ -990,7 +995,7 @@ tbody tr:nth-child(8) {
 .large-avatar {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #1daae2 0%, #1665a0 100%);
+  background: linear-gradient(135deg, #0A61C9 0%, #0A61C9 100%);
   color: #ffffff;
   font-weight: 700;
   border-radius: 50%;
@@ -1299,8 +1304,8 @@ h2 {
 .primary-button,
 .btn,
 .btn-primary {
-  --btn-bg-top: #1daae2;
-  --btn-bg-bottom: #1665a0;
+  --btn-bg-top: #0A61C9;
+  --btn-bg-bottom: #0A61C9;
   --btn-border: #01537a;
   --btn-text: #ffffff;
   --btn-shadow: rgba(2, 101, 148, 0.35);
@@ -1319,7 +1324,7 @@ h2 {
   outline: none !important;
   border-radius: 7px;
 
-  background: #1665a0 !important;
+  background: #0A61C9 !important;
   color: var(--btn-text) !important;
 
   font-size: 13px;
@@ -1334,7 +1339,7 @@ h2 {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  box-shadow: 0 2px 6px rgba(2, 101, 148, 0.25) !important;
+  box-shadow: 0 3px 10px rgba(10, 97, 201, 0.28) !important;
 
   transition:
     transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -1377,14 +1382,14 @@ h2 {
 .btn:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
-  background: #115486 !important;
+  background: #064089 !important;
   border: none !important;
   outline: none !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(2, 101, 148, 0.35) !important;
+  box-shadow: 0 6px 18px rgba(6, 64, 137, 0.35) !important;
 }
 
-/* Global Borderless Button System - Pure #1665a0 Logo Blue with zero dark border */
+/* Global Borderless Button System - Pure #0A61C9 Logo Blue with zero dark border */
 button.primary-button,
 button.btn-blue,
 .primary-button,
@@ -1396,7 +1401,7 @@ button[type="submit"].primary-button,
 button[type="submit"].btn-blue {
   border: none !important;
   outline: none !important;
-  background: #1665a0 !important;
+  background: #0A61C9 !important;
 }
 
 button.primary-button:hover,
@@ -1410,7 +1415,7 @@ button[type="submit"].primary-button:hover,
 button[type="submit"].btn-blue:hover {
   border: none !important;
   outline: none !important;
-  background: #115486 !important;
+  background: #064089 !important;
 }
 
 .primary-button:hover::after,
@@ -1468,8 +1473,8 @@ button[type="submit"].btn-blue:hover {
   outline: none !important;
   border-radius: 7px;
 
-  background: #e8f6fd !important;
-  color: #1665a0 !important;
+  background: #E8F2FA !important;
+  color: #07326A !important;
 
   font-size: 13px;
   font-weight: 600;
@@ -1496,13 +1501,13 @@ button[type="submit"].btn-blue:hover {
 .secondary-button svg,
 .btn-secondary svg {
   flex-shrink: 0;
-  color: #1665a0;
+  color: #0A61C9;
   transition: transform 180ms ease, color 160ms ease;
 }
 
 .secondary-button:hover,
 .btn-secondary:hover {
-  background: #d4eefb !important;
+  background: #D8E7F3 !important;
   border: none !important;
   color: #013550 !important;
   transform: translateY(-1.5px);
@@ -1521,7 +1526,7 @@ button[type="submit"].btn-blue:hover {
 .btn-secondary:active {
   transform: translateY(0.5px) scale(0.985);
   background: #e4edf5 !important;
-  border-color: #1665a0 !important;
+  border-color: #0A61C9 !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
   transition-duration: 60ms;
 }
@@ -1557,11 +1562,11 @@ button[type="submit"].btn-blue:hover {
 [data-tone="purple"],
 [data-tone="teal"],
 [data-tone="amber"] {
-  background: #1665a0 !important;
+  background: #0A61C9 !important;
   color: #ffffff !important;
   border: none !important;
   outline: none !important;
-  box-shadow: 0 2px 6px rgba(2, 101, 148, 0.25) !important;
+  box-shadow: 0 3px 10px rgba(10, 97, 201, 0.28) !important;
 }
 
 .btn-blue:hover,
@@ -1576,14 +1581,14 @@ button[type="submit"].btn-blue:hover {
 .primary-button.btn-teal:hover,
 .primary-button.amber:hover,
 .primary-button.btn-amber:hover {
-  background: #115486 !important;
+  background: #064089 !important;
   border: none !important;
   outline: none !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(2, 101, 148, 0.35) !important;
+  box-shadow: 0 6px 18px rgba(6, 64, 137, 0.35) !important;
 }
 
-/* Global Borderless Button System - Pure #1665a0 Logo Blue with zero dark border */
+/* Global Borderless Button System - Pure #0A61C9 Logo Blue with zero dark border */
 button.primary-button,
 button.btn-blue,
 .primary-button,
@@ -1595,7 +1600,7 @@ button[type="submit"].primary-button,
 button[type="submit"].btn-blue {
   border: none !important;
   outline: none !important;
-  background: #1665a0 !important;
+  background: #0A61C9 !important;
 }
 
 button.primary-button:hover,
@@ -1609,7 +1614,7 @@ button[type="submit"].primary-button:hover,
 button[type="submit"].btn-blue:hover {
   border: none !important;
   outline: none !important;
-  background: #115486 !important;
+  background: #064089 !important;
 }
 
 /* Approval / Success ratification */
@@ -1997,7 +2002,7 @@ td small {
 
 .chart-bar span {
   width: 40px;
-  background: linear-gradient(180deg, #1daae2 0%, #1665a0 100%);
+  background: linear-gradient(180deg, #0A61C9 0%, #0A61C9 100%);
   border-radius: 6px 6px 0 0;
   box-shadow: 0 2px 8px rgba(11, 52, 87, 0.2);
   transition: height 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms ease;
@@ -2006,7 +2011,7 @@ td small {
 
 .chart-bar:hover span {
   transform: scaleY(1.05);
-  background: linear-gradient(180deg, #1daae2 0%, #1665a0 100%);
+  background: linear-gradient(180deg, #0A61C9 0%, #0A61C9 100%);
 }
 
 .chart-bar small {
@@ -2533,7 +2538,7 @@ textarea:focus {
 }
 
 .login-visual {
-  background: linear-gradient(145deg, #1665a0 0%, #11578b 50%, #0d446e 100%);
+  background: linear-gradient(145deg, #07326A 0%, #064089 55%, #0A61C9 100%);
   color: white;
   padding: 44px 8%;
   display: flex;
@@ -2576,7 +2581,7 @@ textarea:focus {
 }
 
 .login-visual-copy span {
-  color: #c5effb;
+  color: #E8F2FA;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.2em;
@@ -2794,14 +2799,14 @@ textarea:focus {
   font-weight: 600;
   border: none !important;
   outline: none !important;
-  background: #1665a0 !important;
-  box-shadow: 0 2px 6px rgba(2, 101, 148, 0.25) !important;
+  background: #0A61C9 !important;
+  box-shadow: 0 3px 10px rgba(10, 97, 201, 0.28) !important;
 }
 
 .login-submit-btn:hover {
   border: none !important;
   outline: none !important;
-  background: #115486 !important;
+  background: #064089 !important;
 }
 
 /* =========================================================
@@ -3814,8 +3819,8 @@ textarea:focus {
 }
 
 .overview-card-icon.blue {
-  background: #e8f6fd;
-  color: #1665a0;
+  background: #E8F2FA;
+  color: #0A61C9;
 }
 
 .overview-card-icon.teal {
@@ -4098,6 +4103,7 @@ body {
     gap: 8px !important;
   }
 }
+
 /* =========================================================
    UNIVERSAL BORDERLESS BUTTON SYSTEM
    Strict zero-border on all interactive button elements across all pages
