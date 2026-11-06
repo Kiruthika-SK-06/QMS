@@ -458,7 +458,7 @@ export default function ManagementReviewMeeting() {
   const handleDownloadMoM = (mrm) => {
     const fileName = mrm.momFile?.fileName || `MRM_${mrm.id}_MoM.pdf`;
     const textContent = `
-CENTRE FOR DEVELOPMENT OF ADVANCED COMPUTING (C-DAC)
+CENTRE FOR DEVELOPMENT OF ADVANCED COMPUTING
 QUALITY MANAGEMENT SYSTEM (ISO 9001:2015)
 MINUTES OF MANAGEMENT REVIEW MEETING (MoM)
 ======================================================================

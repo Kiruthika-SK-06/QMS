@@ -1314,8 +1314,8 @@ const initialExternalAuditList = [
       receivedAt: "2026-11-04 10:15 AM",
       from: "Dr. Robert Vance <robert.vance@tuvsud.com>",
       to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
-      subject: "Official Notice: ISO 9001:2015 Surveillance Audit Plan & Schedule - C-DAC",
-      bodyHtml: "<p>Dear Mr. Rahul Kumar (Lead QMS Coordinator),</p><p>This is to confirm that the annual <strong>ISO 9001:2015 Surveillance Audit</strong> for C-DAC Academic Quality Programs is scheduled for <strong>2026-12-10 starting at 09:30 AM</strong>.</p><p>I will be visiting your campus in person to audit the system, interview course coordinators, inspect physical lab logs, and review institutional quality processes. Please find attached the formal timetable and share it with your division coordinators, Trust Head, and internal audit cell.</p><p>Sincerely,<br/><strong>Dr. Robert Vance</strong><br/>Lead Auditor, TÜV SÜD South Asia</p>",
+      subject: "Official Notice: ISO 9001:2015 Surveillance Audit Plan & Schedule - Centre for Development of Advanced Computing",
+      bodyHtml: "<p>Dear Mr. Rahul Kumar (Lead QMS Coordinator),</p><p>This is to confirm that the annual <strong>ISO 9001:2015 Surveillance Audit</strong> for Centre for Development of Advanced Computing Academic Quality Programs is scheduled for <strong>2026-12-10 starting at 09:30 AM</strong>.</p><p>I will be visiting your campus in person to audit the system, interview course coordinators, inspect physical lab logs, and review institutional quality processes. Please find attached the formal timetable and share it with your division coordinators, Trust Head, and internal audit cell.</p><p>Sincerely,<br/><strong>Dr. Robert Vance</strong><br/>Lead Auditor, TÜV SÜD South Asia</p>",
       attachments: [
         {
           fileName: "TUV_ISO9001_Surveillance_Audit_Plan_2026.pdf",

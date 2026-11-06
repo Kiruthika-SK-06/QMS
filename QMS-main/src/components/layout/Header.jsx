@@ -23,8 +23,8 @@ export default function Header({ openMenu }) {
       <div className="header-left">
         <button className="menu-button" onClick={openMenu} aria-label="Toggle Navigation"><Menu size={22} /></button>
         <div className="header-title">
-          <strong className="header-workspace-title" style={{ fontSize: "18px", fontWeight: "800", color: "var(--navy)", letterSpacing: "0.02em" }}>
-            C-DAC
+          <strong className="header-workspace-title" style={{ fontSize: "16px", fontWeight: "700", color: "var(--navy)", letterSpacing: "0.01em" }}>
+            Centre for Development of Advanced Computing
           </strong>
         </div>
       </div>

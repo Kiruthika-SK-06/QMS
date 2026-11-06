@@ -39,7 +39,7 @@ export default function Sidebar({ open, close }) {
   return (
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
       <div className="sidebar-top">
-        <Logo compact />
+        <Logo />
         <button className="mobile-close" onClick={close}><X size={20} /></button>
       </div>
 

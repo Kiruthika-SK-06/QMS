@@ -166,7 +166,7 @@ export default function ExternalAudit() {
     scheduledDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     scheduledTime: "09:30 AM",
     venue: "Main Boardroom & In-Person Campus Audit",
-    emailSubject: "Official Notice: ISO 9001:2015 External Audit Schedule - C-DAC Academic Quality",
+    emailSubject: "Official Notice: ISO 9001:2015 External Audit Schedule - Centre for Development of Advanced Computing Academic Quality",
     emailBody: "Dear Rahul Kumar (QMS Coordinator),\n\nThis email confirms that the ISO 9001:2015 External Surveillance Audit is scheduled for execution as indicated. I will visit your campus in person to audit the system. Please find attached the formal audit timetable and notify your academic course coordinators, Trust Head, and internal audit cell.\n\nRegards,\nDr. Robert Vance\nLead Auditor, TÜV SÜD South Asia",
     planFileName: "TUV_ISO9001_External_Audit_Plan_2026.pdf"
   });
@@ -230,7 +230,7 @@ export default function ExternalAudit() {
       scheduledDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       scheduledTime: "09:30 AM",
       venue: "Main Boardroom & In-Person Campus Audit",
-      emailSubject: "Official Notice: ISO 9001:2015 External Audit Schedule - C-DAC Academic Quality",
+      emailSubject: "Official Notice: ISO 9001:2015 External Audit Schedule - Centre for Development of Advanced Computing Academic Quality",
       emailBody: "Dear Rahul Kumar (QMS Coordinator),\n\nThis email confirms that the ISO 9001:2015 External Surveillance Audit is scheduled for execution as indicated. I will visit your campus in person to audit the system. Please find attached the formal audit timetable and notify your academic course coordinators, Trust Head, and internal audit cell.\n\nRegards,\nDr. Robert Vance\nLead Auditor, TÜV SÜD South Asia",
       planFileName: "TUV_ISO9001_External_Audit_Plan_2026.pdf"
     });
@@ -415,7 +415,7 @@ export default function ExternalAudit() {
 
     const fileName = nc.fileName || `Scanned_Paper_NC_Report_${audit.id}.pdf`;
     const textContent = `======================================================================
-CENTRE FOR DEVELOPMENT OF ADVANCED COMPUTING (C-DAC)
+CENTRE FOR DEVELOPMENT OF ADVANCED COMPUTING
 ISO 9001:2015 EXTERNAL AUDIT NON-CONFORMANCE (NC) REPORT
 (SCANNED COPY OF PHYSICAL PAPER DOCUMENT HANDED OVER AT CAMPUS OFFICE)
 ======================================================================
@@ -482,7 +482,7 @@ for immediate Root Cause Analysis (RCA) and Corrective Action Plan (CAPA).
     const fileName = `ISO9001_Certificate_${certNum}.txt`;
 
     const textContent = `======================================================================
-CENTRE FOR DEVELOPMENT OF ADVANCED COMPUTING (C-DAC)
+CENTRE FOR DEVELOPMENT OF ADVANCED COMPUTING
 CERTIFICATE OF QUALITY MANAGEMENT SYSTEM ENDORSEMENT
 ISO 9001:2015 COMPLIANCE RATIFICATION
 ======================================================================
@@ -506,7 +506,7 @@ QMS FINAL CLOSURE REMARKS:
 ${audit.qmsClosure?.remarks || "All divisions compliant. Process officially closed following full sequential verification."}
 
 ======================================================================
-Certified Compliant with International Standards - C-DAC Quality Office
+Certified Compliant with International Standards - Centre for Development of Advanced Computing Quality Office
 ======================================================================
 `;
     const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });

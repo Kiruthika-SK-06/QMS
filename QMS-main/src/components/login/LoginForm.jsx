@@ -213,7 +213,7 @@ export default function LoginForm() {
         </form>
 
         <small className="login-footnote">
-          Centre for Development of Advanced Computing (C-DAC) &bull; Quality Management System
+          Centre for Development of Advanced Computing &bull; Quality Management System
         </small>
       </div>
 

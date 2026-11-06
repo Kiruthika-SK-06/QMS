@@ -12,7 +12,7 @@
      ========================================================= */
 
   /* 1. Core Brand Colors */
-  --navy: #026594;
+  --navy: #00688f;
   /* Signature C-DAC Logo Blue - Primary Brand Blue */
   --navy-deep: #013a57;
   /* Deep Anchor Navy (Sidebar base, button hover) */
@@ -29,7 +29,7 @@
 
   /* System aliases */
   --navy-2: #027eb8;
-  --blue: #026594;
+  --blue: #00688f;
   --blue-dark: #014d73;
   --cyan: #45c2db;
 
@@ -81,13 +81,13 @@
   --status-neutral-border: #e2e8f0;
 
   /* Legacy semantic variables harmonized */
-  --green: #166534;
+  --green: #0dae4b;
   --green-bg: #dcfce7;
   --amber: #92400e;
   --amber-bg: #fef3c7;
   --red: #991b1b;
   --red-bg: #fee2e2;
-  --teal: #026594;
+  --teal: #00688f;
   --teal-bg: #edf4fa;
 
   /* 6. Radii */
@@ -460,10 +460,17 @@ tbody tr:nth-child(8) {
 .brand strong {
   display: block;
   font-family: "Inter", sans-serif;
-  letter-spacing: -0.02em;
-  font-size: 15px;
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-size: 13.5px;
+  line-height: 1.25;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar .brand strong {
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 700;
+  max-width: 170px;
 }
 
 .brand small {
@@ -981,7 +988,7 @@ tbody tr:nth-child(8) {
 .large-avatar {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #027eb8 0%, #026594 100%);
+  background: linear-gradient(135deg, #027eb8 0%, #00688f 100%);
   color: #ffffff;
   font-weight: 700;
   border-radius: 50%;
@@ -1291,7 +1298,7 @@ h2 {
 .btn,
 .btn-primary {
   --btn-bg-top: #027eb8;
-  --btn-bg-bottom: #026594;
+  --btn-bg-bottom: #00688f;
   --btn-border: #01537a;
   --btn-text: #ffffff;
   --btn-shadow: rgba(2, 101, 148, 0.35);
@@ -1306,10 +1313,11 @@ h2 {
   justify-content: center;
   gap: 8px;
 
-  border: 1px solid var(--btn-border) !important;
+  border: none !important;
+  outline: none !important;
   border-radius: 7px;
 
-  background: linear-gradient(180deg, var(--btn-bg-top) 0%, var(--btn-bg-bottom) 100%) !important;
+  background: #00688f !important;
   color: var(--btn-text) !important;
 
   font-size: 13px;
@@ -1324,10 +1332,7 @@ h2 {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  box-shadow:
-    inset 0 1px 0 var(--btn-highlight),
-    0 1px 2px rgba(4, 28, 48, 0.08),
-    0 2px 4px -1px var(--btn-shadow);
+  box-shadow: 0 2px 6px rgba(2, 101, 148, 0.25) !important;
 
   transition:
     transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -1370,13 +1375,40 @@ h2 {
 .btn:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
-  background: linear-gradient(180deg, #01557d 0%, #013e5d 100%) !important;
-  border-color: #01334d !important;
+  background: #00506e !important;
+  border: none !important;
+  outline: none !important;
   color: #ffffff !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 8px 20px -2px rgba(11, 52, 87, 0.38),
-    0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(2, 101, 148, 0.35) !important;
+}
+
+/* Global Borderless Button System - Pure #00688f Logo Blue with zero dark border */
+button.primary-button,
+button.btn-blue,
+.primary-button,
+.btn,
+.btn-primary,
+.btn-blue,
+.login-submit-btn,
+button[type="submit"].primary-button,
+button[type="submit"].btn-blue {
+  border: none !important;
+  outline: none !important;
+  background: #00688f !important;
+}
+
+button.primary-button:hover,
+button.btn-blue:hover,
+.primary-button:hover,
+.btn:hover,
+.btn-primary:hover,
+.btn-blue:hover,
+.login-submit-btn:hover,
+button[type="submit"].primary-button:hover,
+button[type="submit"].btn-blue:hover {
+  border: none !important;
+  outline: none !important;
+  background: #00506e !important;
 }
 
 .primary-button:hover::after,
@@ -1430,11 +1462,12 @@ h2 {
   justify-content: center;
   gap: 8px;
 
-  border: 1px solid #c8d9e6 !important;
+  border: none !important;
+  outline: none !important;
   border-radius: 7px;
 
   background: #ffffff !important;
-  color: #026594 !important;
+  color: #00688f !important;
 
   font-size: 13px;
   font-weight: 600;
@@ -1461,14 +1494,14 @@ h2 {
 .secondary-button svg,
 .btn-secondary svg {
   flex-shrink: 0;
-  color: #026594;
+  color: #00688f;
   transition: transform 180ms ease, color 160ms ease;
 }
 
 .secondary-button:hover,
 .btn-secondary:hover {
   background: #f0f6fa !important;
-  border-color: #026594 !important;
+  border-color: #00688f !important;
   color: #013550 !important;
   transform: translateY(-1.5px);
   box-shadow:
@@ -1486,7 +1519,7 @@ h2 {
 .btn-secondary:active {
   transform: translateY(0.5px) scale(0.985);
   background: #e4edf5 !important;
-  border-color: #026594 !important;
+  border-color: #00688f !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
   transition-duration: 60ms;
 }
@@ -1522,9 +1555,11 @@ h2 {
 [data-tone="purple"],
 [data-tone="teal"],
 [data-tone="amber"] {
-  background: linear-gradient(180deg, #027eb8 0%, #026594 100%) !important;
+  background: #00688f !important;
   color: #ffffff !important;
-  border-color: #01537a !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 2px 6px rgba(2, 101, 148, 0.25) !important;
 }
 
 .btn-blue:hover,
@@ -1539,9 +1574,40 @@ h2 {
 .primary-button.btn-teal:hover,
 .primary-button.amber:hover,
 .primary-button.btn-amber:hover {
-  background: linear-gradient(180deg, #01557d 0%, #013e5d 100%) !important;
-  border-color: #01334d !important;
+  background: #00506e !important;
+  border: none !important;
+  outline: none !important;
   color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(2, 101, 148, 0.35) !important;
+}
+
+/* Global Borderless Button System - Pure #00688f Logo Blue with zero dark border */
+button.primary-button,
+button.btn-blue,
+.primary-button,
+.btn,
+.btn-primary,
+.btn-blue,
+.login-submit-btn,
+button[type="submit"].primary-button,
+button[type="submit"].btn-blue {
+  border: none !important;
+  outline: none !important;
+  background: #00688f !important;
+}
+
+button.primary-button:hover,
+button.btn-blue:hover,
+.primary-button:hover,
+.btn:hover,
+.btn-primary:hover,
+.btn-blue:hover,
+.login-submit-btn:hover,
+button[type="submit"].primary-button:hover,
+button[type="submit"].btn-blue:hover {
+  border: none !important;
+  outline: none !important;
+  background: #00506e !important;
 }
 
 /* Approval / Success ratification */
@@ -1551,7 +1617,8 @@ h2 {
 [data-tone="green"] {
   background: linear-gradient(180deg, #166534 0%, #14532d 100%) !important;
   color: #ffffff !important;
-  border-color: #14532d !important;
+  border: none !important;
+  outline: none !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 1px 2px rgba(4, 28, 48, 0.08), 0 2px 4px -1px rgba(22, 101, 52, 0.32) !important;
 }
 
@@ -1559,7 +1626,8 @@ h2 {
 .primary-button.green:hover,
 .primary-button.btn-green:hover {
   background: linear-gradient(180deg, #14532d 0%, #052e16 100%) !important;
-  border-color: #052e16 !important;
+  border: none !important;
+  outline: none !important;
 }
 
 /* Destructive Actions (Delete, Reject, Deactivate) */
@@ -1571,7 +1639,8 @@ h2 {
 [data-tone="red"] {
   background: linear-gradient(180deg, #b91c1c 0%, #991b1b 100%) !important;
   color: #ffffff !important;
-  border-color: #7f1d1d !important;
+  border: none !important;
+  outline: none !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 1px 2px rgba(4, 28, 48, 0.08), 0 2px 4px -1px rgba(185, 28, 28, 0.32) !important;
 }
 
@@ -1611,7 +1680,9 @@ h2 {
 .button-outline {
   background: transparent !important;
   color: var(--navy) !important;
-  border: 1.5px solid var(--navy) !important;
+  border: none !important;
+  outline: none !important;
+  background: #eef5f9 !important;
   box-shadow: none !important;
   text-shadow: none !important;
 }
@@ -1924,7 +1995,7 @@ td small {
 
 .chart-bar span {
   width: 40px;
-  background: linear-gradient(180deg, #027eb8 0%, #026594 100%);
+  background: linear-gradient(180deg, #027eb8 0%, #00688f 100%);
   border-radius: 6px 6px 0 0;
   box-shadow: 0 2px 8px rgba(11, 52, 87, 0.2);
   transition: height 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms ease;
@@ -1933,7 +2004,7 @@ td small {
 
 .chart-bar:hover span {
   transform: scaleY(1.05);
-  background: linear-gradient(180deg, #0090bf 0%, #026594 100%);
+  background: linear-gradient(180deg, #0090bf 0%, #00688f 100%);
 }
 
 .chart-bar small {
@@ -2719,6 +2790,16 @@ textarea:focus {
   margin-top: 4px;
   font-size: 13px;
   font-weight: 600;
+  border: none !important;
+  outline: none !important;
+  background: #00688f !important;
+  box-shadow: 0 2px 6px rgba(2, 101, 148, 0.25) !important;
+}
+
+.login-submit-btn:hover {
+  border: none !important;
+  outline: none !important;
+  background: #00506e !important;
 }
 
 /* =========================================================
@@ -3252,8 +3333,8 @@ textarea:focus {
   }
 
   .header-workspace-title {
-    font-size: 13.5px !important;
-    max-width: 160px;
+    font-size: 13px !important;
+    max-width: 260px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3732,7 +3813,7 @@ textarea:focus {
 
 .overview-card-icon.blue {
   background: #edf4fa;
-  color: #026594;
+  color: #00688f;
 }
 
 .overview-card-icon.teal {
@@ -4014,4 +4095,40 @@ body {
   .header-actions {
     gap: 8px !important;
   }
+}
+/* =========================================================
+   UNIVERSAL BORDERLESS BUTTON SYSTEM
+   Strict zero-border on all interactive button elements across all pages
+   ========================================================= */
+button,
+.btn,
+.primary-button,
+.secondary-button,
+.btn-primary,
+.btn-secondary,
+.btn-blue,
+.btn-green,
+.btn-red,
+.btn-danger,
+.btn-outline,
+.button-outline,
+.action-button,
+.icon-button,
+.login-submit-btn,
+button[type="button"],
+button[type="submit"],
+input[type="button"],
+input[type="submit"] {
+  border: none !important;
+  outline: none !important;
+}
+
+button:focus,
+.btn:focus,
+.primary-button:focus,
+.secondary-button:focus,
+.login-submit-btn:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 104, 143, 0.28) !important;
 }
