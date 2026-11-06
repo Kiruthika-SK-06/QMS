@@ -77,7 +77,7 @@ export default function Documents() {
         title="Document library"
         description="A single controlled view of Forms, Templates and Procedures. Review and manage lifecycle states directly."
         action={
-          currentUser && (
+          currentUser && currentUser.role !== "Head" && currentUser.role !== "auditor" && (
             <button className="primary-button btn-blue" onClick={() => setShowUploadModal(true)}>
               <Upload size={17} />
               <span>Upload document</span>

@@ -69,7 +69,7 @@ export default function AppRoutes() {
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/version-history" element={<VersionHistoryPage />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/activity" element={<ActivityPage />} />
+        <Route path="/activity" element={<Navigate to="/version-history" replace />} />
         <Route path="/profile" element={<Profile />} />
 
         {/* Backward-compatibility redirect from /employees to /user-management */}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Navigate } from "react-router-dom";
 import {
   UserCheck,
   Plus,
@@ -85,6 +86,12 @@ export default function UserManagement() {
   // Role permissions
   const isQMSCoordinator = currentUser?.role === "qm";
   const isTrustHead = currentUser?.role === "Head";
+
+  // Trust Head has User Management removed completely
+  if (isTrustHead) {
+    return <Navigate to="/Head/dashboard" replace />;
+  }
+
   const isInternalAuditor = currentUser?.role === "auditor";
   const canEdit = isQMSCoordinator;
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Navigate } from "react-router-dom";
 import {
   ShieldCheck,
   Plus,
@@ -130,6 +130,11 @@ export default function ExternalAudit() {
   const isTrustHead = roleLower === "head" || roleLower === "trusthead" || roleLower === "qmhead" || titleLower.includes("trust head") || titleLower.includes("team head") || userLower.includes("trusthead") || userLower.includes("head");
   const isInternalAuditor = roleLower === "auditor" || titleLower.includes("auditor") || userLower.includes("auditor");
   const isCourseCoordinator = roleLower === "owner" || titleLower.includes("course coordinator") || titleLower.includes("process owner") || userLower.includes("coordinator");
+
+  // Internal Auditor has External Audit removed completely
+  if (isInternalAuditor) {
+    return <Navigate to="/internal-audit" replace />;
+  }
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");

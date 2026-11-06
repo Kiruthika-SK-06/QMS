@@ -69,13 +69,6 @@ export default function Sidebar({ open, close }) {
       </nav>
 
       <div className="sidebar-bottom">
-        <div className="secure-note">
-          <ShieldCheck size={18} />
-          <div>
-            <strong>Controlled workspace</strong>
-            <small>QMS records are versioned</small>
-          </div>
-        </div>
         <button className="logout-button" onClick={logout}>
           <LogOut size={17} />
           Sign out

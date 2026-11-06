@@ -15,9 +15,9 @@ export default function DocumentTable({ items = [], review = false, onEdit, onDe
   const [submittingReview, setSubmittingReview] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const canEdit = currentUser?.role !== "employee" && currentUser?.role !== "auditor";
-  const canDelete = currentUser?.role === "qm" || currentUser?.role === "Head";
-  const canReview = currentUser?.role === "qm" || currentUser?.role === "Head";
+  const canEdit = currentUser?.role !== "employee" && currentUser?.role !== "auditor" && currentUser?.role !== "Head";
+  const canDelete = currentUser?.role === "qm";
+  const canReview = currentUser?.role === "qm";
 
   const handleConfirmDelete = async () => {
     if (!docToDelete) return;

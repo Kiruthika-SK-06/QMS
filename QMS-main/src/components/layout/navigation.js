@@ -29,8 +29,7 @@ export const navByRole = {
       ["Tasks", "/tasks", ClipboardList]
     ]],
     ["MONITORING", [
-      ["Version History", "/version-history", History],
-      ["Activity", "/activity", Activity],
+      ["Audit Trail", "/version-history", History],
       ["Notifications", "/notifications", Bell]
     ]],
     ["ACCOUNT", [
@@ -52,7 +51,6 @@ export const navByRole = {
     ]],
     ["MONITORING & AUDIT", [
       ["Audit Trail", "/version-history", History],
-      ["Activity Logs", "/activity", Activity],
       ["Notifications", "/notifications", Bell]
     ]],
     ["ACCOUNT", [
@@ -67,12 +65,10 @@ export const navByRole = {
       ["Internal Audit", "/internal-audit", ClipboardCheck],
       ["External Audit", "/external-audit", ShieldCheck],
       ["MRM Approvals", "/mrm", ShieldCheck],
-      ["User Management", "/user-management", UserCheck],
       ["Document Oversight", "/documents", FileText],
       ["Processes", "/processes", BookOpen]
     ]],
     ["MONITORING", [
-      ["Audit Trail", "/version-history", History],
       ["Notifications", "/notifications", Bell]
     ]],
     ["ACCOUNT", [
@@ -85,7 +81,6 @@ export const navByRole = {
     ]],
     ["QUALITY AUDIT & MRM", [
       ["Internal Audit", "/internal-audit", ClipboardCheck],
-      ["External Audit", "/external-audit", ShieldCheck],
       ["Management Review Meeting", "/mrm", CalendarCheck]
     ]],
     ["ACCOUNT", [

@@ -47,7 +47,7 @@ export default function DocumentDetails() {
             <button className="secondary-button" onClick={() => downloadDocument(document.id)}>
               <Download size={16} /> View file
             </button>
-            {currentUser && (
+            {currentUser && currentUser.role !== "Head" && currentUser.role !== "auditor" && (
               <>
                 <button
                   className="secondary-button"
@@ -60,7 +60,7 @@ export default function DocumentDetails() {
                   <Plus size={16} />
                   <span>Create new version</span>
                 </button>
-                {(currentUser?.role === "qm" || currentUser?.role === "Head") && (
+                {currentUser?.role === "qm" && (
                   <button
                     className="primary-button btn-red"
                     onClick={() => setShowDeleteModal(true)}
