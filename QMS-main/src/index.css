@@ -57,9 +57,9 @@
   /* 4. Professional High-Contrast Typography */
   --ink: #07326A;
   /* Midnight Navy for primary body text & headings */
-  --ink-soft: #1E4675;
+  --ink-soft: #07326A;
   /* Secondary headings, form labels */
-  --muted: #567899;
+  --muted: rgba(7, 50, 106, 0.82);
   /* Secondary labels, descriptions, timestamps */
   --muted-2: #749DC8;
   /* Table headers, helper text, placeholders */
@@ -1094,7 +1094,7 @@ h1 {
   font-size: 27px;
   letter-spacing: -0.03em;
   margin: 6px 0 6px;
-  color: var(--navy);
+  color: #07326A;
 }
 
 h2 {
@@ -1102,7 +1102,7 @@ h2 {
   font-size: 15.5px;
   letter-spacing: -0.01em;
   margin: 0;
-  color: var(--navy);
+  color: #07326A;
 }
 
 .page-intro p {
@@ -1214,7 +1214,7 @@ h2 {
   display: block;
   font: 700 23px "Inter", sans-serif;
   margin: 4px 0 2px;
-  color: var(--navy);
+  color: #07326A;
 }
 
 /* =========================================================
@@ -1736,7 +1736,7 @@ table {
 }
 
 th {
-  color: var(--navy);
+  color: #07326A;
   background: #f4f8fb;
   text-align: left;
   font-family: "Inter", sans-serif;
@@ -1752,7 +1752,7 @@ th {
 td {
   padding: 13px 16px;
   border-bottom: 1px solid var(--line-soft);
-  color: var(--ink-soft);
+  color: #07326A;
   font-size: 12.5px;
   white-space: nowrap;
   transition: background var(--dur-fast) var(--ease);
@@ -1781,7 +1781,7 @@ td small {
 }
 
 td strong {
-  color: var(--ink);
+  color: #07326A;
   font-size: 12.5px;
   font-weight: 600;
 }
@@ -2641,7 +2641,7 @@ textarea:focus {
   margin-top: 4px;
   font-size: 26px;
   font-weight: 700;
-  color: var(--navy);
+  color: #07326A;
   letter-spacing: -0.02em;
 }
 
@@ -3846,7 +3846,7 @@ textarea:focus {
 .overview-card-title-group h3 {
   font-size: 14px;
   font-weight: 700;
-  color: var(--ink);
+  color: #07326A;
   margin: 0 0 2px 0;
   letter-spacing: -0.01em;
 }
@@ -4139,4 +4139,29 @@ button:focus,
   outline: none !important;
   border: none !important;
   box-shadow: 0 0 0 3px rgba(0, 104, 143, 0.28) !important;
+}
+/* =========================================================
+   #07326A UNIFIED TYPOGRAPHY TEXT SYSTEM
+   All headings, titles, labels, card copy, table content anchored to #07326A
+   ========================================================= */
+h1, h2, h3, h4, h5, h6 {
+  color: #07326A;
+}
+
+body {
+  color: #07326A;
+}
+
+.page-intro p,
+.section-header h2,
+.panel h2,
+.panel h3,
+.stat-card strong,
+.table-wrap th,
+.table-wrap td,
+.table-wrap td strong,
+label,
+.login-heading,
+.header-workspace-title {
+  color: #07326A;
 }
