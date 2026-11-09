@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 export default function StatCard({
@@ -39,7 +39,17 @@ export default function StatCard({
     derivedProgress = Math.min(100, Math.max(25, value * 15));
   }
 
-  const strokeDashoffset = circumference - (derivedProgress / 100) * circumference;
+  // Smooth entrance sweep: start at 0 and transition to target
+  const [currentProgress, setCurrentProgress] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentProgress(derivedProgress);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [derivedProgress]);
+
+  const strokeDashoffset = circumference - (currentProgress / 100) * circumference;
 
   return (
     <div className={`stat-card gauge-card ${onClick ? "clickable" : ""}`} onClick={onClick}>
