@@ -9,21 +9,21 @@ const users = {
   owner: {
     id: "CC-208",
     username: "coursecoordinator",
-    name: "Priya Sharma",
+    name: "Course Coordinator",
     email: "coordinator@cdac.in",
     aliases: [
       "coursecoordinator",
       "processowner",
       "coordinator@cdac.in",
       "owner@cdac.in",
-      "priya.sharma@cdac.in",
-      "priya.nair@cdac.in",
+      "coordinator@cdac.in",
+      "coordinator@cdac.in",
       "owner"
     ],
     password: "1234",
     role: "owner",
     roleTitle: "Course Coordinator",
-    initials: "PS",
+    initials: "CC",
     employeeId: "CC001",
     department: "Academic & Training Division",
     process: "Course Management",
@@ -40,20 +40,20 @@ const users = {
   qm: {
     id: "QC-001",
     username: "qmcoordinator",
-    name: "Rahul Kumar",
+    name: "QMS Coordinator",
     email: "qm@cdac.in",
     aliases: [
       "qmcoordinator",
       "qmgroup",
       "qm@cdac.in",
       "qms@cdac.in",
-      "rahul.kumar@cdac.in",
+      "qm@cdac.in",
       "qm"
     ],
     password: "1234",
     role: "qm",
     roleTitle: "QMS Coordinator",
-    initials: "RK",
+    initials: "QC",
     employeeId: "QC001",
     department: "Quality Assurance & Compliance",
     process: "All Processes",
@@ -72,19 +72,19 @@ const users = {
   Head: {
     id: "TH-001",
     username: "trusthead",
-    name: "Anita Rao",
+    name: "Trust Head",
     email: "head@cdac.in",
     aliases: [
       "trusthead",
       "qmhead",
       "head@cdac.in",
-      "anita.rao@cdac.in",
+      "head@cdac.in",
       "head"
     ],
     password: "1234",
     role: "Head",
     roleTitle: "Trust Head",
-    initials: "AR",
+    initials: "TH",
     employeeId: "TH001",
     department: "Trust Governance & Executive Board",
     process: "Trust Governance",
@@ -100,19 +100,19 @@ const users = {
   auditor: {
     id: "IA-001",
     username: "internalauditor",
-    name: "Suresh Menon",
+    name: "Internal Auditor",
     email: "auditor@cdac.in",
     aliases: [
       "internalauditor",
       "auditor",
       "auditor@cdac.in",
-      "suresh.menon@cdac.in",
-      "suresh"
+      "auditor@cdac.in",
+      "auditor"
     ],
     password: "1234",
     role: "auditor",
     roleTitle: "Internal Auditor",
-    initials: "SM",
+    initials: "IA",
     employeeId: "IA001",
     department: "Internal Quality Audit Division",
     process: "Quality System & ISO Audit",
@@ -134,16 +134,16 @@ const initialDocuments = [
     name: "Course Student Feedback Form",
     type: "Forms",
     process: "Course Management",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "3.0",
     updated: "18 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Approved",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     versions: [
-      { version: "3.0", date: "18 Sep 2026", author: "Priya Sharma", status: "Current" },
-      { version: "2.0", date: "10 Sep 2026", author: "Priya Sharma", status: "Archived" },
-      { version: "1.0", date: "02 Sep 2026", author: "Priya Sharma", status: "Archived" }
+      { version: "3.0", date: "18 Sep 2026", author: "Course Coordinator", status: "Current" },
+      { version: "2.0", date: "10 Sep 2026", author: "Course Coordinator", status: "Archived" },
+      { version: "1.0", date: "02 Sep 2026", author: "Course Coordinator", status: "Archived" }
     ]
   },
   {
@@ -151,15 +151,15 @@ const initialDocuments = [
     name: "Course Enrollment & Prerequisites Form",
     type: "Forms",
     process: "Course Administration",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "2.0",
     updated: "15 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Changes Requested",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     versions: [
-      { version: "2.0", date: "15 Sep 2026", author: "Priya Sharma", status: "Current" },
-      { version: "1.0", date: "04 Sep 2026", author: "Priya Sharma", status: "Archived" }
+      { version: "2.0", date: "15 Sep 2026", author: "Course Coordinator", status: "Current" },
+      { version: "1.0", date: "04 Sep 2026", author: "Course Coordinator", status: "Archived" }
     ]
   },
   {
@@ -167,14 +167,14 @@ const initialDocuments = [
     name: "Course Delivery Evaluation Template",
     type: "Templates",
     process: "Course Management",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "1.0",
     updated: "11 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Under Review",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     versions: [
-      { version: "1.0", date: "11 Sep 2026", author: "Priya Sharma", status: "Current" }
+      { version: "1.0", date: "11 Sep 2026", author: "Course Coordinator", status: "Current" }
     ]
   },
   {
@@ -182,17 +182,17 @@ const initialDocuments = [
     name: "Academic Curriculum Revision Procedure",
     type: "Procedures",
     process: "Course Management",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "4.0",
     updated: "08 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Approved",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     versions: [
-      { version: "4.0", date: "08 Sep 2026", author: "Priya Sharma", status: "Current" },
-      { version: "3.0", date: "02 Sep 2026", author: "Priya Sharma", status: "Archived" },
-      { version: "2.0", date: "26 Aug 2026", author: "Priya Sharma", status: "Archived" },
-      { version: "1.0", date: "18 Aug 2026", author: "Priya Sharma", status: "Archived" }
+      { version: "4.0", date: "08 Sep 2026", author: "Course Coordinator", status: "Current" },
+      { version: "3.0", date: "02 Sep 2026", author: "Course Coordinator", status: "Archived" },
+      { version: "2.0", date: "26 Aug 2026", author: "Course Coordinator", status: "Archived" },
+      { version: "1.0", date: "18 Aug 2026", author: "Course Coordinator", status: "Archived" }
     ]
   },
   {
@@ -218,7 +218,7 @@ const initialTasks = [
     id: "TASK-001",
     title: "Update Course Curriculum Structure",
     description: "Review and update the course syllabus checklist, statutory accreditation guidelines, and lab exercises.",
-    employee: "Priya Sharma",
+    employee: "Course Coordinator",
     process: "Course Management",
     document: "Academic Curriculum Revision Procedure",
     assigned: "12 Sep 2026",
@@ -229,7 +229,7 @@ const initialTasks = [
     id: "TASK-002",
     title: "Compile MRM Q3 Student Feedback",
     description: "Aggregate student satisfaction ratings for all academic modules and generate summary for MRM agenda.",
-    employee: "Dr. Rajesh Verma",
+    employee: "Course Coordinator (AI)",
     process: "Course Management",
     document: "Course Student Feedback Form",
     assigned: "14 Sep 2026",
@@ -240,7 +240,7 @@ const initialTasks = [
     id: "TASK-003",
     title: "Audit Lab Safety & Hardware Calibrations",
     description: "Validate the latest equipment log sheets against revised ISO 9001:2015 safety criteria.",
-    employee: "Sunita Patil",
+    employee: "Course Coordinator (Cyber Security)",
     process: "IT Support Management",
     document: "",
     assigned: "09 Sep 2026",
@@ -258,15 +258,15 @@ const initialNotifications = [
 ];
 
 const processes = [
-  { name: "Course Administration", owner: "Priya Sharma", employees: 12, active: 5, completed: 31, pending: 5, documents: 8, status: "Active" },
-  { name: "Course Management", owner: "Priya Sharma", employees: 24, active: 8, completed: 46, pending: 9, documents: 11, status: "Active" },
-  { name: "IT Support Management", owner: "Karthik Verma", employees: 9, active: 2, completed: 18, pending: 2, documents: 5, status: "Active" }
+  { name: "Course Administration", owner: "Course Coordinator", employees: 12, active: 5, completed: 31, pending: 5, documents: 8, status: "Active" },
+  { name: "Course Management", owner: "Course Coordinator", employees: 24, active: 8, completed: 46, pending: 9, documents: 11, status: "Active" },
+  { name: "IT Support Management", owner: "Course Coordinator (IT)", employees: 9, active: 2, completed: 18, pending: 2, documents: 5, status: "Active" }
 ];
 
 const initialUsersList = [
   {
     id: "CC-208",
-    name: "Priya Sharma",
+    name: "Course Coordinator",
     email: "coordinator@cdac.in",
     username: "coursecoordinator",
     designation: "Principal Course Coordinator",
@@ -274,7 +274,7 @@ const initialUsersList = [
     role: "owner",
     roleTitle: "Course Coordinator",
     status: "Active",
-    initials: "PS",
+    initials: "CC",
     joinDate: "15 Jan 2024",
     privileges: [
       "Manage Documents",
@@ -284,7 +284,7 @@ const initialUsersList = [
   },
   {
     id: "QC-001",
-    name: "Rahul Kumar",
+    name: "QMS Coordinator",
     email: "qm@cdac.in",
     username: "qmcoordinator",
     designation: "Lead QMS Coordinator",
@@ -292,7 +292,7 @@ const initialUsersList = [
     role: "qm",
     roleTitle: "QMS Coordinator",
     status: "Active",
-    initials: "RK",
+    initials: "QC",
     joinDate: "01 Mar 2023",
     privileges: [
       "Manage Documents",
@@ -306,7 +306,7 @@ const initialUsersList = [
   },
   {
     id: "TH-001",
-    name: "Anita Rao",
+    name: "Trust Head",
     email: "head@cdac.in",
     username: "trusthead",
     designation: "Executive Director / Trust Head",
@@ -314,7 +314,7 @@ const initialUsersList = [
     role: "Head",
     roleTitle: "Trust Head",
     status: "Active",
-    initials: "AR",
+    initials: "TH",
     joinDate: "10 Aug 2021",
     privileges: [
       "Approve MRM",
@@ -324,8 +324,8 @@ const initialUsersList = [
   },
   {
     id: "CC-210",
-    name: "Dr. Rajesh Verma",
-    email: "rajesh.verma@cdac.in",
+    name: "Course Coordinator (AI)",
+    email: "coordinator.ai@cdac.in",
     username: "rajesh.verma",
     designation: "Senior Course Coordinator",
     department: "Artificial Intelligence Division",
@@ -342,9 +342,9 @@ const initialUsersList = [
   },
   {
     id: "CC-215",
-    name: "Sunita Patil",
-    email: "sunita.patil@cdac.in",
-    username: "sunita.patil",
+    name: "Course Coordinator (Cyber Security)",
+    email: "coordinator.cyber@cdac.in",
+    username: "coordinator.cyber",
     designation: "Associate Course Coordinator",
     department: "Cyber Security Division",
     role: "owner",
@@ -374,7 +374,7 @@ const initialMRMList = [
     scheduledDate: "2026-10-10",
     scheduledTime: "10:30 AM",
     venue: "Main Boardroom / Webex Video Conference (Room 402)",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -385,18 +385,18 @@ const initialMRMList = [
       "Recommendations for continual curriculum modernization"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Priya Sharma (Course Coordinator)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)",
-      "Sunita Patil (Course Coordinator - Cyber Security)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator",
+      "Course Coordinator (AI)",
+      "Course Coordinator (Cyber Security)"
     ],
     approvals: {
       teamHead: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Anita Rao",
+        approverName: "Trust Head",
         approverRole: "Trust Head",
         approvedAt: "2026-10-06 11:15 AM",
         remarks: "Meeting objectives, agenda, and participant list fully ratified. Proceed with scheduling."
@@ -404,7 +404,7 @@ const initialMRMList = [
       internalAuditor: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Suresh Menon",
+        approverName: "Internal Auditor",
         approverRole: "Internal Auditor",
         approvedAt: "2026-10-06 02:40 PM",
         remarks: "Compliance with ISO 9001:2015 Clause 9.3 verified. Agenda meets audit requirements."
@@ -413,15 +413,15 @@ const initialMRMList = [
     emailNotification: {
       sent: true,
       sentAt: "2026-10-07 09:30 AM",
-      sentBy: "Rahul Kumar (QMS Coordinator)",
+      sentBy: "QMS Coordinator",
       subject: "Official Notice: Q3 Academic Quality & Curriculum Review Meeting Scheduled",
       status: "Delivered",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator (Cyber Security)", email: "coordinator.cyber@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ],
       emailBodyHtml: "<p>Dear Coordinators and Leadership,</p><p>You are cordially invited to the <strong>Q3 Academic Quality & Curriculum Review Meeting</strong> scheduled on <strong>2026-10-10 at 10:30 AM</strong> in the Main Boardroom / Webex Video Conference.</p><p>Please review the agenda and be prepared with your division course delivery reports.</p><p>Regards,<br/><strong>QMS Quality Office</strong></p>"
     },
@@ -429,7 +429,7 @@ const initialMRMList = [
       fileName: "Q3_Academic_Quality_MRM_MoM.pdf",
       fileSize: "2.4 MB",
       fileType: "application/pdf",
-      uploadedBy: "Rahul Kumar",
+      uploadedBy: "QMS Coordinator",
       uploadedByRole: "QMS Coordinator",
       uploadedAt: "2026-10-10 03:30 PM",
       downloadUrl: "/api/mrm/MRM-2026-001/mom-download",
@@ -443,7 +443,7 @@ const initialMRMList = [
         {
           id: "ACT-01",
           task: "Incorporate Cloud Architecture module into Advanced Computing syllabus",
-          assignee: "Priya Sharma (Course Coordinator)",
+          assignee: "Course Coordinator",
           deadline: "2026-10-25",
           status: "In Progress"
         },
@@ -461,7 +461,7 @@ const initialMRMList = [
       ]
     },
     mom: {
-      recordedBy: "Rahul Kumar",
+      recordedBy: "QMS Coordinator",
       recordedDate: "2026-10-10",
       summary: "Comprehensive review conducted for all academic and computing programs. Overall quality index reached 94.2%.",
       discussionPoints: [
@@ -473,55 +473,55 @@ const initialMRMList = [
     trustHeadApproval: {
       decision: "Approved",
       approved: true,
-      approvedBy: "Anita Rao",
+      approvedBy: "Trust Head",
       approvedAt: "2026-10-06 11:15 AM",
       remarks: "Meeting objectives ratified."
     },
     sharedWithAll: true,
     sharedAt: "2026-10-07 09:30 AM",
-    sharedBy: "Rahul Kumar",
+    sharedBy: "QMS Coordinator",
     sharedVersion: "1.0",
     recipients: ["All Course Coordinators", "Trust Head", "Internal Auditor"],
     acknowledgements: [],
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-05 10:00 AM",
         version: "1.0",
         details: "Meeting plan created for Q3 Academic Quality Review."
       },
       {
         action: "Submitted for Dual Approval",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-05 11:30 AM",
         version: "1.0",
-        details: "Approval requested from Team Head (Anita Rao) and Internal Auditor (Suresh Menon)."
+        details: "Approval requested from Team Head (Trust Head) and Internal Auditor (Internal Auditor)."
       },
       {
         action: "Approved by Team Head",
-        actor: "Anita Rao (Trust Head)",
+        actor: "Trust Head",
         timestamp: "2026-10-06 11:15 AM",
         version: "1.0",
         details: "Meeting objectives, agenda, and participant list ratified."
       },
       {
         action: "Approved by Internal Auditor",
-        actor: "Suresh Menon (Internal Auditor)",
+        actor: "Internal Auditor",
         timestamp: "2026-10-06 02:40 PM",
         version: "1.0",
         details: "ISO 9001 compliance verified. Meeting fully approved."
       },
       {
         action: "Meeting Notification Sent via Email",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-07 09:30 AM",
         version: "1.0",
         details: "Formal email notification distributed to all Course Coordinators, Trust Head, and Internal Auditor."
       },
       {
         action: "MoM File Uploaded (Public Access)",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-10 03:30 PM",
         version: "1.0",
         details: "Official Minutes of Meeting file (Q3_Academic_Quality_MRM_MoM.pdf) uploaded and published for everyone."
@@ -541,7 +541,7 @@ const initialMRMList = [
     scheduledDate: "2026-10-28",
     scheduledTime: "02:30 PM",
     venue: "Division Seminar Hall & Virtual Meet",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -551,17 +551,17 @@ const initialMRMList = [
       "ISO 9001:2015 Clause 7.2 Competency training for instructors"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)",
-      "Priya Sharma (Course Coordinator)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator (AI)",
+      "Course Coordinator"
     ],
     approvals: {
       teamHead: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Anita Rao",
+        approverName: "Trust Head",
         approverRole: "Trust Head",
         approvedAt: "2026-10-15 04:00 PM",
         remarks: "Approved. Excellent agenda addressing AI compute capacity."
@@ -569,7 +569,7 @@ const initialMRMList = [
       internalAuditor: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Suresh Menon",
+        approverName: "Internal Auditor",
         approverRole: "Internal Auditor",
         approvedAt: "2026-10-16 10:15 AM",
         remarks: "Audit agenda item for faculty competency endorsed. Approved."
@@ -581,7 +581,7 @@ const initialMRMList = [
     trustHeadApproval: {
       decision: "Approved",
       approved: true,
-      approvedBy: "Anita Rao",
+      approvedBy: "Trust Head",
       approvedAt: "2026-10-15 04:00 PM",
       remarks: "Approved without modifications."
     },
@@ -594,28 +594,28 @@ const initialMRMList = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-14 09:30 AM",
         version: "1.0",
         details: "Meeting plan drafted for AI & Emerging Tech Review."
       },
       {
         action: "Submitted for Dual Approval",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-14 11:00 AM",
         version: "1.0",
         details: "Submitted to Team Head and Internal Auditor."
       },
       {
         action: "Approved by Team Head",
-        actor: "Anita Rao (Trust Head)",
+        actor: "Trust Head",
         timestamp: "2026-10-15 04:00 PM",
         version: "1.0",
         details: "Executive signoff granted."
       },
       {
         action: "Approved by Internal Auditor",
-        actor: "Suresh Menon (Internal Auditor)",
+        actor: "Internal Auditor",
         timestamp: "2026-10-16 10:15 AM",
         version: "1.0",
         details: "Compliance verified. Ready to share meeting notification through email."
@@ -635,7 +635,7 @@ const initialMRMList = [
     scheduledDate: "2026-11-12",
     scheduledTime: "11:00 AM",
     venue: "Trust Executive Council Room & Hybrid Stream",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -645,12 +645,12 @@ const initialMRMList = [
       "Strategic direction for academic year 2026-2027"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Priya Sharma (Course Coordinator)",
-      "Dr. Rajesh Verma (Course Coordinator)",
-      "Sunita Patil (Course Coordinator)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator",
+      "Course Coordinator (AI)",
+      "Course Coordinator (Cyber Security)"
     ],
     approvals: {
       teamHead: {
@@ -683,21 +683,21 @@ const initialMRMList = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-23 10:00 AM",
         version: "1.0",
         details: "Plan prepared for 2026-11-12"
       },
       {
         action: "Submitted for Dual Approval",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-23 11:30 AM",
         version: "1.0",
         details: "Submitted to Team Head and Internal Auditor"
       },
       {
         action: "Approved by Team Head",
-        actor: "Anita Rao (Trust Head)",
+        actor: "Trust Head",
         timestamp: "2026-10-24 03:00 PM",
         version: "1.0",
         details: "Approved. Awaiting signoff from Internal Auditor."
@@ -717,7 +717,7 @@ const initialMRMList = [
     scheduledDate: "2026-11-20",
     scheduledTime: "10:00 AM",
     venue: "Cyber Security Lab Conference Hall",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -727,11 +727,11 @@ const initialMRMList = [
       "Recommendations for dedicated student sandboxes"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Sunita Patil (Course Coordinator - Cyber Security)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator (Cyber Security)",
+      "Course Coordinator (AI)"
     ],
     approvals: {
       teamHead: {
@@ -764,7 +764,7 @@ const initialMRMList = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-25 09:30 AM",
         version: "1.0",
         details: "Meeting plan drafted. Ready to request approval from Team Head & Internal Auditor."
@@ -776,11 +776,11 @@ const initialMRMList = [
 const employees = initialUsersList;
 
 const activities = [
-  { title: "MRM Approved", detail: "Trust Head Sign-off", text: "MRM MoM Approved by Trust Head", actor: "Anita Rao", time: "18 Sep 2026, 10:42 AM", tone: "green" },
-  { title: "Document Submitted", detail: "Course Delivery Procedure", text: "Document submitted for QMS review", actor: "Priya Sharma", time: "17 Sep 2026, 04:18 PM", tone: "amber" },
-  { title: "Document Reviewed", detail: "Course Delivery Template", text: "QMS Coordinator reviewed Course Delivery Template", actor: "Rahul Kumar", time: "16 Sep 2026, 01:06 PM", tone: "blue" },
-  { title: "Task Assigned", detail: "Review syllabus checklist (Dr. Rajesh Verma)", text: "Task assigned to Dr. Rajesh Verma", actor: "Priya Sharma", time: "14 Sep 2026, 09:30 AM", tone: "green" },
-  { title: "MRM Scheduled", detail: "Annual Curriculum Review", text: "Course Coordinator scheduled new MRM", actor: "Priya Sharma", time: "13 Sep 2026, 05:12 PM", tone: "blue" }
+  { title: "MRM Approved", detail: "Trust Head Sign-off", text: "MRM MoM Approved by Trust Head", actor: "Trust Head", time: "18 Sep 2026, 10:42 AM", tone: "green" },
+  { title: "Document Submitted", detail: "Course Delivery Procedure", text: "Document submitted for QMS review", actor: "Course Coordinator", time: "17 Sep 2026, 04:18 PM", tone: "amber" },
+  { title: "Document Reviewed", detail: "Course Delivery Template", text: "QMS Coordinator reviewed Course Delivery Template", actor: "QMS Coordinator", time: "16 Sep 2026, 01:06 PM", tone: "blue" },
+  { title: "Task Assigned", detail: "Review syllabus checklist (Course Coordinator (AI))", text: "Task assigned to Course Coordinator (AI)", actor: "Course Coordinator", time: "14 Sep 2026, 09:30 AM", tone: "green" },
+  { title: "MRM Scheduled", detail: "Annual Curriculum Review", text: "Course Coordinator scheduled new MRM", actor: "Course Coordinator", time: "13 Sep 2026, 05:12 PM", tone: "blue" }
 ];
 
 const initialAuditList = [
@@ -796,20 +796,20 @@ const initialAuditList = [
     scheduledDate: "2026-11-05",
     internalAuditor: {
       id: "IA001",
-      name: "Vikas Deshmukh",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "vikas.deshmukh@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC001",
-      name: "Priya Sharma",
+      name: "Course Coordinator",
       role: "Course Coordinator",
-      email: "priya.sharma@cdac.in",
+      email: "coordinator@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-24 10:00 AM"
     },
@@ -822,18 +822,18 @@ const initialAuditList = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-24 11:30 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-001.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "priya.sharma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Vikas Deshmukh", email: "vikas.deshmukh@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-25 02:15 PM",
       remarks: "Audit plan and schedule verified. Approved for execution across Academic Division."
@@ -842,7 +842,7 @@ const initialAuditList = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-042",
-      submittedBy: "Vikas Deshmukh (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-11-06 04:30 PM",
       fileName: "Noticing_Sheet_IA-2026-001.pdf",
       summary: "Audit completed successfully. 1 Minor Non-Conformance observed regarding course logbook signatures for weeks 4 and 5.",
@@ -859,19 +859,19 @@ const initialAuditList = [
 
     ncDocs: {
       shared: true,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       sharedAt: "2026-11-07 10:15 AM",
       fileName: "NC_Formal_Notice_IA-2026-001.pdf",
       remarks: "Noticing sheet verified. Formal NC-01 issued. Auditee requested to submit Root Cause Analysis and Corrective Action Plan by 2026-11-15.",
       sharedWith: [
-        { role: "Internal Auditor", name: "Vikas Deshmukh" },
-        { role: "Internal Auditee", name: "Priya Sharma (Course Coordinator)" }
+        { role: "Internal Auditor", name: "Internal Auditor" },
+        { role: "Internal Auditee", name: "Course Coordinator" }
       ]
     },
 
     auditeeClosure: {
       closed: true,
-      closedBy: "Priya Sharma (Course Coordinator)",
+      closedBy: "Course Coordinator",
       closedAt: "2026-11-12 03:45 PM",
       rootCause: "Manual paper sign-off workflow was delayed due to mid-semester exams and faculty travel schedule.",
       correctiveAction: "All pending logbook entries for weeks 4 and 5 have been verified and signed off. Implemented weekly digital attendance sign-off reminder on ERP portal.",
@@ -881,20 +881,20 @@ const initialAuditList = [
 
     qmsFinalClosure: {
       closed: true,
-      closedBy: "Rahul Kumar (QMS Coordinator)",
+      closedBy: "QMS Coordinator",
       closedAt: "2026-11-14 11:00 AM",
       remarks: "Evidence reviewed and cross-verified with ERP logs. Corrective action is satisfactory. NC-01 officially closed. Audit process completed.",
       completedAt: "2026-11-14 11:00 AM"
     },
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-24 10:00 AM", details: "Audit scheduled for Course Management process" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-24 11:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-25 02:15 PM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Vikas Deshmukh (Internal Auditor)", timestamp: "2026-11-06 04:30 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
-      { action: "NC Docs Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-07 10:15 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" },
-      { action: "Auditee Closure Submitted", actor: "Priya Sharma (Course Coordinator)", timestamp: "2026-11-12 03:45 PM", details: "Auditee submitted CAPA and evidence" },
-      { action: "Final Audit Closed", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-14 11:00 AM", details: "QMS Coordinator verified corrective actions and closed entire audit process" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-24 10:00 AM", details: "Audit scheduled for Course Management process" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-24 11:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-25 02:15 PM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-11-06 04:30 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
+      { action: "NC Docs Shared", actor: "QMS Coordinator", timestamp: "2026-11-07 10:15 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" },
+      { action: "Auditee Closure Submitted", actor: "Course Coordinator", timestamp: "2026-11-12 03:45 PM", details: "Auditee submitted CAPA and evidence" },
+      { action: "Final Audit Closed", actor: "QMS Coordinator", timestamp: "2026-11-14 11:00 AM", details: "QMS Coordinator verified corrective actions and closed entire audit process" }
     ]
   },
   {
@@ -909,20 +909,20 @@ const initialAuditList = [
     scheduledDate: "2026-11-18",
     internalAuditor: {
       id: "IA002",
-      name: "Suresh Menon",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "suresh.menon@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC002",
-      name: "Dr. Rajesh Verma",
+      name: "Course Coordinator (AI)",
       role: "Course Coordinator",
-      email: "rajesh.verma@cdac.in",
+      email: "coordinator.ai@cdac.in",
       department: "AI & Advanced Computing"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-25 09:30 AM"
     },
@@ -935,18 +935,18 @@ const initialAuditList = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-25 10:15 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-002.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "suresh.menon@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-25 03:00 PM",
       remarks: "Audit dates ratified. Ensure all admission registers are made available."
@@ -955,7 +955,7 @@ const initialAuditList = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-045",
-      submittedBy: "Suresh Menon (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-11-19 05:00 PM",
       fileName: "Noticing_Sheet_IA-2026-002.pdf",
       summary: "Verification completed for 120 student admissions. 1 Observation noted regarding archival of transfer certificates.",
@@ -972,19 +972,19 @@ const initialAuditList = [
 
     ncDocs: {
       shared: true,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       sharedAt: "2026-11-20 11:00 AM",
       fileName: "NC_Formal_Notice_IA-2026-002.pdf",
       remarks: "NC-02 issued. Auditee requested to complete scanned uploads and submit closure.",
       sharedWith: [
-        { role: "Internal Auditor", name: "Suresh Menon" },
-        { role: "Internal Auditee", name: "Dr. Rajesh Verma (Course Coordinator)" }
+        { role: "Internal Auditor", name: "Internal Auditor" },
+        { role: "Internal Auditee", name: "Course Coordinator (AI)" }
       ]
     },
 
     auditeeClosure: {
       closed: true,
-      closedBy: "Dr. Rajesh Verma (Course Coordinator)",
+      closedBy: "Course Coordinator (AI)",
       closedAt: "2026-11-22 04:10 PM",
       rootCause: "Late document submission by candidates during spot counseling rounds.",
       correctiveAction: "All 3 transfer certificates scanned in high resolution, uploaded to student ERP profiles, and physically indexed in archive binder #12.",
@@ -995,12 +995,12 @@ const initialAuditList = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-25 09:30 AM", details: "Audit scheduled for Admissions & Enrollment" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-25 10:15 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-25 03:00 PM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Suresh Menon (Internal Auditor)", timestamp: "2026-11-19 05:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
-      { action: "NC Docs Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-20 11:00 AM", details: "QMS Coordinator shared NC docs to Auditor & Auditee" },
-      { action: "Auditee Closure Submitted", actor: "Dr. Rajesh Verma (Course Coordinator)", timestamp: "2026-11-22 04:10 PM", details: "Auditee uploaded evidence and closed NC" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-25 09:30 AM", details: "Audit scheduled for Admissions & Enrollment" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-25 10:15 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-25 03:00 PM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-11-19 05:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
+      { action: "NC Docs Shared", actor: "QMS Coordinator", timestamp: "2026-11-20 11:00 AM", details: "QMS Coordinator shared NC docs to Auditor & Auditee" },
+      { action: "Auditee Closure Submitted", actor: "Course Coordinator (AI)", timestamp: "2026-11-22 04:10 PM", details: "Auditee uploaded evidence and closed NC" }
     ]
   },
   {
@@ -1015,20 +1015,20 @@ const initialAuditList = [
     scheduledDate: "2026-11-25",
     internalAuditor: {
       id: "IA001",
-      name: "Vikas Deshmukh",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "vikas.deshmukh@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC001",
-      name: "Priya Sharma",
+      name: "Course Coordinator",
       role: "Course Coordinator",
-      email: "priya.sharma@cdac.in",
+      email: "coordinator@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 09:00 AM"
     },
@@ -1041,18 +1041,18 @@ const initialAuditList = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-26 09:30 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-003.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "priya.sharma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Vikas Deshmukh", email: "vikas.deshmukh@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-26 11:45 AM",
       remarks: "Confirmed. Ensure strict adherence to question paper confidentiality protocols."
@@ -1061,7 +1061,7 @@ const initialAuditList = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-049",
-      submittedBy: "Vikas Deshmukh (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-11-26 04:00 PM",
       fileName: "Noticing_Sheet_IA-2026-003.pdf",
       summary: "Evaluation system inspected. Moderation logs require formal sign-off sheet attachment.",
@@ -1078,13 +1078,13 @@ const initialAuditList = [
 
     ncDocs: {
       shared: true,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       sharedAt: "2026-11-27 10:30 AM",
       fileName: "NC_Formal_Notice_IA-2026-003.pdf",
       remarks: "Formal NC-03 communicated to Course Coordinator and Internal Auditor. Auditee closure due within 7 days.",
       sharedWith: [
-        { role: "Internal Auditor", name: "Vikas Deshmukh" },
-        { role: "Internal Auditee", name: "Priya Sharma (Course Coordinator)" }
+        { role: "Internal Auditor", name: "Internal Auditor" },
+        { role: "Internal Auditee", name: "Course Coordinator" }
       ]
     },
 
@@ -1092,11 +1092,11 @@ const initialAuditList = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 09:00 AM", details: "Audit scheduled for Examination & Evaluation" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 09:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 11:45 AM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Vikas Deshmukh (Internal Auditor)", timestamp: "2026-11-26 04:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
-      { action: "NC Docs Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-27 10:30 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 09:00 AM", details: "Audit scheduled for Examination & Evaluation" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-26 09:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-26 11:45 AM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-11-26 04:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
+      { action: "NC Docs Shared", actor: "QMS Coordinator", timestamp: "2026-11-27 10:30 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" }
     ]
   },
   {
@@ -1111,20 +1111,20 @@ const initialAuditList = [
     scheduledDate: "2026-12-02",
     internalAuditor: {
       id: "IA002",
-      name: "Suresh Menon",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "suresh.menon@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC002",
-      name: "Dr. Rajesh Verma",
+      name: "Course Coordinator (AI)",
       role: "Course Coordinator",
-      email: "rajesh.verma@cdac.in",
+      email: "coordinator.ai@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 02:00 PM"
     },
@@ -1137,18 +1137,18 @@ const initialAuditList = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-26 02:30 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-004.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "suresh.menon@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-26 04:00 PM",
       remarks: "Schedule confirmed. Lab safety compliance must also be examined."
@@ -1157,7 +1157,7 @@ const initialAuditList = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-052",
-      submittedBy: "Suresh Menon (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-12-03 04:30 PM",
       fileName: "Noticing_Sheet_IA-2026-004.pdf",
       summary: "Lab resources audited. GPU software updates recorded; identified missing periodic maintenance log for Server Node 04.",
@@ -1177,10 +1177,10 @@ const initialAuditList = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 02:00 PM", details: "Audit scheduled for Curriculum Design & Review" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 02:30 PM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 04:00 PM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Suresh Menon (Internal Auditor)", timestamp: "2026-12-03 04:30 PM", details: "Auditor shared noticing sheet to QMS Coordinator" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 02:00 PM", details: "Audit scheduled for Curriculum Design & Review" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-26 02:30 PM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-26 04:00 PM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-12-03 04:30 PM", details: "Auditor shared noticing sheet to QMS Coordinator" }
     ]
   },
   {
@@ -1195,20 +1195,20 @@ const initialAuditList = [
     scheduledDate: "2026-12-10",
     internalAuditor: {
       id: "IA001",
-      name: "Vikas Deshmukh",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "vikas.deshmukh@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC001",
-      name: "Priya Sharma",
+      name: "Course Coordinator",
       role: "Course Coordinator",
-      email: "priya.sharma@cdac.in",
+      email: "coordinator@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 03:30 PM"
     },
@@ -1226,7 +1226,7 @@ const initialAuditList = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 03:30 PM", details: "Audit scheduled and submitted to Trust Head for approval" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 03:30 PM", details: "Audit scheduled and submitted to Trust Head for approval" }
     ]
   },
   {
@@ -1241,20 +1241,20 @@ const initialAuditList = [
     scheduledDate: "2026-12-15",
     internalAuditor: {
       id: "IA002",
-      name: "Suresh Menon",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "suresh.menon@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC002",
-      name: "Dr. Rajesh Verma",
+      name: "Course Coordinator (AI)",
       role: "Course Coordinator",
-      email: "rajesh.verma@cdac.in",
+      email: "coordinator.ai@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 04:00 PM"
     },
@@ -1267,7 +1267,7 @@ const initialAuditList = [
     scheduleShared: null,
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-26 04:30 PM",
       remarks: "Audit dates verified and approved. QMS Coordinator may distribute schedule."
@@ -1278,8 +1278,8 @@ const initialAuditList = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 04:00 PM", details: "Audit scheduled for Faculty Development & Competency" },
-      { action: "Schedule Approved by Trust Head", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 04:30 PM", details: "Trust Head approved audit schedule. Ready for QMS distribution." }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 04:00 PM", details: "Audit scheduled for Faculty Development & Competency" },
+      { action: "Schedule Approved by Trust Head", actor: "Trust Head", timestamp: "2026-10-26 04:30 PM", details: "Trust Head approved audit schedule. Ready for QMS distribution." }
     ]
   }
 ];
@@ -1292,7 +1292,7 @@ const initialExternalAuditList = [
     scope: "Annual surveillance evaluation of academic syllabus coverage, student feedback mechanisms, laboratory safety protocols, and institutional quality governance under ISO 9001:2015 Clauses 4 through 10.",
     externalAgency: "TÜV SÜD South Asia Certification Body",
     leadAuditor: {
-      name: "Dr. Robert Vance",
+      name: "Lead External Auditor",
       title: "Lead External Auditor (ISO 9001:2015)",
       agency: "TÜV SÜD South Asia",
       email: "robert.vance@tuvsud.com",
@@ -1312,10 +1312,10 @@ const initialExternalAuditList = [
     incomingScheduleEmail: {
       received: true,
       receivedAt: "2026-11-04 10:15 AM",
-      from: "Dr. Robert Vance <robert.vance@tuvsud.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      from: "Lead External Auditor <robert.vance@tuvsud.com>",
+      to: "QMS Coordinator (QMS Coordinator) <qm@cdac.in>",
       subject: "Official Notice: ISO 9001:2015 Surveillance Audit Plan & Schedule - Centre for Development of Advanced Computing",
-      bodyHtml: "<p>Dear Mr. Rahul Kumar (Lead QMS Coordinator),</p><p>This is to confirm that the annual <strong>ISO 9001:2015 Surveillance Audit</strong> for Centre for Development of Advanced Computing Academic Quality Programs is scheduled for <strong>2026-12-10 starting at 09:30 AM</strong>.</p><p>I will be visiting your campus in person to audit the system, interview course coordinators, inspect physical lab logs, and review institutional quality processes. Please find attached the formal timetable and share it with your division coordinators, Trust Head, and internal audit cell.</p><p>Sincerely,<br/><strong>Dr. Robert Vance</strong><br/>Lead Auditor, TÜV SÜD South Asia</p>",
+      bodyHtml: "<p>Dear Mr. QMS Coordinator (Lead QMS Coordinator),</p><p>This is to confirm that the annual <strong>ISO 9001:2015 Surveillance Audit</strong> for Centre for Development of Advanced Computing Academic Quality Programs is scheduled for <strong>2026-12-10 starting at 09:30 AM</strong>.</p><p>I will be visiting your campus in person to audit the system, interview course coordinators, inspect physical lab logs, and review institutional quality processes. Please find attached the formal timetable and share it with your division coordinators, Trust Head, and internal audit cell.</p><p>Sincerely,<br/><strong>Lead External Auditor</strong><br/>Lead Auditor, TÜV SÜD South Asia</p>",
       attachments: [
         {
           fileName: "TUV_ISO9001_Surveillance_Audit_Plan_2026.pdf",
@@ -1334,9 +1334,9 @@ const initialExternalAuditList = [
     timeline: [
       {
         action: "Audit Schedule Received via Email",
-        actor: "Dr. Robert Vance (Lead External Auditor - TÜV SÜD)",
+        actor: "Lead External Auditor (Lead External Auditor - TÜV SÜD)",
         timestamp: "2026-11-04 10:15 AM",
-        details: "External audit schedule and official timetable received via email by QMS Coordinator Rahul Kumar. Ready to share to all stakeholders."
+        details: "External audit schedule and official timetable received via email by QMS Coordinator QMS Coordinator. Ready to share to all stakeholders."
       }
     ]
   },
@@ -1366,9 +1366,9 @@ const initialExternalAuditList = [
       received: true,
       receivedAt: "2026-10-28 09:30 AM",
       from: "Marcus Sterling <marcus.sterling@dnvgl.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator (QMS Coordinator) <qm@cdac.in>",
       subject: "DNV GL External Quality Audit Timetable & Campus Visit",
-      bodyHtml: "<p>Dear Rahul Kumar,</p><p>We confirm the upcoming on-site surveillance audit on 2026-11-20. The auditor team will arrive at 10:00 AM for physical inspection of labs and course delivery records.</p><p>Regards,<br/>Marcus Sterling, DNV GL</p>",
+      bodyHtml: "<p>Dear QMS Coordinator,</p><p>We confirm the upcoming on-site surveillance audit on 2026-11-20. The auditor team will arrive at 10:00 AM for physical inspection of labs and course delivery records.</p><p>Regards,<br/>Marcus Sterling, DNV GL</p>",
       attachments: [{ fileName: "DNVGL_Audit_Notification_Nov2026.pdf", fileSize: "1.6 MB" }]
     },
 
@@ -1376,14 +1376,14 @@ const initialExternalAuditList = [
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-10-28 02:00 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "Announcement: ISO 9001:2015 External Audit Scheduled on 20-Nov-2026",
       noticeMessage: "All Course Coordinators, Trust Head, and Internal Auditor: External Auditor Marcus Sterling (DNV GL) will visit the office in person on 20-Nov-2026 to audit the system. Please prepare lab manuals, student registers, and course records.",
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -1401,9 +1401,9 @@ const initialExternalAuditList = [
       },
       {
         action: "Schedule & Meeting Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-28 02:00 PM",
-        details: "Meeting schedule and notice dispatched to all Course Coordinators, Trust Head Anita Rao, and Internal Auditor Suresh Menon."
+        details: "Meeting schedule and notice dispatched to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor."
       }
     ]
   },
@@ -1433,23 +1433,23 @@ const initialExternalAuditList = [
       received: true,
       receivedAt: "2026-10-05 09:00 AM",
       from: "Dr. Katherine Price <katherine.price@bsigroup.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator (QMS Coordinator) <qm@cdac.in>",
       subject: "BSI ISO 9001:2015 Recertification Audit Schedule Notice",
-      bodyHtml: "<p>Dear Rahul Kumar,</p><p>Please find attached the schedule for the ISO 9001:2015 Recertification Audit on 2026-10-18. The audit will be conducted in person on campus.</p><p>Regards,<br/>Dr. Katherine Price</p>",
+      bodyHtml: "<p>Dear QMS Coordinator,</p><p>Please find attached the schedule for the ISO 9001:2015 Recertification Audit on 2026-10-18. The audit will be conducted in person on campus.</p><p>Regards,<br/>Dr. Katherine Price</p>",
       attachments: [{ fileName: "BSI_Audit_Notification_Oct2026.pdf", fileSize: "1.4 MB" }]
     },
 
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-10-05 11:30 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "External Audit Notice: BSI Recertification Scheduled on 18-Oct-2026",
       noticeMessage: "External audit schedule received and shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -1459,7 +1459,7 @@ const initialExternalAuditList = [
       receivedAtOffice: "2026-10-18 04:30 PM",
       isScannedPaperCopy: true,
       uploadedAt: "2026-10-19 11:00 AM",
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: "BSI_ISO9001_Scanned_Paper_NC_Report.pdf",
       fileSize: "2.3 MB",
@@ -1472,7 +1472,7 @@ const initialExternalAuditList = [
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 8.5.1",
           description: "Lab log verification timestamps for week 6 experiments were not counter-signed by assigned instructors on physical registers.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-11-15",
           status: "Pending Action"
         },
@@ -1481,7 +1481,7 @@ const initialExternalAuditList = [
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 7.5.3",
           description: "Version stamp missing on practical module appendix documents in student repository.",
-          assignedTo: "Dr. Rajesh Verma (Course Coordinator)",
+          assignedTo: "Course Coordinator (AI)",
           deadline: "2026-11-18",
           status: "Pending Action"
         }
@@ -1501,7 +1501,7 @@ const initialExternalAuditList = [
       },
       {
         action: "Schedule & Meeting Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-05 11:30 AM",
         details: "Schedule details shared with all Course Coordinators, Trust Head, and Internal Auditor."
       },
@@ -1513,7 +1513,7 @@ const initialExternalAuditList = [
       },
       {
         action: "Scanned Copy of Paper NC Uploaded & Shared to Course Coordinators Only",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-19 11:00 AM",
         details: "Scanned copy of physical paper NC document uploaded and shared exclusively to Course Coordinators for review and resolution closure."
       }
@@ -1545,7 +1545,7 @@ const initialExternalAuditList = [
       received: true,
       receivedAt: "2026-09-01 10:00 AM",
       from: "Meera Krishnan <meera.krishnan@sgs.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator (QMS Coordinator) <qm@cdac.in>",
       subject: "SGS ISO 9001:2015 External Audit Schedule - Academic Faculty Review",
       bodyHtml: "<p>Dear QMS Coordinator,</p><p>Please note the confirmed audit timetable for the faculty standards evaluation on 2026-09-12. The auditor will arrive at 09:30 AM.</p>",
       attachments: [{ fileName: "SGS_Audit_Schedule_Sep2026.pdf", fileSize: "1.2 MB" }]
@@ -1554,13 +1554,13 @@ const initialExternalAuditList = [
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-09-01 01:30 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "External Audit Notice: Faculty Development Standards on 12-Sep-2026",
       noticeMessage: "Shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -1569,7 +1569,7 @@ const initialExternalAuditList = [
       receivedAtOffice: "2026-09-12 04:00 PM",
       isScannedPaperCopy: true,
       uploadedAt: "2026-09-13 10:00 AM",
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: "SGS_ISO9001_Scanned_Paper_NC_Report.pdf",
       fileSize: "1.9 MB",
@@ -1582,7 +1582,7 @@ const initialExternalAuditList = [
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 7.2",
           description: "Faculty workshop attendance logs lacked standard dual signature verification.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-09-25",
           status: "Resolved"
         }
@@ -1593,7 +1593,7 @@ const initialExternalAuditList = [
     ncClosure: {
       closed: true,
       closedAt: "2026-09-24 03:15 PM",
-      closedBy: "Priya Sharma (Course Coordinator)",
+      closedBy: "Course Coordinator",
       remarks: "Scanned NC doc downloaded and verified. Standardized dual counter-signature protocol implemented across all academic departments. Archival verified.",
       actionPlan: "Standard Operating Procedure (SOP-ACA-04) revised. All instructors re-trained on digital counter-signature archiving."
     },
@@ -1610,7 +1610,7 @@ const initialExternalAuditList = [
       },
       {
         action: "Schedule & Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-09-01 01:30 PM",
         details: "Shared to Course Coordinators, Trust Head, and Internal Auditor."
       },
@@ -1622,13 +1622,13 @@ const initialExternalAuditList = [
       },
       {
         action: "Scanned NC Document Uploaded (Course Coord Only)",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-09-13 10:00 AM",
         details: "Scanned paper NC uploaded and shared exclusively with Course Coordinators."
       },
       {
         action: "NC Document Downloaded & Closed by Course Coordinator",
-        actor: "Priya Sharma (Course Coordinator)",
+        actor: "Course Coordinator",
         timestamp: "2026-09-24 03:15 PM",
         details: "Course Coordinator downloaded scanned NC document, conducted root cause analysis, implemented corrective actions, and closed the NC."
       }
@@ -1660,7 +1660,7 @@ const initialExternalAuditList = [
       received: true,
       receivedAt: "2026-05-02 11:00 AM",
       from: "Arthur Pendelton <arthur.pendelton@bureauveritas.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator (QMS Coordinator) <qm@cdac.in>",
       subject: "Bureau Veritas ISO 9001:2015 Recertification Plan",
       bodyHtml: "<p>Dear QMS Coordinator,</p><p>Please find enclosed the confirmed schedule for the triennial ISO 9001:2015 system re-certification audit on 2026-05-15.</p>",
       attachments: [{ fileName: "BV_Recertification_Audit_Schedule.pdf", fileSize: "2.1 MB" }]
@@ -1669,13 +1669,13 @@ const initialExternalAuditList = [
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-05-02 03:00 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "Bureau Veritas Triennial Recertification Audit Schedule",
       noticeMessage: "Shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -1684,7 +1684,7 @@ const initialExternalAuditList = [
       receivedAtOffice: "2026-05-15 05:00 PM",
       isScannedPaperCopy: true,
       uploadedAt: "2026-05-16 10:30 AM",
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: "BV_ISO9001_Scanned_Paper_NC_Report_Signed.pdf",
       fileSize: "1.8 MB",
@@ -1696,7 +1696,7 @@ const initialExternalAuditList = [
           type: "Opportunity for Improvement",
           clause: "ISO 9001:2015 Clause 9.1.2",
           description: "Archive retention policy for student satisfaction feedback standardized to 5 years.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-05-28",
           status: "Resolved"
         }
@@ -1706,7 +1706,7 @@ const initialExternalAuditList = [
     ncClosure: {
       closed: true,
       closedAt: "2026-05-26 02:00 PM",
-      closedBy: "Priya Sharma (Course Coordinator)",
+      closedBy: "Course Coordinator",
       remarks: "Scanned paper NC downloaded. 5-year digital archival policy established and implemented.",
       actionPlan: "Standardized record retention schedule."
     },
@@ -1726,7 +1726,7 @@ const initialExternalAuditList = [
     qmsClosure: {
       closed: true,
       closedAt: "2026-05-30 11:00 AM",
-      closedBy: "Rahul Kumar (QMS Coordinator)",
+      closedBy: "QMS Coordinator",
       remarks: "ISO 9001:2015 re-certification audit successfully completed and closed with full compliance certification following in-person auditor endorsement."
     },
 
@@ -1739,7 +1739,7 @@ const initialExternalAuditList = [
       },
       {
         action: "Schedule & Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-05-02 03:00 PM",
         details: "Dispatched to all Course Coordinators, Trust Head, and Internal Auditor."
       },
@@ -1751,13 +1751,13 @@ const initialExternalAuditList = [
       },
       {
         action: "Scanned NC Document Uploaded (Course Coord Only)",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-05-16 10:30 AM",
         details: "Scanned copy of physical paper NC document uploaded and shared exclusively to Course Coordinators."
       },
       {
         action: "NC Document Downloaded & Closed by Course Coordinator",
-        actor: "Priya Sharma (Course Coordinator)",
+        actor: "Course Coordinator",
         timestamp: "2026-05-26 02:00 PM",
         details: "Course Coordinator downloaded scanned NC document, completed corrective actions, and submitted closure."
       },
@@ -1769,7 +1769,7 @@ const initialExternalAuditList = [
       },
       {
         action: "External Audit Process Officially Closed",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-05-30 11:00 AM",
         details: "Full process closed by QMS Coordinator. ISO 9001:2015 certification cycle successfully renewed."
       }

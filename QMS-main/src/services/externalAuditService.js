@@ -166,7 +166,7 @@ export const externalAuditService = {
     const currentList = getStoredExternalAudits();
     const now = formatNow();
     const auditId = auditData.id || `EA-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
-    const auditorName = auditData.auditorName || auditData.leadAuditor?.name || "Dr. Robert Vance";
+    const auditorName = auditData.auditorName || auditData.leadAuditor?.name || "Lead External Auditor";
     const agencyName = auditData.externalAgency || "TÜV SÜD South Asia Certification Body";
 
     const newAudit = {
@@ -267,11 +267,11 @@ export const externalAuditService = {
         noticeSubject: noticeSubject || `External Audit Schedule Notice: ${existing.title} on ${existing.scheduledDate}`,
         noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${existing.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${existing.scheduledDate} at ${existing.scheduledTime}. The auditor will visit the campus in person to audit the system.`,
         recipients: [
-          { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-          { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-          { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-          { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
-          { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+          { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+          { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+          { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+          { role: "Course Coordinator", name: "Course Coordinator (Cyber Security)", email: "coordinator.cyber@cdac.in" },
+          { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
         ]
       },
       timeline: [
@@ -280,7 +280,7 @@ export const externalAuditService = {
           action: "Schedule & Meeting Details Shared to All Stakeholders",
           actor: "Rahul Kumar (QMS Coordinator)",
           timestamp: now,
-          details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Anita Rao, and Internal Auditor Suresh Menon.`
+          details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor.`
         }
       ]
     };
@@ -332,7 +332,7 @@ export const externalAuditService = {
             type: "Minor Non-Conformance",
             clause: "ISO 9001:2015 Clause 8.5.1",
             description: "Course delivery schedules and practical lab exercise counter-signatures require standard digital archiving.",
-            assignedTo: "Priya Sharma (Course Coordinator)",
+            assignedTo: "Course Coordinator (Course Coordinator)",
             deadline: ncData.targetClosureDate || "2026-12-15",
             status: "Pending Action"
           }
@@ -373,7 +373,7 @@ export const externalAuditService = {
     if (!existing) return null;
 
     const now = formatNow();
-    const actorName = resolutionData.closedBy || "Priya Sharma (Course Coordinator)";
+    const actorName = resolutionData.closedBy || "Course Coordinator (Course Coordinator)";
 
     const updatedFindings = (existing.ncDocument?.findings || []).map((f) => ({
       ...f,

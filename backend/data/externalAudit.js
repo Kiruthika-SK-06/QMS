@@ -37,9 +37,9 @@ export let externalAuditData = [
       received: true,
       receivedAt: "2026-11-04 10:15 AM",
       from: "Dr. Robert Vance <robert.vance@tuvsud.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator <qm@cdac.in>",
       subject: "Official Notice: ISO 9001:2015 Surveillance Audit Plan & Schedule - C-DAC",
-      bodyHtml: "<p>Dear Mr. Rahul Kumar (Lead QMS Coordinator),</p><p>This is to confirm that the annual <strong>ISO 9001:2015 Surveillance Audit</strong> for C-DAC Academic Quality Programs is scheduled for <strong>2026-12-10 starting at 09:30 AM</strong>.</p><p>I will be visiting your campus in person to audit the system, interview course coordinators, inspect physical lab logs, and review institutional quality processes. Please find attached the formal timetable and share it with your division coordinators, Trust Head, and internal audit cell.</p><p>Sincerely,<br/><strong>Dr. Robert Vance</strong><br/>Lead Auditor, TÜV SÜD South Asia</p>",
+      bodyHtml: "<p>Dear Mr. QMS Coordinator (Lead QMS Coordinator),</p><p>This is to confirm that the annual <strong>ISO 9001:2015 Surveillance Audit</strong> for C-DAC Academic Quality Programs is scheduled for <strong>2026-12-10 starting at 09:30 AM</strong>.</p><p>I will be visiting your campus in person to audit the system, interview course coordinators, inspect physical lab logs, and review institutional quality processes. Please find attached the formal timetable and share it with your division coordinators, Trust Head, and internal audit cell.</p><p>Sincerely,<br/><strong>Dr. Robert Vance</strong><br/>Lead Auditor, TÜV SÜD South Asia</p>",
       attachments: [
         {
           fileName: "TUV_ISO9001_Surveillance_Audit_Plan_2026.pdf",
@@ -60,7 +60,7 @@ export let externalAuditData = [
         action: "Audit Schedule Received via Email",
         actor: "Dr. Robert Vance (Lead External Auditor - TÜV SÜD)",
         timestamp: "2026-11-04 10:15 AM",
-        details: "External audit schedule and official timetable received via email by QMS Coordinator Rahul Kumar. Ready to share to all stakeholders."
+        details: "External audit schedule and official timetable received via email by QMS Coordinator QMS Coordinator. Ready to share to all stakeholders."
       }
     ]
   },
@@ -90,9 +90,9 @@ export let externalAuditData = [
       received: true,
       receivedAt: "2026-10-28 09:30 AM",
       from: "Marcus Sterling <marcus.sterling@dnvgl.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator <qm@cdac.in>",
       subject: "DNV GL External Quality Audit Timetable & Campus Visit",
-      bodyHtml: "<p>Dear Rahul Kumar,</p><p>We confirm the upcoming on-site surveillance audit on 2026-11-20. The auditor team will arrive at 10:00 AM for physical inspection of labs and course delivery records.</p><p>Regards,<br/>Marcus Sterling, DNV GL</p>",
+      bodyHtml: "<p>Dear QMS Coordinator,</p><p>We confirm the upcoming on-site surveillance audit on 2026-11-20. The auditor team will arrive at 10:00 AM for physical inspection of labs and course delivery records.</p><p>Regards,<br/>Marcus Sterling, DNV GL</p>",
       attachments: [{ fileName: "DNVGL_Audit_Notification_Nov2026.pdf", fileSize: "1.6 MB" }]
     },
 
@@ -100,14 +100,14 @@ export let externalAuditData = [
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-10-28 02:00 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "Announcement: ISO 9001:2015 External Audit Scheduled on 20-Nov-2026",
       noticeMessage: "All Course Coordinators, Trust Head, and Internal Auditor: External Auditor Marcus Sterling (DNV GL) will visit the office in person on 20-Nov-2026 to audit the system. Please prepare lab manuals, student registers, and course records.",
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
         { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -125,9 +125,9 @@ export let externalAuditData = [
       },
       {
         action: "Schedule & Meeting Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-28 02:00 PM",
-        details: "Meeting schedule and notice dispatched to all Course Coordinators, Trust Head Anita Rao, and Internal Auditor Suresh Menon."
+        details: "Meeting schedule and notice dispatched to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor."
       }
     ]
   },
@@ -157,23 +157,23 @@ export let externalAuditData = [
       received: true,
       receivedAt: "2026-10-05 09:00 AM",
       from: "Dr. Katherine Price <katherine.price@bsigroup.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator <qm@cdac.in>",
       subject: "BSI ISO 9001:2015 Recertification Audit Schedule Notice",
-      bodyHtml: "<p>Dear Rahul Kumar,</p><p>Please find attached the schedule for the ISO 9001:2015 Recertification Audit on 2026-10-18. The audit will be conducted in person on campus.</p><p>Regards,<br/>Dr. Katherine Price</p>",
+      bodyHtml: "<p>Dear QMS Coordinator,</p><p>Please find attached the schedule for the ISO 9001:2015 Recertification Audit on 2026-10-18. The audit will be conducted in person on campus.</p><p>Regards,<br/>Dr. Katherine Price</p>",
       attachments: [{ fileName: "BSI_Audit_Notification_Oct2026.pdf", fileSize: "1.4 MB" }]
     },
 
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-10-05 11:30 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "External Audit Notice: BSI Recertification Scheduled on 18-Oct-2026",
       noticeMessage: "External audit schedule received and shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
         { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -183,7 +183,7 @@ export let externalAuditData = [
       receivedAtOffice: "2026-10-18 04:30 PM",
       isScannedPaperCopy: true,
       uploadedAt: "2026-10-19 11:00 AM",
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: "BSI_ISO9001_Scanned_Paper_NC_Report.pdf",
       fileSize: "2.3 MB",
@@ -196,7 +196,7 @@ export let externalAuditData = [
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 8.5.1",
           description: "Lab log verification timestamps for week 6 experiments were not counter-signed by assigned instructors on physical registers.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-11-15",
           status: "Pending Action"
         },
@@ -225,7 +225,7 @@ export let externalAuditData = [
       },
       {
         action: "Schedule & Meeting Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-05 11:30 AM",
         details: "Schedule details shared with all Course Coordinators, Trust Head, and Internal Auditor."
       },
@@ -237,7 +237,7 @@ export let externalAuditData = [
       },
       {
         action: "Scanned Copy of Paper NC Uploaded & Shared to Course Coordinators Only",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-19 11:00 AM",
         details: "Scanned copy of physical paper NC document uploaded and shared exclusively to Course Coordinators for review and resolution closure."
       }
@@ -269,7 +269,7 @@ export let externalAuditData = [
       received: true,
       receivedAt: "2026-09-01 10:00 AM",
       from: "Meera Krishnan <meera.krishnan@sgs.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator <qm@cdac.in>",
       subject: "SGS ISO 9001:2015 External Audit Schedule - Academic Faculty Review",
       bodyHtml: "<p>Dear QMS Coordinator,</p><p>Please note the confirmed audit timetable for the faculty standards evaluation on 2026-09-12. The auditor will arrive at 09:30 AM.</p>",
       attachments: [{ fileName: "SGS_Audit_Schedule_Sep2026.pdf", fileSize: "1.2 MB" }]
@@ -278,13 +278,13 @@ export let externalAuditData = [
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-09-01 01:30 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "External Audit Notice: Faculty Development Standards on 12-Sep-2026",
       noticeMessage: "Shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -293,7 +293,7 @@ export let externalAuditData = [
       receivedAtOffice: "2026-09-12 04:00 PM",
       isScannedPaperCopy: true,
       uploadedAt: "2026-09-13 10:00 AM",
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: "SGS_ISO9001_Scanned_Paper_NC_Report.pdf",
       fileSize: "1.9 MB",
@@ -306,7 +306,7 @@ export let externalAuditData = [
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 7.2",
           description: "Faculty workshop attendance logs lacked standard dual signature verification.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-09-25",
           status: "Resolved"
         }
@@ -317,7 +317,7 @@ export let externalAuditData = [
     ncClosure: {
       closed: true,
       closedAt: "2026-09-24 03:15 PM",
-      closedBy: "Priya Sharma (Course Coordinator)",
+      closedBy: "Course Coordinator",
       remarks: "Scanned NC doc downloaded and verified. Standardized dual counter-signature protocol implemented across all academic departments. Archival verified.",
       actionPlan: "Standard Operating Procedure (SOP-ACA-04) revised. All instructors re-trained on digital counter-signature archiving."
     },
@@ -334,7 +334,7 @@ export let externalAuditData = [
       },
       {
         action: "Schedule & Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-09-01 01:30 PM",
         details: "Shared to Course Coordinators, Trust Head, and Internal Auditor."
       },
@@ -346,13 +346,13 @@ export let externalAuditData = [
       },
       {
         action: "Scanned NC Document Uploaded (Course Coord Only)",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-09-13 10:00 AM",
         details: "Scanned paper NC uploaded and shared exclusively with Course Coordinators."
       },
       {
         action: "NC Document Downloaded & Closed by Course Coordinator",
-        actor: "Priya Sharma (Course Coordinator)",
+        actor: "Course Coordinator",
         timestamp: "2026-09-24 03:15 PM",
         details: "Course Coordinator downloaded scanned NC document, conducted root cause analysis, implemented corrective actions, and closed the NC."
       }
@@ -384,7 +384,7 @@ export let externalAuditData = [
       received: true,
       receivedAt: "2026-05-02 11:00 AM",
       from: "Arthur Pendelton <arthur.pendelton@bureauveritas.com>",
-      to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+      to: "QMS Coordinator <qm@cdac.in>",
       subject: "Bureau Veritas ISO 9001:2015 Recertification Plan",
       bodyHtml: "<p>Dear QMS Coordinator,</p><p>Please find enclosed the confirmed schedule for the triennial ISO 9001:2015 system re-certification audit on 2026-05-15.</p>",
       attachments: [{ fileName: "BV_Recertification_Audit_Schedule.pdf", fileSize: "2.1 MB" }]
@@ -393,13 +393,13 @@ export let externalAuditData = [
     shareWithStakeholders: {
       shared: true,
       sharedAt: "2026-05-02 03:00 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: "Bureau Veritas Triennial Recertification Audit Schedule",
       noticeMessage: "Shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
@@ -408,7 +408,7 @@ export let externalAuditData = [
       receivedAtOffice: "2026-05-15 05:00 PM",
       isScannedPaperCopy: true,
       uploadedAt: "2026-05-16 10:30 AM",
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: "BV_ISO9001_Scanned_Paper_NC_Report_Signed.pdf",
       fileSize: "1.8 MB",
@@ -420,7 +420,7 @@ export let externalAuditData = [
           type: "Opportunity for Improvement",
           clause: "ISO 9001:2015 Clause 9.1.2",
           description: "Archive retention policy for student satisfaction feedback standardized to 5 years.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-05-28",
           status: "Resolved"
         }
@@ -430,7 +430,7 @@ export let externalAuditData = [
     ncClosure: {
       closed: true,
       closedAt: "2026-05-26 02:00 PM",
-      closedBy: "Priya Sharma (Course Coordinator)",
+      closedBy: "Course Coordinator",
       remarks: "Scanned paper NC downloaded. 5-year digital archival policy established and implemented.",
       actionPlan: "Standardized record retention schedule."
     },
@@ -450,7 +450,7 @@ export let externalAuditData = [
     qmsClosure: {
       closed: true,
       closedAt: "2026-05-30 11:00 AM",
-      closedBy: "Rahul Kumar (QMS Coordinator)",
+      closedBy: "QMS Coordinator",
       remarks: "ISO 9001:2015 re-certification audit successfully completed and closed with full compliance certification following in-person auditor endorsement."
     },
 
@@ -463,7 +463,7 @@ export let externalAuditData = [
       },
       {
         action: "Schedule & Details Shared to All Stakeholders",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-05-02 03:00 PM",
         details: "Dispatched to all Course Coordinators, Trust Head, and Internal Auditor."
       },
@@ -475,13 +475,13 @@ export let externalAuditData = [
       },
       {
         action: "Scanned NC Document Uploaded (Course Coord Only)",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-05-16 10:30 AM",
         details: "Scanned copy of physical paper NC document uploaded and shared exclusively to Course Coordinators."
       },
       {
         action: "NC Document Downloaded & Closed by Course Coordinator",
-        actor: "Priya Sharma (Course Coordinator)",
+        actor: "Course Coordinator",
         timestamp: "2026-05-26 02:00 PM",
         details: "Course Coordinator downloaded scanned NC document, completed corrective actions, and submitted closure."
       },
@@ -493,7 +493,7 @@ export let externalAuditData = [
       },
       {
         action: "External Audit Process Officially Closed",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-05-30 11:00 AM",
         details: "Full process closed by QMS Coordinator. ISO 9001:2015 certification cycle successfully renewed."
       }

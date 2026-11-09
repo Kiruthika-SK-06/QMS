@@ -206,12 +206,12 @@ export default function ManagementReviewMeeting() {
       "Recommendations for continual curriculum modernization"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Team Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Priya Sharma (Course Coordinator)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)",
-      "Sunita Patil (Course Coordinator - Cyber Security)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator",
+      "Course Coordinator (AI)",
+      "Course Coordinator (Cyber Security)"
     ]
   });
   const [newAgendaItem, setNewAgendaItem] = useState("");
@@ -236,7 +236,7 @@ export default function ManagementReviewMeeting() {
       {
         id: "ACT-01",
         task: "Incorporate updated course delivery modules into syllabus",
-        assignee: "Priya Sharma (Course Coordinator)",
+        assignee: "Course Coordinator",
         deadline: "2026-11-30",
         status: "In Progress"
       }
@@ -278,12 +278,12 @@ export default function ManagementReviewMeeting() {
         "Recommendations for continual curriculum modernization"
       ],
       attendees: [
-        "Rahul Kumar (QMS Coordinator)",
-        "Anita Rao (Team Head)",
-        "Suresh Menon (Internal Auditor)",
-        "Priya Sharma (Course Coordinator)",
-        "Dr. Rajesh Verma (Course Coordinator - AI)",
-        "Sunita Patil (Course Coordinator - Cyber Security)"
+        "QMS Coordinator",
+        "Trust Head",
+        "Internal Auditor",
+        "Course Coordinator",
+        "Course Coordinator (AI)",
+        "Course Coordinator (Cyber Security)"
       ]
     });
     setShowPlanModal(true);
@@ -318,7 +318,7 @@ export default function ManagementReviewMeeting() {
         {
           id: "ACT-01",
           task: "Integrate revised practical lab assignments into semester schedule",
-          assignee: "Priya Sharma (Course Coordinator)",
+          assignee: "Course Coordinator",
           deadline: "2026-11-25",
           status: "In Progress"
         },
@@ -360,7 +360,7 @@ export default function ManagementReviewMeeting() {
       await addMRM(planForm);
       showToast(
         planForm.requestApprovalImmediately
-          ? "MRM planned and shared to Trust Head (Anita Rao) for approval!"
+          ? "MRM planned and shared to Trust Head for approval!"
           : "MRM meeting planned and scheduled successfully!"
       );
     } catch (err) {
@@ -372,13 +372,13 @@ export default function ManagementReviewMeeting() {
 
   // Submit Stage 1 -> Stage 2: Share to Team Head for approval
   const handleShareToTeamHead = async (mrm) => {
-    if (!window.confirm(`Share "${mrm.title}" to Trust Head (Anita Rao) for formal approval?`)) {
+    if (!window.confirm(`Share "${mrm.title}" to Trust Head for formal approval?`)) {
       return;
     }
     setSubmitting(true);
     try {
       await requestMRMApproval(mrm.id);
-      showToast("Meeting proposal shared to Trust Head (Anita Rao) for approval!");
+      showToast("Meeting proposal shared to Trust Head for approval!");
     } catch (err) {
       alert(err.message || "Failed to share for approval");
     } finally {
@@ -466,9 +466,9 @@ Meeting Title   : ${mrm.title}
 Meeting ID      : ${mrm.id}
 Date & Time     : ${mrm.scheduledDate || "N/A"} at ${mrm.scheduledTime || "10:30 AM"}
 Venue           : ${mrm.venue || "Main Boardroom"}
-Planned By      : ${mrm.plannedBy || "Rahul Kumar (QMS Coordinator)"}
-Approved By     : ${mrm.approvals?.teamHead?.approverName || "Anita Rao (Team Head)"}
-MoM Uploaded By : ${mrm.momFile?.uploadedBy || "Rahul Kumar (QMS Coordinator)"}
+Planned By      : ${mrm.plannedBy || "QMS Coordinator"}
+Approved By     : ${mrm.approvals?.teamHead?.approverName || "Trust Head"}
+MoM Uploaded By : ${mrm.momFile?.uploadedBy || "QMS Coordinator"}
 Upload Date     : ${mrm.momFile?.uploadedAt || new Date().toLocaleDateString()}
 ======================================================================
 
@@ -560,7 +560,7 @@ Controlled Document - Published for all Course Staff and Auditors
     const items = mrm.momFile?.actionItems || [];
     const myItems = items.filter(
       (act) =>
-        act.assignee?.toLowerCase().includes("priya") ||
+        act.assignee?.toLowerCase().includes("coordinator") ||
         act.assignee?.toLowerCase().includes("course coordinator") ||
         act.assignee?.toLowerCase().includes(currentUser?.name?.toLowerCase() || "")
     );
@@ -852,7 +852,7 @@ Controlled Document - Published for all Course Staff and Auditors
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#334155" }}>
                     <UserCheck size={15} color="#2563eb" />
-                    <span><strong>Planner:</strong> {mrm.plannedBy || "Rahul Kumar (QMS)"}</span>
+                    <span><strong>Planner:</strong> {mrm.plannedBy || "QMS Coordinator"}</span>
                   </div>
                 </div>
 
@@ -1274,7 +1274,7 @@ Controlled Document - Published for all Course Staff and Auditors
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 <div><strong>Scheduled Date:</strong> {selectedMRM.scheduledDate} at {selectedMRM.scheduledTime || "10:30 AM"}</div>
                 <div><strong>Venue:</strong> {selectedMRM.venue}</div>
-                <div><strong>Planner:</strong> {selectedMRM.plannedBy || "Rahul Kumar (QMS Coordinator)"}</div>
+                <div><strong>Planner:</strong> {selectedMRM.plannedBy || "QMS Coordinator"}</div>
                 <div><strong>Target Period:</strong> {selectedMRM.targetMonth || "Q4"}</div>
               </div>
 
@@ -1370,13 +1370,13 @@ Controlled Document - Published for all Course Staff and Auditors
                   <span style={{ fontWeight: "600", color: "#1e40af" }}>All Course Coordinators:</span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
                     <span style={{ padding: "2px 8px", background: "#eff6ff", borderRadius: "4px", border: "1px solid #bfdbfe", color: "#1e40af" }}>
-                      Priya Sharma (coordinator@cdac.in)
+                      Course Coordinator (coordinator@cdac.in)
                     </span>
                     <span style={{ padding: "2px 8px", background: "#eff6ff", borderRadius: "4px", border: "1px solid #bfdbfe", color: "#1e40af" }}>
-                      Dr. Rajesh Verma (rajesh.verma@cdac.in)
+                      Course Coordinator (AI) (coordinator.ai@cdac.in)
                     </span>
                     <span style={{ padding: "2px 8px", background: "#eff6ff", borderRadius: "4px", border: "1px solid #bfdbfe", color: "#1e40af" }}>
-                      Sunita Patil (sunita.patil@cdac.in)
+                      Course Coordinator (Cyber Security) (coordinator.cyber@cdac.in)
                     </span>
                   </div>
                 </div>
@@ -1385,7 +1385,7 @@ Controlled Document - Published for all Course Staff and Auditors
                   <span style={{ fontWeight: "600", color: "#166534" }}>Team Head:</span>
                   <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
                     <span style={{ padding: "2px 8px", background: "#f0fdf4", borderRadius: "4px", border: "1px solid #bbf7d0", color: "#166534" }}>
-                      Anita Rao (head@cdac.in)
+                      Trust Head (head@cdac.in)
                     </span>
                   </div>
                 </div>
@@ -1394,7 +1394,7 @@ Controlled Document - Published for all Course Staff and Auditors
                   <span style={{ fontWeight: "600", color: "#6b21a8" }}>Internal Auditor:</span>
                   <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
                     <span style={{ padding: "2px 8px", background: "#faf5ff", borderRadius: "4px", border: "1px solid #e9d5ff", color: "#6b21a8" }}>
-                      Suresh Menon (auditor@cdac.in)
+                      Internal Auditor (auditor@cdac.in)
                     </span>
                   </div>
                 </div>
@@ -1405,7 +1405,7 @@ Controlled Document - Published for all Course Staff and Auditors
             <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", marginBottom: "18px" }}>
               <div style={{ padding: "10px 14px", background: "#f1f5f9", borderBottom: "1px solid #cbd5e1", fontSize: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div><strong>Subject:</strong> Official Notice: {selectedMRM.title} Scheduled for {selectedMRM.scheduledDate} at {selectedMRM.scheduledTime || "10:30 AM"}</div>
-                <div><strong>From:</strong> Rahul Kumar &lt;qms@cdac.in&gt; (QMS Coordinator)</div>
+                <div><strong>From:</strong> QMS Coordinator &lt;qms@cdac.in&gt; (QMS Coordinator)</div>
               </div>
               <div style={{ padding: "16px", fontSize: "13px", lineHeight: "1.6", color: "#334155", background: "#ffffff" }}>
                 <p style={{ marginTop: 0 }}>Dear Course Coordinators, Team Head, and Internal Auditor,</p>
@@ -1606,7 +1606,7 @@ Controlled Document - Published for all Course Staff and Auditors
                     {selectedMRM.momFile?.fileName || `MRM_${selectedMRM.id}_MoM.pdf`}
                   </h4>
                   <span style={{ fontSize: "12px", color: "#166534" }}>
-                    File Size: {selectedMRM.momFile?.fileSize || "2.4 MB"} • Uploaded by {selectedMRM.momFile?.uploadedBy || "Rahul Kumar (QMS Coordinator)"}
+                    File Size: {selectedMRM.momFile?.fileSize || "2.4 MB"} • Uploaded by {selectedMRM.momFile?.uploadedBy || "QMS Coordinator"}
                   </span>
                 </div>
               </div>

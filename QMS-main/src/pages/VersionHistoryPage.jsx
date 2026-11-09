@@ -156,7 +156,7 @@ export default function VersionHistoryPage() {
             stage: 7,
             stageLabel: "Stage 7: Audit Concluded & Closed",
             action: "Final Audit Closure Verified",
-            actor: audit.closure?.closedBy || "Rahul Kumar (QMS Coordinator)",
+            actor: audit.closure?.closedBy || "QMS Coordinator",
             timestamp: audit.closure?.closedAt || audit.scheduledDate,
             details: audit.closure?.finalRemarks || "Audit concluded with complete verification of all corrective actions.",
             link: "/internal-audit"
@@ -217,7 +217,7 @@ export default function VersionHistoryPage() {
             stage: 2,
             stageLabel: "Step 2: Meeting Shared to Stakeholders",
             action: "Audit Notice Dispatched by QMS Coordinator",
-            actor: audit.shareWithStakeholders.sharedBy || "Rahul Kumar (QMS Coordinator)",
+            actor: audit.shareWithStakeholders.sharedBy || "QMS Coordinator",
             timestamp: audit.shareWithStakeholders.sharedAt || audit.scheduledDate,
             details: "External audit schedule and agenda shared to all Course Coordinators, Trust Head, and Internal Auditor.",
             link: "/external-audit"
@@ -233,7 +233,7 @@ export default function VersionHistoryPage() {
             stage: 3,
             stageLabel: "Step 3: Scanned Paper NC Uploaded",
             action: "On-Site Paper NC Scanned & Uploaded",
-            actor: "Rahul Kumar (QMS Coordinator)",
+            actor: "QMS Coordinator",
             timestamp: audit.scheduledDate,
             details: `Physical on-site audit conducted. Scanned paper NC document (${audit.ncDocument.fileName || "Scanned_NC.pdf"}) shared exclusively to Course Coordinators.`,
             link: "/external-audit"
@@ -249,7 +249,7 @@ export default function VersionHistoryPage() {
             stage: 4,
             stageLabel: "Step 4: NC Resolution Closed",
             action: "Scanned Paper NC Downloaded & Resolved",
-            actor: audit.ncClosure.closedBy || "Priya Sharma (Course Coordinator)",
+            actor: audit.ncClosure.closedBy || "Course Coordinator",
             timestamp: audit.ncClosure.closedAt || audit.scheduledDate,
             details: audit.ncClosure.remarks || "Root Cause Analysis (RCA) completed and corrective action plan verified by Course Coordinator.",
             link: "/external-audit"
@@ -265,7 +265,7 @@ export default function VersionHistoryPage() {
             stage: 5,
             stageLabel: "Step 5: ISO 9001 Certified & Closed",
             action: "External Auditor Approval Endorsed & Process Closed",
-            actor: audit.processClosure?.closedBy || "Rahul Kumar (QMS Coordinator)",
+            actor: audit.processClosure?.closedBy || "QMS Coordinator",
             timestamp: audit.processClosure?.closedAt || audit.externalAuditorApproval?.approvedAt || audit.scheduledDate,
             details: `External auditor reviewed resolutions and endorsed ISO 9001:2015 Certification (${audit.externalAuditorApproval?.certificateNumber || "ISO-9001-CERT"}). Entire audit cycle closed.`,
             link: "/external-audit"

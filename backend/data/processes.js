@@ -3,7 +3,7 @@ export let processesData = [
   {
     id: "PROC-001",
     name: "Course Administration",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     employees: 12,
     active: 5,
     completed: 31,
@@ -45,7 +45,7 @@ export let processesData = [
   {
     id: "PROC-004",
     name: "Course Management",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     employees: 16,
     active: 4,
     completed: 28,
@@ -59,7 +59,7 @@ export let processesData = [
   {
     id: "PROC-005",
     name: "IT Support Management",
-    owner: "Karthik Verma",
+    owner: "Course Coordinator (IT)",
     employees: 18,
     active: 6,
     completed: 40,
@@ -73,7 +73,7 @@ export let processesData = [
   {
     id: "PROC-006",
     name: "Quality Review & MRM",
-    owner: "Anita Rao",
+    owner: "Trust Head",
     employees: 8,
     active: 3,
     completed: 22,

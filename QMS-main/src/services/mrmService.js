@@ -203,11 +203,11 @@ export const mrmService = {
       ],
       attendees: Array.isArray(payload.attendees) && payload.attendees.length > 0 ? payload.attendees : [
         "Rahul Kumar (QMS Coordinator)",
-        "Anita Rao (Trust Head)",
-        "Suresh Menon (Internal Auditor)",
-        "Priya Sharma (Course Coordinator)",
-        "Dr. Rajesh Verma (Course Coordinator - AI)",
-        "Sunita Patil (Course Coordinator - Cyber Security)"
+        "Trust Head",
+        "Internal Auditor",
+        "Course Coordinator (Course Coordinator)",
+        "Course Coordinator (AI)",
+        "Course Coordinator (Cyber Security)"
       ],
       approvals: {
         teamHead: {
@@ -277,7 +277,7 @@ export const mrmService = {
     const existing = currentList.find((m) => m.id === id);
     if (!existing) return null;
 
-    const approverName = "Anita Rao";
+    const approverName = "Trust Head";
     const approverRole = "Trust Head";
     const approvalTimestamp = formatNow();
 
@@ -310,7 +310,7 @@ export const mrmService = {
           actor: `${approverName} (${approverRole})`,
           timestamp: approvalTimestamp,
           version: existing.version || "1.0",
-          details: remarks || "Meeting schedule and agenda ratified by Trust Head Anita Rao. Ready for email notification."
+          details: remarks || "Meeting schedule and agenda ratified by Trust Head Trust Head. Ready for email notification."
         }
       ]
     };
@@ -341,11 +341,11 @@ export const mrmService = {
     const dispatchTimestamp = formatNow();
 
     const recipients = [
-      { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-      { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-      { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
-      { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-      { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+      { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+      { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+      { role: "Course Coordinator", name: "Course Coordinator (Cyber Security)", email: "coordinator.cyber@cdac.in" },
+      { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+      { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
     ];
 
     const updated = {
@@ -420,7 +420,7 @@ export const mrmService = {
         {
           id: "ACT-01",
           task: "Integrate updated course delivery modules into syllabus",
-          assignee: "Priya Sharma (Course Coordinator)",
+          assignee: "Course Coordinator (Course Coordinator)",
           deadline: "2026-11-30",
           status: "In Progress"
         }
@@ -480,7 +480,7 @@ export const mrmService = {
           actor: "Rahul Kumar (QMS Coordinator)",
           timestamp: formatNow(),
           version: existing.version || "1.0",
-          details: "Proposal submitted to Trust Head Anita Rao for formal authorization."
+          details: "Proposal submitted to Trust Head Trust Head for formal authorization."
         }
       ]
     };
@@ -511,7 +511,7 @@ export const mrmService = {
       trustHeadApproval: {
         decision: "Changes Requested",
         approved: false,
-        approvedBy: "Anita Rao (Trust Head)",
+        approvedBy: "Trust Head",
         approvedAt: formatNow(),
         remarks
       },
@@ -519,7 +519,7 @@ export const mrmService = {
         ...(existing.timeline || []),
         {
           action: "Revisions Requested by Trust Head",
-          actor: "Anita Rao (Trust Head)",
+          actor: "Trust Head",
           timestamp: formatNow(),
           version: existing.version || "1.0",
           details: `Requested revisions: ${remarks}`

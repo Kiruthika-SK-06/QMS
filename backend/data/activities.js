@@ -5,7 +5,7 @@ export let activitiesData = [
     title: "Version Created",
     detail: "Feedback Form (v3.0)",
     text: "Version 3.0 created for Feedback Form",
-    actor: "Priya Sharma",
+    actor: "Course Coordinator",
     time: "18 Sep 2026, 10:42 AM",
     tone: "blue",
     timestamp: "2026-09-18T10:42:00Z"
@@ -15,7 +15,7 @@ export let activitiesData = [
     title: "Document Submitted",
     detail: "Training Feedback Template",
     text: "Document submitted for QM review: Training Feedback Template",
-    actor: "Priya Sharma",
+    actor: "Course Coordinator",
     time: "17 Sep 2026, 04:18 PM",
     tone: "amber",
     timestamp: "2026-09-17T16:18:00Z"
@@ -25,7 +25,7 @@ export let activitiesData = [
     title: "Changes Requested",
     detail: "Joining Form",
     text: "QM Group requested changes for Joining Form",
-    actor: "Rahul Kumar",
+    actor: "QMS Coordinator",
     time: "16 Sep 2026, 01:06 PM",
     tone: "red",
     timestamp: "2026-09-16T13:06:00Z"
@@ -35,7 +35,7 @@ export let activitiesData = [
     title: "Task Assigned",
     detail: "Complete joining documentation (Arun Kumar)",
     text: "Task assigned to Arun Kumar: Complete joining documentation",
-    actor: "Priya Sharma",
+    actor: "Course Coordinator",
     time: "14 Sep 2026, 09:30 AM",
     tone: "green",
     timestamp: "2026-09-14T09:30:00Z"
@@ -55,7 +55,7 @@ export let activitiesData = [
     title: "Document Approved",
     detail: "Employee Induction Procedure (v4.0)",
     text: "Document approved: Employee Induction Procedure (v4.0)",
-    actor: "Anita Rao",
+    actor: "Trust Head",
     time: "08 Sep 2026, 11:20 AM",
     tone: "green",
     timestamp: "2026-09-08T11:20:00Z"

@@ -316,7 +316,7 @@ export const confirmSchedule = (req, res) => {
     }
 
     const isTrustHeadUser = req.user?.role?.toLowerCase() === "head";
-    const userName = isTrustHeadUser ? (req.user?.name || "Anita Rao") : (req.body?.confirmedBy || "Anita Rao");
+    const userName = isTrustHeadUser ? (req.user?.name || "Trust Head") : (req.body?.confirmedBy || "Trust Head");
     const userRole = "Trust Head";
     const remarks = req.body?.remarks || "Audit schedule ratified and authorized for execution.";
 
@@ -381,7 +381,7 @@ export const shareSchedule = (req, res) => {
       docTitle: `Internal_Audit_Schedule_${audit.id}.pdf`,
       recipients: [
         { role: "Course Coordinator (Auditee)", name: audit.internalAuditee?.name, email: audit.internalAuditee?.email },
-        { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "trusthead@cdac.in" },
         { role: "Internal Auditor", name: audit.internalAuditor?.name, email: audit.internalAuditor?.email }
       ]
     };
@@ -394,7 +394,7 @@ export const shareSchedule = (req, res) => {
       action: "Schedule Dispatched to All Stakeholders",
       actor: `${userName} (${userRole})`,
       timestamp: formatNow(),
-      details: `QMS Coordinator officially dispatched confirmed audit schedule to Course Coordinator (${audit.internalAuditee?.name}), Trust Head (Anita Rao), and Internal Auditor (${audit.internalAuditor?.name}).`
+      details: `QMS Coordinator officially dispatched confirmed audit schedule to Course Coordinator (${audit.internalAuditee?.name}), Trust Head (Trust Head), and Internal Auditor (${audit.internalAuditor?.name}).`
     });
     saveAuditsToDisk();
 
@@ -450,7 +450,7 @@ export const submitNoticingSheet = (req, res) => {
       return res.status(404).json({ success: false, message: "Internal Audit not found" });
     }
 
-    const userName = req.user?.name || audit.internalAuditor.name || "Vikas Deshmukh";
+    const userName = req.user?.name || audit.internalAuditor.name || "Internal Auditor";
     const userRole = req.user?.roleTitle || "Internal Auditor";
     const {
       sheetNo,
@@ -590,7 +590,7 @@ export const auditeeClose = (req, res) => {
       return res.status(404).json({ success: false, message: "Internal Audit not found" });
     }
 
-    const userName = req.user?.name || audit.internalAuditee.name || "Priya Sharma";
+    const userName = req.user?.name || audit.internalAuditee.name || "Course Coordinator";
     const userRole = req.user?.roleTitle || "Course Coordinator";
     const {
       rootCause,
@@ -737,7 +737,7 @@ OVERALL STATUS:        ${audit.status.toUpperCase()}
 KEY STAKEHOLDERS & PARTICIPANTS
 --------------------------------------------------------------------------------
 * QMS Coordinator:     ${audit.scheduledBy?.name || "Rahul Kumar"}
-* Trust Head:          ${audit.trustHeadConfirmation?.confirmedBy || "Anita Rao"}
+* Trust Head:          ${audit.trustHeadConfirmation?.confirmedBy || "Trust Head"}
 * Internal Auditor:    ${audit.internalAuditor?.name} (${audit.internalAuditor?.department})
 * Internal Auditee:    ${audit.internalAuditee?.name} (${audit.internalAuditee?.department})
 

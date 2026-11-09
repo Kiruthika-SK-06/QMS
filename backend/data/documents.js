@@ -5,17 +5,17 @@ export let documentsData = [
     name: "Feedback Form",
     type: "Forms",
     process: "Training & Development",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "3.0",
     updated: "18 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Approved",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     description: "Standard training feedback questionnaire collected after completion of technical and soft skills workshops.",
     versions: [
-      { version: "3.0", date: "18 Sep 2026", author: "Priya Sharma", status: "Current", notes: "Updated ISO 9001:2026 compliance questions" },
-      { version: "2.0", date: "10 Sep 2026", author: "Priya Sharma", status: "Archived", notes: "Added digital signature confirmation fields" },
-      { version: "1.0", date: "02 Sep 2026", author: "Priya Sharma", status: "Archived", notes: "Initial release" }
+      { version: "3.0", date: "18 Sep 2026", author: "Course Coordinator", status: "Current", notes: "Updated ISO 9001:2026 compliance questions" },
+      { version: "2.0", date: "10 Sep 2026", author: "Course Coordinator", status: "Archived", notes: "Added digital signature confirmation fields" },
+      { version: "1.0", date: "02 Sep 2026", author: "Course Coordinator", status: "Archived", notes: "Initial release" }
     ]
   },
   {
@@ -23,17 +23,17 @@ export let documentsData = [
     name: "Joining Form",
     type: "Forms",
     process: "Employee Onboarding",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "2.0",
     updated: "15 Sep 2026",
     updatedBy: "Arun Kumar",
     status: "Changes Requested",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     reviewComments: "Please update section 4 to include emergency contacts and verify the compliance disclaimer.",
     description: "Onboarding form for newly joined personnel detailing statutory information and hardware requests.",
     versions: [
       { version: "2.0", date: "15 Sep 2026", author: "Arun Kumar", status: "Current", notes: "Revised employee tax verification checklist" },
-      { version: "1.0", date: "04 Sep 2026", author: "Priya Sharma", status: "Archived", notes: "Initial release" }
+      { version: "1.0", date: "04 Sep 2026", author: "Course Coordinator", status: "Archived", notes: "Initial release" }
     ]
   },
   {
@@ -41,12 +41,12 @@ export let documentsData = [
     name: "Training Feedback Template",
     type: "Templates",
     process: "Training & Development",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "1.0",
     updated: "11 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Under Review",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     description: "Structured evaluation template used by training instructors to compile course effectiveness metrics.",
     content: `1. PARTICIPANT DETAILS:
 - Trainee Name: _____________________
@@ -64,7 +64,7 @@ export let documentsData = [
 - Key domain competencies acquired:
 - Specific areas suggested for continuous syllabus improvement:`,
     versions: [
-      { version: "1.0", date: "11 Sep 2026", author: "Priya Sharma", status: "Current", notes: "Initial submission for QM group evaluation" }
+      { version: "1.0", date: "11 Sep 2026", author: "Course Coordinator", status: "Current", notes: "Initial submission for QM group evaluation" }
     ]
   },
   {
@@ -72,18 +72,18 @@ export let documentsData = [
     name: "Employee Induction Procedure",
     type: "Procedures",
     process: "Employee Onboarding",
-    owner: "Priya Sharma",
+    owner: "Course Coordinator",
     version: "4.0",
     updated: "08 Sep 2026",
-    updatedBy: "Priya Sharma",
+    updatedBy: "Course Coordinator",
     status: "Approved",
-    submittedBy: "Priya Sharma",
+    submittedBy: "Course Coordinator",
     description: "Official procedure governing the step-by-step induction program for all personnel joining the organization.",
     versions: [
-      { version: "4.0", date: "08 Sep 2026", author: "Priya Sharma", status: "Current", notes: "Integrated information security briefing module" },
-      { version: "3.0", date: "02 Sep 2026", author: "Priya Sharma", status: "Archived", notes: "Revised departmental rotation schedules" },
-      { version: "2.0", date: "26 Aug 2026", author: "Priya Sharma", status: "Archived", notes: "Updated mentor assignment criteria" },
-      { version: "1.0", date: "18 Aug 2026", author: "Priya Sharma", status: "Archived", notes: "Initial baseline induction SOP" }
+      { version: "4.0", date: "08 Sep 2026", author: "Course Coordinator", status: "Current", notes: "Integrated information security briefing module" },
+      { version: "3.0", date: "02 Sep 2026", author: "Course Coordinator", status: "Archived", notes: "Revised departmental rotation schedules" },
+      { version: "2.0", date: "26 Aug 2026", author: "Course Coordinator", status: "Archived", notes: "Updated mentor assignment criteria" },
+      { version: "1.0", date: "18 Aug 2026", author: "Course Coordinator", status: "Archived", notes: "Initial baseline induction SOP" }
     ]
   },
   {
@@ -124,12 +124,12 @@ export let documentsData = [
     name: "Internal Audit Checklist",
     type: "Templates",
     process: "Quality Management",
-    owner: "Rahul Kumar",
+    owner: "QMS Coordinator",
     version: "3.1",
     updated: "20 Sep 2026",
-    updatedBy: "Anita Rao",
+    updatedBy: "Trust Head",
     status: "Approved",
-    submittedBy: "Rahul Kumar",
+    submittedBy: "QMS Coordinator",
     description: "Comprehensive questionnaire template used during biannual internal quality audits.",
     content: `1. QUALITY POLICY & MANAGEMENT COMMITMENT (Clause 5.2):
 [ ] Documented Quality Policy communicated and understood across all labs
@@ -146,8 +146,8 @@ export let documentsData = [
 [ ] Corrective action records verified for previous audit findings
 [ ] Evidence of continual improvement initiatives recorded`,
     versions: [
-      { version: "3.1", date: "20 Sep 2026", author: "Anita Rao", status: "Current", notes: "Minor corrections to ISO clause mapping" },
-      { version: "3.0", date: "14 Sep 2026", author: "Rahul Kumar", status: "Archived", notes: "Updated annual quality criteria" }
+      { version: "3.1", date: "20 Sep 2026", author: "Trust Head", status: "Current", notes: "Minor corrections to ISO clause mapping" },
+      { version: "3.0", date: "14 Sep 2026", author: "QMS Coordinator", status: "Archived", notes: "Updated annual quality criteria" }
     ]
   },
   {

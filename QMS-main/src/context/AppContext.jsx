@@ -36,11 +36,45 @@ export function useApp() {
   return context;
 }
 
+// Ensure institutional identity: never expose dummy personal names
+const sanitizeUserIdentity = (user) => {
+  if (!user) return null;
+  const roleNameMap = {
+    Head: "Trust Head",
+    head: "Trust Head",
+    qm: "QMS Coordinator",
+    owner: "Course Coordinator",
+    auditor: "Internal Auditor",
+    employee: "Employee"
+  };
+  const roleName = roleNameMap[user.role] || user.roleTitle || roles[user.role] || user.username || "User";
+  const initialsMap = {
+    Head: "TH",
+    head: "TH",
+    qm: "QC",
+    owner: "CC",
+    auditor: "IA",
+    employee: "EM"
+  };
+  const initials = initialsMap[user.role] || (roleName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase());
+
+  return {
+    ...user,
+    name: roleName,
+    roleTitle: roleName,
+    initials
+  };
+};
+
 export function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem("qms_user");
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (!savedUser) return null;
+      const parsed = JSON.parse(savedUser);
+      const clean = sanitizeUserIdentity(parsed);
+      localStorage.setItem("qms_user", JSON.stringify(clean));
+      return clean;
     } catch {
       return null;
     }
@@ -289,15 +323,16 @@ export function AppProvider({ children }) {
   // Login handler accepting user object and token from backend
   const loginUser = (user, authToken) => {
     if (!user) return;
+    const clean = sanitizeUserIdentity(user);
     try {
-      localStorage.setItem("qms_user", JSON.stringify(user));
+      localStorage.setItem("qms_user", JSON.stringify(clean));
       if (authToken) {
         localStorage.setItem("qms_token", authToken);
       }
     } catch (e) {
       console.warn("Storage write notice:", e);
     }
-    setCurrentUser(user);
+    setCurrentUser(clean);
     if (authToken) {
       setToken(authToken);
     }
@@ -413,7 +448,7 @@ export function AppProvider({ children }) {
       );
       pushNotification(
         "MRM Meeting Scheduled",
-        `Meeting (${created.id}) scheduled and submitted to Trust Head Anita Rao for formal authorization.`,
+        `Meeting (${created.id}) scheduled and submitted to Trust Head for formal authorization.`,
         "qm"
       );
       return created;
@@ -472,7 +507,7 @@ export function AppProvider({ children }) {
         setMrmList((prev) => sortMRMs(prev.map((m) => (m.id === id ? updated : m))));
         pushNotification(
           "MRM Approved by Trust Head",
-          `Trust Head Anita Rao approved the schedule for "${updated.title}". You can now dispatch meeting notifications via email to all stakeholders.`,
+          `Trust Head approved the schedule for "${updated.title}". You can now dispatch meeting notifications via email to all stakeholders.`,
           "qm"
         );
         pushNotification(

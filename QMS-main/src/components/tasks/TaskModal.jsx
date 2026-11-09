@@ -6,7 +6,7 @@ import { useApp } from "../../context/AppContext";
 export default function TaskModal({ task, onClose, onSave }) {
   const { documents, employees, processes } = useApp();
 
-  const defaultEmployee = employees[0]?.name || "Priya Sharma";
+  const defaultEmployee = employees[0]?.name || "Course Coordinator";
   const defaultProcess = processes[0]?.name || "Course Management";
 
   const [form, setForm] = useState({

@@ -2,7 +2,7 @@
 export let employeesData = [
   {
     id: "CC-208",
-    name: "Priya Sharma",
+    name: "Course Coordinator",
     email: "coordinator@cdac.in",
     process: "Course Management",
     role: "owner",
@@ -15,7 +15,7 @@ export let employeesData = [
   },
   {
     id: "QC-001",
-    name: "Rahul Kumar",
+    name: "QMS Coordinator",
     email: "qm@cdac.in",
     process: "Quality Management",
     role: "qm",
@@ -28,7 +28,7 @@ export let employeesData = [
   },
   {
     id: "TH-001",
-    name: "Anita Rao",
+    name: "Trust Head",
     email: "head@cdac.in",
     process: "Trust Governance",
     role: "Head",
@@ -41,8 +41,8 @@ export let employeesData = [
   },
   {
     id: "CC-210",
-    name: "Dr. Rajesh Verma",
-    email: "rajesh.verma@cdac.in",
+    name: "Course Coordinator (AI)",
+    email: "coordinator.ai@cdac.in",
     process: "AI & Data Science Course",
     role: "owner",
     assigned: 8,
@@ -54,8 +54,8 @@ export let employeesData = [
   },
   {
     id: "CC-215",
-    name: "Sunita Patil",
-    email: "sunita.patil@cdac.in",
+    name: "Course Coordinator (Cyber Security)",
+    email: "coordinator.cyber@cdac.in",
     process: "Cyber Defense Course",
     role: "owner",
     assigned: 11,

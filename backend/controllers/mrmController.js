@@ -210,7 +210,7 @@ export const createMRM = (req, res) => {
       return res.status(400).json({ success: false, message: "Meeting title is required" });
     }
 
-    const plannerName = req.user?.name || "Rahul Kumar";
+    const plannerName = req.user?.name || "QMS Coordinator";
     const plannerRole = req.user?.roleTitle || "QMS Coordinator";
     const isRequestingApproval = !!requestApprovalImmediately;
 
@@ -241,11 +241,11 @@ export const createMRM = (req, res) => {
       ],
       attendees: Array.isArray(attendees) && attendees.length ? attendees : [
         `${plannerName} (${plannerRole})`,
-        "Anita Rao (Trust Head)",
-        "Suresh Menon (Internal Auditor)",
-        "Priya Sharma (Course Coordinator)",
+        "Trust Head",
+        "Internal Auditor",
+        "Course Coordinator",
         "Dr. Rajesh Verma (Course Coordinator - AI)",
-        "Sunita Patil (Course Coordinator - Cyber Security)"
+        "Course Coordinator (Cyber Security)"
       ],
       approvals: {
         teamHead: {
@@ -294,7 +294,7 @@ export const createMRM = (req, res) => {
         actor: `${plannerName} (${plannerRole})`,
         timestamp: formatNow(),
         version: "1.0",
-        details: "Approval requested from Team Head (Anita Rao) and Internal Auditor (Suresh Menon)."
+        details: "Approval requested from Team Head (Trust Head) and Internal Auditor (Internal Auditor)."
       });
 
       // Notify Team Head & Internal Auditor
@@ -360,7 +360,7 @@ export const requestApproval = (req, res) => {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }
 
-    const sender = req.user?.name || "Rahul Kumar";
+    const sender = req.user?.name || "QMS Coordinator";
     const senderRole = req.user?.roleTitle || "QMS Coordinator";
 
     mrm.status = "Pending Approval";
@@ -384,7 +384,7 @@ export const requestApproval = (req, res) => {
       actor: `${sender} (${senderRole})`,
       timestamp: formatNow(),
       version: mrm.version || "1.0",
-      details: "Meeting plan shared to Team Head (Anita Rao) for formal review and approval."
+      details: "Meeting plan shared to Team Head (Trust Head) for formal review and approval."
     });
 
     // Notify Team Head
@@ -451,7 +451,7 @@ export const approveMRM = (req, res) => {
     }
 
     const { remarks = "" } = req.body;
-    const approverName = req.user?.name || (isAuditor ? "Suresh Menon" : "Anita Rao");
+    const approverName = req.user?.name || (isAuditor ? "Internal Auditor" : "Trust Head");
     const approverRole = req.user?.roleTitle || (isAuditor ? "Internal Auditor" : "Trust Head");
 
     if (!mrm.approvals) {
@@ -514,7 +514,7 @@ export const approveMRM = (req, res) => {
       notificationsData.unshift({
         id: Date.now(),
         title: "MRM Meeting Approved by Team Head!",
-        text: `"${mrm.title}" was approved by Team Head ${mrm.approvals?.teamHead?.approverName || "Anita Rao"}. You can now share the meeting notification via email to all Course Coordinators, Team Head, and Internal Auditors.`,
+        text: `"${mrm.title}" was approved by Team Head ${mrm.approvals?.teamHead?.approverName || "Trust Head"}. You can now share the meeting notification via email to all Course Coordinators, Team Head, and Internal Auditors.`,
         time: "Just now",
         targetRole: "qm",
         read: false,
@@ -695,7 +695,7 @@ export const shareMeetingEmail = (req, res) => {
       });
     }
 
-    const senderName = req.user?.name || "Rahul Kumar";
+    const senderName = req.user?.name || "QMS Coordinator";
     const senderRole = req.user?.roleTitle || "QMS Coordinator";
 
     // Build recipient list: All Course Coordinators + Trust Head + Internal Auditor
@@ -703,8 +703,8 @@ export const shareMeetingEmail = (req, res) => {
       ...dummyUsers
         .filter((u) => u.role === "owner")
         .map((u) => ({ role: "Course Coordinator", name: u.name, email: u.email })),
-      { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-      { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+      { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+      { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
     ];
 
     const emailSubject = `Official Notice: ${mrm.title} Scheduled for ${mrm.scheduledDate || "Upcoming Date"} at ${mrm.scheduledTime || "10:30 AM"}`;
@@ -753,7 +753,7 @@ export const shareMeetingEmail = (req, res) => {
       actor: `${senderName} (${senderRole})`,
       timestamp: formatNow(),
       version: mrm.version || "1.0",
-      details: `Meeting invitation successfully emailed to all Course Coordinators (${recipients.filter(r => r.role === "Course Coordinator").map(r => r.name).join(", ")}), Trust Head (${mrm.approvals.teamHead.approverName || "Anita Rao"}), and Internal Auditor (${mrm.approvals.internalAuditor.approverName || "Suresh Menon"}).`
+      details: `Meeting invitation successfully emailed to all Course Coordinators (${recipients.filter(r => r.role === "Course Coordinator").map(r => r.name).join(", ")}), Trust Head (${mrm.approvals.teamHead.approverName || "Trust Head"}), and Internal Auditor (${mrm.approvals.internalAuditor.approverName || "Internal Auditor"}).`
     });
 
     // Notify all Course Coordinators
@@ -827,7 +827,7 @@ export const uploadMoMFile = (req, res) => {
       decisions
     } = req.body;
 
-    const uploaderName = req.user?.name || "Rahul Kumar";
+    const uploaderName = req.user?.name || "QMS Coordinator";
     const uploaderRole = req.user?.roleTitle || "QMS Coordinator";
     const chosenFileName = fileName || `MRM_${mrm.id}_Minutes_Of_Meeting.pdf`;
 
@@ -850,7 +850,7 @@ export const uploadMoMFile = (req, res) => {
         {
           id: "ACT-01",
           task: "Implement updated course delivery curriculum module",
-          assignee: "Priya Sharma (Course Coordinator)",
+          assignee: "Course Coordinator",
           deadline: "2026-11-30",
           status: "In Progress"
         }
@@ -955,13 +955,13 @@ Uploaded By:       ${mom.uploadedBy || mrm.plannedBy} (${mom.uploadedAt || "Reco
 1. FORMAL MANDATORY APPROVALS
 --------------------------------------------------------------------------------
 * Team Head Approval:
-  - Approver: ${mrm.approvals?.teamHead?.approverName || "Anita Rao (Trust Head)"}
+  - Approver: ${mrm.approvals?.teamHead?.approverName || "Trust Head"}
   - Status:   ${mrm.approvals?.teamHead?.status || "Approved"}
   - Date:     ${mrm.approvals?.teamHead?.approvedAt || "2026-10-06"}
   - Remarks:  ${mrm.approvals?.teamHead?.remarks || "Approved"}
 
 * Internal Auditor Signoff:
-  - Approver: ${mrm.approvals?.internalAuditor?.approverName || "Suresh Menon (Internal Auditor)"}
+  - Approver: ${mrm.approvals?.internalAuditor?.approverName || "Internal Auditor"}
   - Status:   ${mrm.approvals?.internalAuditor?.status || "Approved"}
   - Date:     ${mrm.approvals?.internalAuditor?.approvedAt || "2026-10-06"}
   - Remarks:  ${mrm.approvals?.internalAuditor?.remarks || "ISO 9001 compliance criteria verified."}

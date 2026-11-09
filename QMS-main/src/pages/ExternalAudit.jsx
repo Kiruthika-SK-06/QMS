@@ -158,7 +158,7 @@ export default function ExternalAudit() {
   const [logForm, setLogForm] = useState({
     title: "",
     externalAgency: "TÜV SÜD South Asia Certification Body",
-    auditorName: "Dr. Robert Vance",
+    auditorName: "Lead External Auditor",
     auditorTitle: "Lead External Auditor (ISO 9001:2015)",
     auditorEmail: "robert.vance@tuvsud.com",
     auditorPhone: "+91 98230 45678",
@@ -168,7 +168,7 @@ export default function ExternalAudit() {
     scheduledTime: "09:30 AM",
     venue: "Main Boardroom & In-Person Campus Audit",
     emailSubject: "Official Notice: ISO 9001:2015 External Audit Schedule - Centre for Development of Advanced Computing Academic Quality",
-    emailBody: "Dear Rahul Kumar (QMS Coordinator),\n\nThis email confirms that the ISO 9001:2015 External Surveillance Audit is scheduled for execution as indicated. I will visit your campus in person to audit the system. Please find attached the formal audit timetable and notify your academic course coordinators, Trust Head, and internal audit cell.\n\nRegards,\nDr. Robert Vance\nLead Auditor, TÜV SÜD South Asia",
+    emailBody: "Dear QMS Coordinator,\n\nThis email confirms that the ISO 9001:2015 External Surveillance Audit is scheduled for execution as indicated. I will visit your campus in person to audit the system. Please find attached the formal audit timetable and notify your academic course coordinators, Trust Head, and internal audit cell.\n\nRegards,\nLead External Auditor\nLead Auditor, TÜV SÜD South Asia",
     planFileName: "TUV_ISO9001_External_Audit_Plan_2026.pdf"
   });
 
@@ -187,12 +187,12 @@ export default function ExternalAudit() {
     findingClause: "ISO 9001:2015 Clause 8.5.1",
     findingType: "Minor Non-Conformance",
     findingDesc: "Lab log verification timestamps for experiments require physical instructor counter-signatures and digital archival.",
-    findingAssignee: "Priya Sharma (Course Coordinator)"
+    findingAssignee: "Course Coordinator"
   });
 
   // Form State: Modal 4 - Course Coordinator Closes NC Resolution
   const [courseCoordCloseForm, setCourseCoordCloseForm] = useState({
-    closedBy: activeUser?.name ? `${activeUser.name} (Course Coordinator)` : "Priya Sharma (Course Coordinator)",
+    closedBy: activeUser?.name ? `${activeUser.name} (Course Coordinator)` : "Course Coordinator",
     remarks: "Scanned paper NC document downloaded and reviewed. Root cause analysis conducted. Counter-signature protocols deployed across all course lab registers.",
     actionPlan: "Standard Operating Procedure (SOP-ACA-04) revised. Dual signature verification initiated for all weekly practical experiment records."
   });
@@ -222,7 +222,7 @@ export default function ExternalAudit() {
     setLogForm({
       title: "ISO 9001:2015 Comprehensive External Surveillance Audit",
       externalAgency: "TÜV SÜD South Asia Certification Body",
-      auditorName: "Dr. Robert Vance",
+      auditorName: "Lead External Auditor",
       auditorTitle: "Lead External Auditor (ISO 9001:2015)",
       auditorEmail: "robert.vance@tuvsud.com",
       auditorPhone: "+91 98230 45678",
@@ -232,7 +232,7 @@ export default function ExternalAudit() {
       scheduledTime: "09:30 AM",
       venue: "Main Boardroom & In-Person Campus Audit",
       emailSubject: "Official Notice: ISO 9001:2015 External Audit Schedule - Centre for Development of Advanced Computing Academic Quality",
-      emailBody: "Dear Rahul Kumar (QMS Coordinator),\n\nThis email confirms that the ISO 9001:2015 External Surveillance Audit is scheduled for execution as indicated. I will visit your campus in person to audit the system. Please find attached the formal audit timetable and notify your academic course coordinators, Trust Head, and internal audit cell.\n\nRegards,\nDr. Robert Vance\nLead Auditor, TÜV SÜD South Asia",
+      emailBody: "Dear QMS Coordinator,\n\nThis email confirms that the ISO 9001:2015 External Surveillance Audit is scheduled for execution as indicated. I will visit your campus in person to audit the system. Please find attached the formal audit timetable and notify your academic course coordinators, Trust Head, and internal audit cell.\n\nRegards,\nLead External Auditor\nLead Auditor, TÜV SÜD South Asia",
       planFileName: "TUV_ISO9001_External_Audit_Plan_2026.pdf"
     });
     setShowLogModal(true);
@@ -259,7 +259,7 @@ export default function ExternalAudit() {
       findingClause: "ISO 9001:2015 Clause 8.5.1",
       findingType: "Minor Non-Conformance",
       findingDesc: "Course delivery schedules and practical lab exercise counter-signatures require standard digital archiving.",
-      findingAssignee: "Priya Sharma (Course Coordinator)"
+      findingAssignee: "Course Coordinator"
     });
     setShowUploadNCModal(true);
   };
@@ -268,7 +268,7 @@ export default function ExternalAudit() {
   const openCourseCoordCloseModal = (audit) => {
     setSelectedAudit(audit);
     setCourseCoordCloseForm({
-      closedBy: activeUser?.name ? `${activeUser.name} (Course Coordinator)` : "Priya Sharma (Course Coordinator)",
+      closedBy: activeUser?.name ? `${activeUser.name} (Course Coordinator)` : "Course Coordinator",
       remarks: "Scanned paper NC document downloaded and reviewed. Root cause analysis conducted. Counter-signature protocols deployed across all course lab registers.",
       actionPlan: "Standard Operating Procedure (SOP-ACA-04) revised. Dual signature verification initiated for all weekly practical experiment records."
     });
@@ -427,7 +427,7 @@ Lead External Auditor: ${audit.leadAuditor?.name} (${audit.leadAuditor?.agency})
 Campus Audit Venue  : ${audit.venue}
 Date of Office Audit: ${audit.scheduledDate}
 Paper NC Received   : In-Person Physical Handover at Campus Office
-Scanned & Uploaded  : ${nc.uploadedBy || "Rahul Kumar (QMS Coordinator)"} on ${nc.uploadedAt || "N/A"}
+Scanned & Uploaded  : ${nc.uploadedBy || "QMS Coordinator"} on ${nc.uploadedAt || "N/A"}
 Distribution Scope  : COURSE COORDINATORS ONLY (Restricted Document)
 Target Closure Date : ${nc.targetClosureDate || "2026-12-15"}
 ======================================================================
@@ -494,7 +494,7 @@ Lead External Auditor: ${audit.leadAuditor?.name}
 Approval Mode       : ${cert?.approvalMode || "Direct Office Visit"}
 Approval Date       : ${cert?.approvedAt || "N/A"}
 Official QMS Closure: ${audit.qmsClosure?.closedAt || "N/A"}
-Closure Authority   : ${audit.qmsClosure?.closedBy || "Rahul Kumar (QMS Coordinator)"}
+Closure Authority   : ${audit.qmsClosure?.closedBy || "QMS Coordinator"}
 ======================================================================
 
 AUDITOR ENDORSEMENT & RECOMMENDATION:
@@ -1116,7 +1116,7 @@ Certified Compliant with International Standards - Centre for Development of Adv
                   required
                   value={logForm.auditorName}
                   onChange={(e) => setLogForm({ ...logForm, auditorName: e.target.value })}
-                  placeholder="e.g. Dr. Robert Vance"
+                  placeholder="e.g. Lead External Auditor"
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
                 />
               </label>

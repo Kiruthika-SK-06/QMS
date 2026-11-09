@@ -322,11 +322,11 @@ export const shareExternalAuditSchedule = (req, res) => {
       noticeSubject: noticeSubject || `External Audit Schedule Notice: ${audit.title} on ${audit.scheduledDate}`,
       noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${audit.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${audit.scheduledDate} at ${audit.scheduledTime}. The auditor will visit the campus in person to audit the system.`,
       recipients: [
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
         { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator (Cyber Security)", email: "coordinator.cyber@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     };
 
@@ -334,7 +334,7 @@ export const shareExternalAuditSchedule = (req, res) => {
       action: "Schedule & Meeting Details Shared to All Stakeholders",
       actor: "Rahul Kumar (QMS Coordinator)",
       timestamp: now,
-      details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Anita Rao, and Internal Auditor Suresh Menon.`
+      details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor.`
     });
 
     saveToDisk();
@@ -423,7 +423,7 @@ export const uploadExternalAuditNCDocs = (req, res) => {
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 8.5.1",
           description: "Course delivery schedules and practical lab exercise counter-signatures require standard digital archiving.",
-          assignedTo: "Priya Sharma (Course Coordinator)",
+          assignedTo: "Course Coordinator (Course Coordinator)",
           deadline: targetClosureDate || "2026-12-15",
           status: "Pending Action"
         }
@@ -497,7 +497,7 @@ export const closeCourseCoordinatorNC = (req, res) => {
     } = req.body;
 
     const now = formatNow();
-    const actorName = closedBy || "Priya Sharma (Course Coordinator)";
+    const actorName = closedBy || "Course Coordinator (Course Coordinator)";
 
     // Update all findings to Resolved
     if (audit.ncDocument && Array.isArray(audit.ncDocument.findings)) {

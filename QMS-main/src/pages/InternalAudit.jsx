@@ -293,7 +293,7 @@ export default function InternalAudit() {
       if (pushNotification) {
         pushNotification(
           "Audit Schedule Approved by Trust Head",
-          `Trust Head Anita Rao approved the audit schedule for ${audit.process} (${audit.id}). You can now share the schedule with Course Coordinators, Trust Head, and Internal Auditors.`,
+          `Trust Head approved the audit schedule for ${audit.process} (${audit.id}). You can now share the schedule with Course Coordinators, Trust Head, and Internal Auditors.`,
           "qm"
         );
       }
@@ -1186,8 +1186,8 @@ export default function InternalAudit() {
                     }}
                   >
                     <option value="">-- Select Internal Auditor --</option>
-                    <option value="Vikas Deshmukh">Vikas Deshmukh (Lead Auditor)</option>
-                    <option value="Suresh Menon">Suresh Menon (Internal Auditor)</option>
+                    <option value="Internal Auditor">Internal Auditor</option>
+                    <option value="Internal Auditor">Internal Auditor</option>
                     <option value="Dr. Meenakshi Sundaram">Dr. Meenakshi Sundaram (Senior Auditor)</option>
                     <option value="__custom__">+ Enter Other Auditor...</option>
                   </select>
@@ -1230,11 +1230,11 @@ export default function InternalAudit() {
                     }}
                   >
                     <option value="">-- Select Course Coordinator --</option>
-                    <option value="Priya Sharma">Priya Sharma (Adv Computing)</option>
-                    <option value="Dr. Rajesh Verma">Dr. Rajesh Verma (AI Division)</option>
-                    <option value="Sunita Patil">Sunita Patil (Cyber Security)</option>
+                    <option value="Course Coordinator">Course Coordinator (Adv Computing)</option>
+                    <option value="Course Coordinator (AI)">Course Coordinator (AI)</option>
+                    <option value="Course Coordinator (Cyber Security)">Course Coordinator (Cyber Security)</option>
                     <option value="Rohan Desai">Rohan Desai (Training Coord)</option>
-                    <option value="Karthik Verma">Karthik Verma (IT Systems)</option>
+                    <option value="Course Coordinator (IT)">Course Coordinator (IT)</option>
                     <option value="__custom__">+ Enter Other Auditee...</option>
                   </select>
 
@@ -1339,7 +1339,7 @@ export default function InternalAudit() {
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ padding: "10px 12px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "6px", fontSize: "12.5px", color: "#166534" }}>
-              <strong>Schedule Approved by Trust Head:</strong> Anita Rao has ratified the schedule for <strong>{shareScheduleAudit.process}</strong> ({shareScheduleAudit.scheduledDate}).
+              <strong>Schedule Approved by Trust Head:</strong> Trust Head has ratified the schedule for <strong>{shareScheduleAudit.process}</strong> ({shareScheduleAudit.scheduledDate}).
             </div>
 
             <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#334155" }}>
@@ -1359,7 +1359,7 @@ export default function InternalAudit() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <CheckCircle2 size={14} color="#16a34a" />
-                  <span><strong>Trust Head:</strong> Anita Rao (Executive Office)</span>
+                  <span><strong>Trust Head:</strong> Trust Head (Executive Office)</span>
                 </div>
               </div>
             </div>

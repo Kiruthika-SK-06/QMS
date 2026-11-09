@@ -644,7 +644,7 @@ export default function UserManagement() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Dr. Rajesh Verma"
+                  placeholder="e.g. Course Coordinator (AI)"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
@@ -674,7 +674,7 @@ export default function UserManagement() {
                 <input
                   type="email"
                   required
-                  placeholder="e.g. rajesh.verma@cdac.in"
+                  placeholder="e.g. coordinator.ai@cdac.in"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}

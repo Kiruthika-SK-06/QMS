@@ -12,20 +12,20 @@ export let auditData = [
     scheduledDate: "2026-11-05",
     internalAuditor: {
       id: "IA001",
-      name: "Vikas Deshmukh",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "vikas.deshmukh@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC001",
-      name: "Priya Sharma",
+      name: "Course Coordinator",
       role: "Course Coordinator",
-      email: "priya.sharma@cdac.in",
+      email: "coordinator@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-24 10:00 AM"
     },
@@ -38,18 +38,18 @@ export let auditData = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-24 11:30 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-001.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "priya.sharma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Vikas Deshmukh", email: "vikas.deshmukh@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-25 02:15 PM",
       remarks: "Audit plan and schedule verified. Approved for execution across Academic Division."
@@ -58,7 +58,7 @@ export let auditData = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-042",
-      submittedBy: "Vikas Deshmukh (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-11-06 04:30 PM",
       fileName: "Noticing_Sheet_IA-2026-001.pdf",
       summary: "Audit completed successfully. 1 Minor Non-Conformance observed regarding course logbook signatures for weeks 4 and 5.",
@@ -75,19 +75,19 @@ export let auditData = [
 
     ncDocs: {
       shared: true,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       sharedAt: "2026-11-07 10:15 AM",
       fileName: "NC_Formal_Notice_IA-2026-001.pdf",
       remarks: "Noticing sheet verified. Formal NC-01 issued. Auditee requested to submit Root Cause Analysis and Corrective Action Plan by 2026-11-15.",
       sharedWith: [
-        { role: "Internal Auditor", name: "Vikas Deshmukh" },
-        { role: "Internal Auditee", name: "Priya Sharma (Course Coordinator)" }
+        { role: "Internal Auditor", name: "Internal Auditor" },
+        { role: "Internal Auditee", name: "Course Coordinator" }
       ]
     },
 
     auditeeClosure: {
       closed: true,
-      closedBy: "Priya Sharma (Course Coordinator)",
+      closedBy: "Course Coordinator",
       closedAt: "2026-11-12 03:45 PM",
       rootCause: "Manual paper sign-off workflow was delayed due to mid-semester exams and faculty travel schedule.",
       correctiveAction: "All pending logbook entries for weeks 4 and 5 have been verified and signed off. Implemented weekly digital attendance sign-off reminder on ERP portal.",
@@ -97,20 +97,20 @@ export let auditData = [
 
     qmsFinalClosure: {
       closed: true,
-      closedBy: "Rahul Kumar (QMS Coordinator)",
+      closedBy: "QMS Coordinator",
       closedAt: "2026-11-14 11:00 AM",
       remarks: "Evidence reviewed and cross-verified with ERP logs. Corrective action is satisfactory. NC-01 officially closed. Audit process completed.",
       completedAt: "2026-11-14 11:00 AM"
     },
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-24 10:00 AM", details: "Audit scheduled for Course Management process" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-24 11:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-25 02:15 PM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Vikas Deshmukh (Internal Auditor)", timestamp: "2026-11-06 04:30 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
-      { action: "NC Docs Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-07 10:15 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" },
-      { action: "Auditee Closure Submitted", actor: "Priya Sharma (Course Coordinator)", timestamp: "2026-11-12 03:45 PM", details: "Auditee submitted CAPA and evidence" },
-      { action: "Final Audit Closed", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-14 11:00 AM", details: "QMS Coordinator verified corrective actions and closed entire audit process" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-24 10:00 AM", details: "Audit scheduled for Course Management process" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-24 11:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-25 02:15 PM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-11-06 04:30 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
+      { action: "NC Docs Shared", actor: "QMS Coordinator", timestamp: "2026-11-07 10:15 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" },
+      { action: "Auditee Closure Submitted", actor: "Course Coordinator", timestamp: "2026-11-12 03:45 PM", details: "Auditee submitted CAPA and evidence" },
+      { action: "Final Audit Closed", actor: "QMS Coordinator", timestamp: "2026-11-14 11:00 AM", details: "QMS Coordinator verified corrective actions and closed entire audit process" }
     ]
   },
   {
@@ -125,20 +125,20 @@ export let auditData = [
     scheduledDate: "2026-11-18",
     internalAuditor: {
       id: "IA002",
-      name: "Suresh Menon",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "suresh.menon@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC002",
-      name: "Dr. Rajesh Verma",
+      name: "Course Coordinator (AI)",
       role: "Course Coordinator",
-      email: "rajesh.verma@cdac.in",
+      email: "coordinator.ai@cdac.in",
       department: "AI & Advanced Computing"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-25 09:30 AM"
     },
@@ -151,18 +151,18 @@ export let auditData = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-25 10:15 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-002.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "suresh.menon@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-25 03:00 PM",
       remarks: "Audit dates ratified. Ensure all admission registers are made available."
@@ -171,7 +171,7 @@ export let auditData = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-045",
-      submittedBy: "Suresh Menon (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-11-19 05:00 PM",
       fileName: "Noticing_Sheet_IA-2026-002.pdf",
       summary: "Verification completed for 120 student admissions. 1 Observation noted regarding archival of transfer certificates.",
@@ -188,19 +188,19 @@ export let auditData = [
 
     ncDocs: {
       shared: true,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       sharedAt: "2026-11-20 11:00 AM",
       fileName: "NC_Formal_Notice_IA-2026-002.pdf",
       remarks: "NC-02 issued. Auditee requested to complete scanned uploads and submit closure.",
       sharedWith: [
-        { role: "Internal Auditor", name: "Suresh Menon" },
-        { role: "Internal Auditee", name: "Dr. Rajesh Verma (Course Coordinator)" }
+        { role: "Internal Auditor", name: "Internal Auditor" },
+        { role: "Internal Auditee", name: "Course Coordinator (AI)" }
       ]
     },
 
     auditeeClosure: {
       closed: true,
-      closedBy: "Dr. Rajesh Verma (Course Coordinator)",
+      closedBy: "Course Coordinator (AI)",
       closedAt: "2026-11-22 04:10 PM",
       rootCause: "Late document submission by candidates during spot counseling rounds.",
       correctiveAction: "All 3 transfer certificates scanned in high resolution, uploaded to student ERP profiles, and physically indexed in archive binder #12.",
@@ -211,12 +211,12 @@ export let auditData = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-25 09:30 AM", details: "Audit scheduled for Admissions & Enrollment" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-25 10:15 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-25 03:00 PM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Suresh Menon (Internal Auditor)", timestamp: "2026-11-19 05:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
-      { action: "NC Docs Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-20 11:00 AM", details: "QMS Coordinator shared NC docs to Auditor & Auditee" },
-      { action: "Auditee Closure Submitted", actor: "Dr. Rajesh Verma (Course Coordinator)", timestamp: "2026-11-22 04:10 PM", details: "Auditee uploaded evidence and closed NC" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-25 09:30 AM", details: "Audit scheduled for Admissions & Enrollment" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-25 10:15 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-25 03:00 PM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-11-19 05:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
+      { action: "NC Docs Shared", actor: "QMS Coordinator", timestamp: "2026-11-20 11:00 AM", details: "QMS Coordinator shared NC docs to Auditor & Auditee" },
+      { action: "Auditee Closure Submitted", actor: "Course Coordinator (AI)", timestamp: "2026-11-22 04:10 PM", details: "Auditee uploaded evidence and closed NC" }
     ]
   },
   {
@@ -231,20 +231,20 @@ export let auditData = [
     scheduledDate: "2026-11-25",
     internalAuditor: {
       id: "IA001",
-      name: "Vikas Deshmukh",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "vikas.deshmukh@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC001",
-      name: "Priya Sharma",
+      name: "Course Coordinator",
       role: "Course Coordinator",
-      email: "priya.sharma@cdac.in",
+      email: "coordinator@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 09:00 AM"
     },
@@ -257,18 +257,18 @@ export let auditData = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-26 09:30 AM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-003.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "priya.sharma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Vikas Deshmukh", email: "vikas.deshmukh@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-26 11:45 AM",
       remarks: "Confirmed. Ensure strict adherence to question paper confidentiality protocols."
@@ -277,7 +277,7 @@ export let auditData = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-049",
-      submittedBy: "Vikas Deshmukh (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-11-26 04:00 PM",
       fileName: "Noticing_Sheet_IA-2026-003.pdf",
       summary: "Evaluation system inspected. Moderation logs require formal sign-off sheet attachment.",
@@ -294,13 +294,13 @@ export let auditData = [
 
     ncDocs: {
       shared: true,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       sharedAt: "2026-11-27 10:30 AM",
       fileName: "NC_Formal_Notice_IA-2026-003.pdf",
       remarks: "Formal NC-03 communicated to Course Coordinator and Internal Auditor. Auditee closure due within 7 days.",
       sharedWith: [
-        { role: "Internal Auditor", name: "Vikas Deshmukh" },
-        { role: "Internal Auditee", name: "Priya Sharma (Course Coordinator)" }
+        { role: "Internal Auditor", name: "Internal Auditor" },
+        { role: "Internal Auditee", name: "Course Coordinator" }
       ]
     },
 
@@ -308,11 +308,11 @@ export let auditData = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 09:00 AM", details: "Audit scheduled for Examination & Evaluation" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 09:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 11:45 AM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Vikas Deshmukh (Internal Auditor)", timestamp: "2026-11-26 04:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
-      { action: "NC Docs Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-11-27 10:30 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 09:00 AM", details: "Audit scheduled for Examination & Evaluation" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-26 09:30 AM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-26 11:45 AM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-11-26 04:00 PM", details: "Auditor uploaded noticing sheet with 1 Minor NC" },
+      { action: "NC Docs Shared", actor: "QMS Coordinator", timestamp: "2026-11-27 10:30 AM", details: "QMS Coordinator reviewed and shared NC docs to Auditor & Auditee" }
     ]
   },
   {
@@ -327,20 +327,20 @@ export let auditData = [
     scheduledDate: "2026-12-02",
     internalAuditor: {
       id: "IA002",
-      name: "Suresh Menon",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "suresh.menon@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC002",
-      name: "Dr. Rajesh Verma",
+      name: "Course Coordinator (AI)",
       role: "Course Coordinator",
-      email: "rajesh.verma@cdac.in",
+      email: "coordinator.ai@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 02:00 PM"
     },
@@ -353,18 +353,18 @@ export let auditData = [
     scheduleShared: {
       shared: true,
       sharedAt: "2026-10-26 02:30 PM",
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       docTitle: "Internal_Audit_Schedule_IA-2026-004.pdf",
       recipients: [
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "anita.rao@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "suresh.menon@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
 
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-26 04:00 PM",
       remarks: "Schedule confirmed. Lab safety compliance must also be examined."
@@ -373,7 +373,7 @@ export let auditData = [
     noticingSheet: {
       submitted: true,
       sheetNo: "NS-2026-052",
-      submittedBy: "Suresh Menon (Internal Auditor)",
+      submittedBy: "Internal Auditor",
       submittedAt: "2026-12-03 04:30 PM",
       fileName: "Noticing_Sheet_IA-2026-004.pdf",
       summary: "Lab resources audited. GPU software updates recorded; identified missing periodic maintenance log for Server Node 04.",
@@ -393,10 +393,10 @@ export let auditData = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 02:00 PM", details: "Audit scheduled for Curriculum Design & Review" },
-      { action: "Schedule Shared", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 02:30 PM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
-      { action: "Schedule Confirmed", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 04:00 PM", details: "Trust Head confirmed audit schedule" },
-      { action: "Noticing Sheet Submitted", actor: "Suresh Menon (Internal Auditor)", timestamp: "2026-12-03 04:30 PM", details: "Auditor shared noticing sheet to QMS Coordinator" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 02:00 PM", details: "Audit scheduled for Curriculum Design & Review" },
+      { action: "Schedule Shared", actor: "QMS Coordinator", timestamp: "2026-10-26 02:30 PM", details: "Schedule docs shared with Auditee, Trust Head, and Auditor" },
+      { action: "Schedule Confirmed", actor: "Trust Head", timestamp: "2026-10-26 04:00 PM", details: "Trust Head confirmed audit schedule" },
+      { action: "Noticing Sheet Submitted", actor: "Internal Auditor", timestamp: "2026-12-03 04:30 PM", details: "Auditor shared noticing sheet to QMS Coordinator" }
     ]
   },
   {
@@ -411,20 +411,20 @@ export let auditData = [
     scheduledDate: "2026-12-10",
     internalAuditor: {
       id: "IA001",
-      name: "Vikas Deshmukh",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "vikas.deshmukh@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC001",
-      name: "Priya Sharma",
+      name: "Course Coordinator",
       role: "Course Coordinator",
-      email: "priya.sharma@cdac.in",
+      email: "coordinator@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 03:30 PM"
     },
@@ -442,7 +442,7 @@ export let auditData = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 03:30 PM", details: "Audit scheduled and submitted to Trust Head for approval" }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 03:30 PM", details: "Audit scheduled and submitted to Trust Head for approval" }
     ]
   },
   {
@@ -457,20 +457,20 @@ export let auditData = [
     scheduledDate: "2026-12-15",
     internalAuditor: {
       id: "IA002",
-      name: "Suresh Menon",
+      name: "Internal Auditor",
       role: "Internal Auditor",
-      email: "suresh.menon@cdac.in",
+      email: "auditor@cdac.in",
       department: "Internal Quality Audit Cell"
     },
     internalAuditee: {
       id: "CC002",
-      name: "Dr. Rajesh Verma",
+      name: "Course Coordinator (AI)",
       role: "Course Coordinator",
-      email: "rajesh.verma@cdac.in",
+      email: "coordinator.ai@cdac.in",
       department: "Academic Division"
     },
     scheduledBy: {
-      name: "Rahul Kumar",
+      name: "QMS Coordinator",
       role: "QMS Coordinator",
       scheduledAt: "2026-10-26 04:00 PM"
     },
@@ -483,7 +483,7 @@ export let auditData = [
     scheduleShared: null,
     trustHeadConfirmation: {
       confirmed: true,
-      confirmedBy: "Anita Rao",
+      confirmedBy: "Trust Head",
       confirmedRole: "Trust Head",
       confirmedAt: "2026-10-26 04:30 PM",
       remarks: "Audit dates verified and approved. QMS Coordinator may distribute schedule."
@@ -494,8 +494,8 @@ export let auditData = [
     qmsFinalClosure: null,
 
     timeline: [
-      { action: "Audit Scheduled", actor: "Rahul Kumar (QMS Coordinator)", timestamp: "2026-10-26 04:00 PM", details: "Audit scheduled for Faculty Development & Competency" },
-      { action: "Schedule Approved by Trust Head", actor: "Anita Rao (Trust Head)", timestamp: "2026-10-26 04:30 PM", details: "Trust Head approved audit schedule. Ready for QMS distribution." }
+      { action: "Audit Scheduled", actor: "QMS Coordinator", timestamp: "2026-10-26 04:00 PM", details: "Audit scheduled for Faculty Development & Competency" },
+      { action: "Schedule Approved by Trust Head", actor: "Trust Head", timestamp: "2026-10-26 04:30 PM", details: "Trust Head approved audit schedule. Ready for QMS distribution." }
     ]
   }
 ];

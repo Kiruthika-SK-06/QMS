@@ -55,10 +55,12 @@ export default function Header({ openMenu }) {
           onClick={() => navigate("/profile")}
           title="Account profile"
         >
-          <span className="avatar">{currentUser?.initials || "QM"}</span>
+          <span className="avatar">
+            {currentUser?.initials || (currentUser?.roleTitle ? currentUser.roleTitle.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "QM")}
+          </span>
           <span className="user-summary">
-            <strong>{currentUser?.name || "User"}</strong>
-            <small>{currentUser?.role ? roles[currentUser.role] : "Workspace User"}</small>
+            <strong>{currentUser?.roleTitle || (currentUser?.role ? roles[currentUser.role] : null) || currentUser?.username || "User"}</strong>
+            <small>{currentUser?.employeeId || currentUser?.id || (currentUser?.role ? roles[currentUser.role] : "Workspace User")}</small>
           </span>
           <ChevronDown size={16} />
         </button>

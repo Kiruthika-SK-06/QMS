@@ -13,7 +13,7 @@ export let mrmData = [
     scheduledDate: "2026-10-10",
     scheduledTime: "10:30 AM",
     venue: "Main Boardroom / Webex Video Conference (Room 402)",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -24,19 +24,19 @@ export let mrmData = [
       "Recommendations for continual curriculum modernization"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Priya Sharma (Course Coordinator)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)",
-      "Sunita Patil (Course Coordinator - Cyber Security)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator",
+      "Course Coordinator (AI)",
+      "Course Coordinator (Cyber Security)"
     ],
     // Dual Approvals: Both Team Head and Internal Auditor
     approvals: {
       teamHead: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Anita Rao",
+        approverName: "Trust Head",
         approverRole: "Trust Head",
         approvedAt: "2026-10-06 11:15 AM",
         remarks: "Meeting objectives, agenda, and participant list fully ratified. Proceed with scheduling."
@@ -44,7 +44,7 @@ export let mrmData = [
       internalAuditor: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Suresh Menon",
+        approverName: "Internal Auditor",
         approverRole: "Internal Auditor",
         approvedAt: "2026-10-06 02:40 PM",
         remarks: "Compliance with ISO 9001:2015 Clause 9.3 verified. Agenda meets audit requirements."
@@ -54,15 +54,15 @@ export let mrmData = [
     emailNotification: {
       sent: true,
       sentAt: "2026-10-07 09:30 AM",
-      sentBy: "Rahul Kumar (QMS Coordinator)",
+      sentBy: "QMS Coordinator",
       subject: "Official Notice: Q3 Academic Quality & Curriculum Review Meeting Scheduled",
       status: "Delivered",
       recipients: [
-        { role: "Course Coordinator", name: "Priya Sharma", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
-        { role: "Course Coordinator", name: "Sunita Patil", email: "sunita.patil@cdac.in" },
-        { role: "Trust Head", name: "Anita Rao", email: "head@cdac.in" },
-        { role: "Internal Auditor", name: "Suresh Menon", email: "auditor@cdac.in" }
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator (AI)", email: "coordinator.ai@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator (Cyber Security)", email: "coordinator.cyber@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ],
       emailBodyHtml: "<p>Dear Coordinators and Leadership,</p><p>You are cordially invited to the <strong>Q3 Academic Quality & Curriculum Review Meeting</strong> scheduled on <strong>2026-10-10 at 10:30 AM</strong> in the Main Boardroom / Webex Video Conference.</p><p>Please review the agenda and be prepared with your division course delivery reports.</p><p>Regards,<br/><strong>QMS Quality Office</strong></p>"
     },
@@ -71,7 +71,7 @@ export let mrmData = [
       fileName: "Q3_Academic_Quality_MRM_MoM.pdf",
       fileSize: "2.4 MB",
       fileType: "application/pdf",
-      uploadedBy: "Rahul Kumar",
+      uploadedBy: "QMS Coordinator",
       uploadedByRole: "QMS Coordinator",
       uploadedAt: "2026-10-10 03:30 PM",
       downloadUrl: "/api/mrm/MRM-2026-001/mom-download",
@@ -85,7 +85,7 @@ export let mrmData = [
         {
           id: "ACT-01",
           task: "Incorporate Cloud Architecture module into Advanced Computing syllabus",
-          assignee: "Priya Sharma (Course Coordinator)",
+          assignee: "Course Coordinator",
           deadline: "2026-10-25",
           status: "In Progress"
         },
@@ -104,7 +104,7 @@ export let mrmData = [
     },
     // Backward compatibility fields
     mom: {
-      recordedBy: "Rahul Kumar",
+      recordedBy: "QMS Coordinator",
       recordedDate: "2026-10-10",
       summary: "Comprehensive review conducted for all academic and computing programs. Overall quality index reached 94.2%.",
       discussionPoints: [
@@ -115,7 +115,7 @@ export let mrmData = [
         {
           id: "ACT-01",
           task: "Incorporate Cloud Architecture module into Advanced Computing syllabus",
-          assignee: "Priya Sharma (Course Coordinator)",
+          assignee: "Course Coordinator",
           deadline: "2026-10-25",
           status: "In Progress"
         }
@@ -125,19 +125,19 @@ export let mrmData = [
     trustHeadApproval: {
       decision: "Approved",
       approved: true,
-      approvedBy: "Anita Rao",
+      approvedBy: "Trust Head",
       approvedAt: "2026-10-06 11:15 AM",
       remarks: "Meeting objectives ratified."
     },
     sharedWithAll: true,
     sharedAt: "2026-10-07 09:30 AM",
-    sharedBy: "Rahul Kumar",
+    sharedBy: "QMS Coordinator",
     sharedVersion: "1.0",
     recipients: ["All Course Coordinators", "Trust Head", "Internal Auditor"],
     acknowledgements: [
       {
         userId: "CC-208",
-        name: "Priya Sharma",
+        name: "Course Coordinator",
         role: "Course Coordinator",
         department: "Advanced Computing Division",
         acknowledgedAt: "2026-10-07 10:15 AM"
@@ -146,42 +146,42 @@ export let mrmData = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-05 10:00 AM",
         version: "1.0",
         details: "Meeting plan created for Q3 Academic Quality Review."
       },
       {
         action: "Submitted for Dual Approval",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-05 11:30 AM",
         version: "1.0",
-        details: "Approval requested from Team Head (Anita Rao) and Internal Auditor (Suresh Menon)."
+        details: "Approval requested from Team Head (Trust Head) and Internal Auditor (Internal Auditor)."
       },
       {
         action: "Approved by Team Head",
-        actor: "Anita Rao (Trust Head)",
+        actor: "Trust Head",
         timestamp: "2026-10-06 11:15 AM",
         version: "1.0",
         details: "Meeting objectives, agenda, and participant list ratified."
       },
       {
         action: "Approved by Internal Auditor",
-        actor: "Suresh Menon (Internal Auditor)",
+        actor: "Internal Auditor",
         timestamp: "2026-10-06 02:40 PM",
         version: "1.0",
         details: "ISO 9001 compliance verified. Meeting fully approved."
       },
       {
         action: "Meeting Notification Sent via Email",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-07 09:30 AM",
         version: "1.0",
         details: "Formal email notification distributed to all Course Coordinators, Trust Head, and Internal Auditor."
       },
       {
         action: "MoM File Uploaded (Public Access)",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-10 03:30 PM",
         version: "1.0",
         details: "Official Minutes of Meeting file (Q3_Academic_Quality_MRM_MoM.pdf) uploaded and published for everyone."
@@ -201,7 +201,7 @@ export let mrmData = [
     scheduledDate: "2026-10-28",
     scheduledTime: "02:30 PM",
     venue: "Division Seminar Hall & Virtual Meet",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -211,17 +211,17 @@ export let mrmData = [
       "ISO 9001:2015 Clause 7.2 Competency training for instructors"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)",
-      "Priya Sharma (Course Coordinator)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator (AI)",
+      "Course Coordinator"
     ],
     approvals: {
       teamHead: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Anita Rao",
+        approverName: "Trust Head",
         approverRole: "Trust Head",
         approvedAt: "2026-10-15 04:00 PM",
         remarks: "Approved. Excellent agenda addressing AI compute capacity."
@@ -229,7 +229,7 @@ export let mrmData = [
       internalAuditor: {
         status: "Approved",
         decision: "Approved",
-        approverName: "Suresh Menon",
+        approverName: "Internal Auditor",
         approverRole: "Internal Auditor",
         approvedAt: "2026-10-16 10:15 AM",
         remarks: "Audit agenda item for faculty competency endorsed. Approved."
@@ -241,7 +241,7 @@ export let mrmData = [
     trustHeadApproval: {
       decision: "Approved",
       approved: true,
-      approvedBy: "Anita Rao",
+      approvedBy: "Trust Head",
       approvedAt: "2026-10-15 04:00 PM",
       remarks: "Approved without modifications."
     },
@@ -254,28 +254,28 @@ export let mrmData = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-14 09:30 AM",
         version: "1.0",
         details: "Meeting plan drafted for AI & Emerging Tech Review."
       },
       {
         action: "Submitted for Dual Approval",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-14 11:00 AM",
         version: "1.0",
         details: "Submitted to Team Head and Internal Auditor."
       },
       {
         action: "Approved by Team Head",
-        actor: "Anita Rao (Trust Head)",
+        actor: "Trust Head",
         timestamp: "2026-10-15 04:00 PM",
         version: "1.0",
         details: "Executive signoff granted."
       },
       {
         action: "Approved by Internal Auditor",
-        actor: "Suresh Menon (Internal Auditor)",
+        actor: "Internal Auditor",
         timestamp: "2026-10-16 10:15 AM",
         version: "1.0",
         details: "Compliance verified. Ready to share meeting notification through email."
@@ -295,7 +295,7 @@ export let mrmData = [
     scheduledDate: "2026-11-12",
     scheduledTime: "11:00 AM",
     venue: "Trust Executive Council Room & Hybrid Stream",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -305,12 +305,12 @@ export let mrmData = [
       "Strategic direction for academic year 2026-2027"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Priya Sharma (Course Coordinator)",
-      "Dr. Rajesh Verma (Course Coordinator)",
-      "Sunita Patil (Course Coordinator)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator",
+      "Course Coordinator (AI)",
+      "Course Coordinator (Cyber Security)"
     ],
     approvals: {
       teamHead: {
@@ -343,21 +343,21 @@ export let mrmData = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-23 10:00 AM",
         version: "1.0",
         details: "Plan prepared for 2026-11-12"
       },
       {
         action: "Submitted for Dual Approval",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-23 11:30 AM",
         version: "1.0",
         details: "Submitted to Team Head and Internal Auditor"
       },
       {
         action: "Approved by Team Head",
-        actor: "Anita Rao (Trust Head)",
+        actor: "Trust Head",
         timestamp: "2026-10-24 03:00 PM",
         version: "1.0",
         details: "Approved. Awaiting signoff from Internal Auditor."
@@ -377,7 +377,7 @@ export let mrmData = [
     scheduledDate: "2026-11-20",
     scheduledTime: "10:00 AM",
     venue: "Cyber Security Lab Conference Hall",
-    plannedBy: "Rahul Kumar",
+    plannedBy: "QMS Coordinator",
     plannedByRole: "QMS Coordinator",
     department: "Quality Assurance & Compliance",
     agenda: [
@@ -387,11 +387,11 @@ export let mrmData = [
       "Recommendations for dedicated student sandboxes"
     ],
     attendees: [
-      "Rahul Kumar (QMS Coordinator)",
-      "Anita Rao (Trust Head)",
-      "Suresh Menon (Internal Auditor)",
-      "Sunita Patil (Course Coordinator - Cyber Security)",
-      "Dr. Rajesh Verma (Course Coordinator - AI)"
+      "QMS Coordinator",
+      "Trust Head",
+      "Internal Auditor",
+      "Course Coordinator (Cyber Security)",
+      "Course Coordinator (AI)"
     ],
     approvals: {
       teamHead: {
@@ -424,7 +424,7 @@ export let mrmData = [
     timeline: [
       {
         action: "Meeting Planned by QMS Coordinator",
-        actor: "Rahul Kumar (QMS Coordinator)",
+        actor: "QMS Coordinator",
         timestamp: "2026-10-25 09:30 AM",
         version: "1.0",
         details: "Meeting plan drafted. Ready to request approval from Team Head & Internal Auditor."

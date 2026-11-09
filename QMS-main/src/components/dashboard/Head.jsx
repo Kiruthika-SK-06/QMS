@@ -20,7 +20,7 @@ import OverviewWaveChart from "./OverviewWaveChart";
 const defaultProcessData = [
   {
     name: "Course Administration",
-    owner: "Course Coordinator (Priya Sharma)",
+    owner: "Course Coordinator",
     progress: 82,
     status: "In Progress",
     target: "30 Sep 2026",
@@ -34,7 +34,7 @@ const defaultProcessData = [
   },
   {
     name: "AI & Emerging Tech Course",
-    owner: "Course Coordinator (Dr. Rajesh Verma)",
+    owner: "Course Coordinator (Course Coordinator (AI))",
     progress: 100,
     status: "Completed",
     target: "20 Sep 2026",

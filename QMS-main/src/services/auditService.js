@@ -246,7 +246,7 @@ export const auditService = {
       stageLabel: "Approved by Trust Head (Pending QMS Distribution)",
       trustHeadConfirmation: {
         confirmed: true,
-        confirmedBy: "Anita Rao",
+        confirmedBy: "Trust Head",
         confirmedRole: "Trust Head",
         confirmedAt: formatNow(),
         remarks: remarks || "Audit schedule ratified and authorized."
@@ -255,7 +255,7 @@ export const auditService = {
         ...(existing.timeline || []),
         {
           action: "Schedule Approved by Trust Head",
-          actor: "Anita Rao (Trust Head)",
+          actor: "Trust Head",
           timestamp: formatNow(),
           details: `Trust Head ratified the audit schedule. Automated approval notification dispatched to QMS Coordinator.`
         }
@@ -294,7 +294,7 @@ export const auditService = {
         docTitle: `Internal_Audit_Schedule_${id}.pdf`,
         recipients: [
           { role: "Course Coordinator", name: existing.internalAuditee?.name, email: existing.internalAuditee?.email },
-          { role: "Trust Head", name: "Anita Rao", email: "trusthead@cdac.in" },
+          { role: "Trust Head", name: "Trust Head", email: "trusthead@cdac.in" },
           { role: "Internal Auditor", name: existing.internalAuditor?.name, email: existing.internalAuditor?.email }
         ]
       },
@@ -336,7 +336,7 @@ export const auditService = {
       noticingSheet: {
         submitted: true,
         sheetNo: payload.sheetNo || `NS-${new Date().getFullYear()}-088`,
-        submittedBy: payload.submittedBy || "Vikas Deshmukh (Internal Auditor)",
+        submittedBy: payload.submittedBy || "Internal Auditor",
         submittedAt: formatNow(),
         fileName: payload.fileName || `Noticing_Sheet_${id}.pdf`,
         summary: payload.summary || "Audit concluded. Non-conformance items documented.",
