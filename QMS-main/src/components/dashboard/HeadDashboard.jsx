@@ -4,6 +4,7 @@ import { AlertCircle, ArrowRight, ClipboardCheck } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import StatCard from "../common/StatCard";
 import StatusBadge from "../common/StatusBadge";
+import OverviewWaveChart from "./OverviewWaveChart";
 
 const processData = [
   {
@@ -104,17 +105,14 @@ export default function TrustHeadDashboard() {
 
   return (
     <div>
-
       {/* Page Intro */}
       <div className="page-intro">
         <div>
           <span className="eyebrow">MANAGEMENT OVERVIEW</span>
-
           <h1>QMS Overview</h1>
-
           <p>
             Monitor the overall progress of quality management
-            processes and activities.
+            processes, audit compliance, and institutional activities.
           </p>
         </div>
 
@@ -124,14 +122,14 @@ export default function TrustHeadDashboard() {
         </div>
       </div>
 
-      {/* Urgent Action Banner for Trust Head: Pending Audit Schedule Confirmations */}
+      {/* Urgent Action Banner for Trust Head */}
       {pendingAudits.length > 0 && (
         <div
           style={{
             padding: "14px 18px",
             background: "#eff6ff",
             border: "1px solid #bfdbfe",
-            borderRadius: "8px",
+            borderRadius: "10px",
             marginBottom: "20px",
             display: "flex",
             justifyContent: "space-between",
@@ -164,163 +162,103 @@ export default function TrustHeadDashboard() {
         </div>
       )}
 
-      {/* Summary Statistics */}
-      <div className="stats-grid">
-
+      {/* Top 3 Stat Cards with Circular Gauge Rings & Directional Arrows */}
+      <div className="stats-grid three-col">
         <StatCard
           label="Total Processes"
-          value={totalProcesses}
-          hint="All QMS processes"
+          value={`${totalProcesses} Monitored`}
+          progress={88}
+          tone="blue"
+          direction="up"
+          hint="All registered institutional processes"
         />
 
         <StatCard
-          label="Completed"
-          value={completedProcesses}
-          hint="Processes completed"
+          label="Completed Processes"
+          value={`${completedProcesses} Completed`}
+          progress={100}
+          tone="teal"
+          direction="up"
+          hint="Processes signed off & verified"
         />
 
         <StatCard
-          label="In Progress"
-          value={inProgressProcesses}
-          hint="Currently active"
+          label="Pending Audits & Reviews"
+          value={`${pendingAudits.length + inProgressProcesses} Pending`}
+          progress={55}
+          tone="dark"
+          direction="down"
+          hint="Requires coordinator attention"
         />
-
-        <StatCard
-          label="Pending"
-          value={pendingProcesses}
-          hint="Needs attention"
-        />
-
       </div>
 
-      {/* Overall Progress */}
-      <div className="panel">
-        <div className="section-header">
-
-          <div>
-            <h2>Overall QMS Progress</h2>
-
-            <p>
-              High-level progress across all quality management
-              processes.
-            </p>
-          </div>
-
-          <strong className="progress-value">
-            {overallProgress}%
-          </strong>
-
-        </div>
-
-        <div className="progress-bar">
-          <div
-            className="progress-bar-fill"
-            style={{
-              width: `${overallProgress}%`,
-            }}
-          />
-        </div>
-
-        <div className="progress-info">
-          <span>Overall process completion</span>
-          <span>{overallProgress}% completed</span>
-        </div>
+      {/* Flagship Overview Wave Chart */}
+      <div style={{ marginBottom: "24px" }}>
+        <OverviewWaveChart
+          metric={`${overallProgress}%`}
+          title="Overall Process & Compliance Index"
+        />
       </div>
 
-      {/* Process Overview + Overall Status */}
+      {/* Process Overview + Overall Status Grid */}
       <div className="dashboard-grid">
-
         {/* Process Overview */}
         <div className="panel">
-
           <div className="section-header">
             <div>
               <h2>Process Overview</h2>
-
-              <p>
-                Current status of all QMS processes.
-              </p>
+              <p>Current status of all QMS processes.</p>
             </div>
           </div>
 
           <div className="process-overview-list">
-
             {processData.map((process) => (
-              <div
-                className="process-overview-item"
-                key={process.name}
-              >
-
+              <div className="process-overview-item" key={process.name}>
                 <div className="process-overview-top">
-
                   <div>
                     <strong>{process.name}</strong>
-
-                    <span>
-                      {process.owner}
-                    </span>
+                    <span>{process.owner}</span>
                   </div>
-
-                  <strong>
-                    {process.progress}%
-                  </strong>
-
+                  <strong>{process.progress}%</strong>
                 </div>
 
                 <div className="progress-bar small">
-
                   <div
                     className="progress-bar-fill"
                     style={{
                       width: `${process.progress}%`,
                     }}
                   />
-
                 </div>
 
                 <div className="process-overview-bottom">
-
                   <StatusBadge status={process.status} />
-
-                  <span>
-                    Target: {process.target}
-                  </span>
-
+                  <span>Target: {process.target}</span>
                 </div>
-
               </div>
             ))}
-
           </div>
-
         </div>
 
         {/* Overall Status */}
         <div className="panel">
-
           <div className="section-header">
             <div>
               <h2>Overall Status</h2>
-
-              <p>
-                Current QMS process status.
-              </p>
+              <p>Current QMS process status breakdown.</p>
             </div>
           </div>
 
           <div className="overall-progress">
-
             <div className="progress-circle">
               <div className="progress-circle-content">
                 <strong>{overallProgress}%</strong>
                 <span>Overall Progress</span>
               </div>
             </div>
-
           </div>
 
           <div className="status-summary">
-
             <div>
               <span className="status-dot completed" />
               <span>Completed</span>
@@ -338,71 +276,43 @@ export default function TrustHeadDashboard() {
               <span>Pending</span>
               <strong>{pendingProcesses}</strong>
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       {/* Process Timeline */}
       <div className="panel timeline-panel">
-
         <div className="section-header">
-
           <div>
             <h2>Process Timeline</h2>
-
-            <p>
-              High-level timeline of major QMS activities.
-            </p>
+            <p>High-level timeline of major QMS activities.</p>
           </div>
-
-          <span className="timeline-period">
-            September 2026
-          </span>
-
+          <span className="timeline-period">September 2026</span>
         </div>
 
         <div className="head-timeline">
-
           {timelineData.map((item, index) => (
             <div
               className={`head-timeline-item ${item.status}`}
               key={`${item.title}-${index}`}
             >
-
-              <div className="head-timeline-date">
-                {item.date}
-              </div>
+              <div className="head-timeline-date">{item.date}</div>
 
               <div className="head-timeline-line">
-
                 <span className="head-timeline-dot" />
-
                 {index !== timelineData.length - 1 && (
                   <span className="head-timeline-connector" />
                 )}
-
               </div>
 
               <div className="head-timeline-content">
-
                 <strong>{item.title}</strong>
-
-                <p>
-                  {item.description}
-                </p>
-
+                <p>{item.description}</p>
               </div>
-
             </div>
           ))}
-
         </div>
-
       </div>
-
     </div>
   );
 }

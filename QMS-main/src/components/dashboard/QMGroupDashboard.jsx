@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   CalendarCheck,
@@ -15,9 +15,11 @@ import { sortMRMs } from "../../services/mrmService";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
 import StatusBadge from "../common/StatusBadge";
+import StatCard from "../common/StatCard";
 import ActivityCard from "./ActivityCard";
 
 export default function QMGroupDashboard() {
+  const navigate = useNavigate();
   const {
     documents = [],
     processes = [],
@@ -65,83 +67,37 @@ export default function QMGroupDashboard() {
         description="Oversee quality governance, process monitoring, Management Review Meetings, and compliance oversight."
       />
 
-      {/* Context Overview Cards */}
-      <div className="overview-cards-grid four-col">
-        {/* Card 1: MRM */}
-        <NavLink to="/mrm" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon purple">
-              <CalendarCheck size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>MRM</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {mrmList.length} <small>Sessions</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>View MRMs</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+      {/* Top 3 Stat Cards with Circular Gauge Rings */}
+      <div className="stats-grid three-col">
+        <StatCard
+          label="MRM & Quality Governance"
+          value={`${mrmList.length} Sessions`}
+          progress={88}
+          tone="blue"
+          direction="up"
+          hint="Active & Scheduled MRMs"
+          onClick={() => navigate("/mrm")}
+        />
 
-        {/* Card 2: Process Overview */}
-        <NavLink to="/processes" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon teal">
-              <BookOpen size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>Process Overview</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {processes.length} <small>Processes</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>Explore Processes</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+        <StatCard
+          label="Process Register"
+          value={`${processes.length} Processes`}
+          progress={95}
+          tone="teal"
+          direction="up"
+          hint="Institutional Processes"
+          onClick={() => navigate("/processes")}
+        />
 
-        {/* Card 3: Docs Management */}
-        <NavLink to="/documents" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon blue">
-              <FileText size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>Docs Management</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {documents.length} <small>Controlled</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>Open Library</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
-
-        {/* Card 4: Internal Quality Audit */}
-        <NavLink to="/internal-audit" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon green">
-              <ShieldCheck size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>Internal Audit</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {auditList.length} <small>Audits</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>Open Audit</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+        <StatCard
+          label="Controlled Docs & Audits"
+          value={`${documents.length} Docs · ${auditList.length} Audits`}
+          progress={80}
+          tone="dark"
+          direction="up"
+          hint="Library & Audit Schedules"
+          onClick={() => navigate("/documents")}
+        />
       </div>
 
       {/* Row: Audit Trails and User Management */}
@@ -158,36 +114,29 @@ export default function QMGroupDashboard() {
                 <tr>
                   <th>Document Record</th>
                   <th>Version</th>
-                  <th>Date & Author</th>
-                  <th>Status</th>
+                  <th>Modifier / Author</th>
+                  <th>Timestamp</th>
+                  <th>Review Status</th>
                 </tr>
               </thead>
               <tbody>
                 {auditTrailRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
-                      No audit trail records found.
+                    <td colSpan={5} style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>
+                      No audit trails recorded yet.
                     </td>
                   </tr>
                 ) : (
-                  auditTrailRecords.map((item, idx) => (
-                    <tr key={`${item.docId}-${item.version}-${idx}`}>
+                  auditTrailRecords.map((rec, idx) => (
+                    <tr key={`${rec.docId}-${idx}`}>
                       <td>
-                        <NavLink to={`/documents/${item.docId}`} className="table-link">
-                          <strong>{item.docName}</strong>
-                          <small>{item.docId}</small>
-                        </NavLink>
+                        <strong>{rec.docName}</strong>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>ID: {rec.docId}</div>
                       </td>
-                      <td>
-                        <b>v{item.version}</b>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: "12px", color: "var(--ink-soft)", display: "block" }}>{item.author}</span>
-                        <small style={{ color: "var(--muted)" }}>{item.date}</small>
-                      </td>
-                      <td>
-                        <StatusBadge status={item.status} />
-                      </td>
+                      <td><span className="badge badge-neutral">{rec.version}</span></td>
+                      <td>{rec.author || "System"}</td>
+                      <td style={{ fontSize: "12px", color: "#475569" }}>{rec.date}</td>
+                      <td><StatusBadge status={rec.status || "Approved"} /></td>
                     </tr>
                   ))
                 )}
@@ -196,62 +145,138 @@ export default function QMGroupDashboard() {
           </div>
         </section>
 
-        {/* Right: User Management */}
+        {/* Right: Institutional Personnel & Governance */}
         <section className="panel" style={{ margin: 0, display: "flex", flexDirection: "column" }}>
           <SectionHeader
-            title="User Management"
-            action={<NavLink className="text-link" to="/user-management">Manage all users →</NavLink>}
+            title="Institutional Governance"
+            action={<NavLink className="text-link" to="/users">Manage Staff Accounts →</NavLink>}
           />
-          <div className="table-wrap" style={{ flex: 1 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>User Name</th>
-                  <th>Role</th>
-                  <th>Department</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(usersList && usersList.length > 0 ? usersList : employees).slice(0, 4).map((user) => (
-                  <tr key={user.id || user.email}>
-                    <td>
-                      <NavLink to="/user-management" className="table-link">
-                        <strong>{user.name}</strong>
-                        <small>{user.email}</small>
-                      </NavLink>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--navy)" }}>
-                        {user.roleTitle || user.role}
-                      </span>
-                    </td>
-                    <td>{user.department || "Academic Division"}</td>
-                    <td>
-                      <span
-                        style={{
-                          padding: "3px 8px",
-                          borderRadius: "9999px",
-                          fontSize: "11px",
-                          fontWeight: "600",
-                          background: "var(--status-green-bg)",
-                          color: "var(--status-green)",
-                          border: "1px solid var(--status-green-border)"
-                        }}
-                      >
-                        Active
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "8px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+            >
+              <div>
+                <strong style={{ display: "block", fontSize: "13px", color: "#0f172a" }}>Course Coordinators</strong>
+                <span style={{ fontSize: "11px", color: "#64748b" }}>Process Owners managing documentation</span>
+              </div>
+              <span className="badge badge-info" style={{ fontWeight: 600 }}>{courseCoordinatorsCount} Registered</span>
+            </div>
+
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "8px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+            >
+              <div>
+                <strong style={{ display: "block", fontSize: "13px", color: "#0f172a" }}>Pending Quality Reviews</strong>
+                <span style={{ fontSize: "11px", color: "#64748b" }}>Documents awaiting review or comments</span>
+              </div>
+              <span className="badge badge-warning" style={{ fontWeight: 600 }}>{pendingReviews} Documents</span>
+            </div>
+
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "8px",
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+            >
+              <div>
+                <strong style={{ display: "block", fontSize: "13px", color: "#166534" }}>Ready to Share with Coordinators</strong>
+                <span style={{ fontSize: "11px", color: "#15803d" }}>Audits & MRMs approved by Trust Head</span>
+              </div>
+              <span className="badge badge-success" style={{ fontWeight: 600 }}>
+                {readyToShareMRMs.length + readyToShareAudits.length} Items Ready
+              </span>
+            </div>
           </div>
         </section>
       </div>
 
-      {/* Recent Activity Timeline */}
-      <ActivityCard />
+      {/* Audit Action Hub Section */}
+      <div className="panel" style={{ marginTop: "24px" }}>
+        <SectionHeader
+          title="Quality Audit Portals"
+          description="Internal ISO reviews and external third-party surveillance audits."
+        />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+          {/* Card 1: Internal Audit */}
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+              background: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between"
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <ShieldCheck size={18} color="#0284c7" />
+                <strong style={{ fontSize: "14px", color: "#0f172a" }}>Internal Quality Audit (IQA)</strong>
+              </div>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0, lineHeight: 1.4 }}>
+                Review, authorize schedules with Trust Head, and track department Non-Conformance (NC) reports.
+              </p>
+            </div>
+            <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#0284c7" }}>{auditList.length} Active Audits</span>
+              <NavLink to="/internal-audit" className="secondary-button" style={{ padding: "6px 12px", fontSize: "11px" }}>
+                Open Internal Portal →
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Card 2: External Audit */}
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+              background: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between"
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <Check size={18} color="#16a34a" />
+                <strong style={{ fontSize: "14px", color: "#0f172a" }}>External ISO Certification Audit</strong>
+              </div>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0, lineHeight: 1.4 }}>
+                External certifying agency surveillance audits, registrar observations, and certification validity.
+              </p>
+            </div>
+            <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#16a34a" }}>{externalAuditList.length} Cycles</span>
+              <NavLink to="/external-audit" className="secondary-button" style={{ padding: "6px 12px", fontSize: "11px" }}>
+                Open External Portal →
+              </NavLink>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
