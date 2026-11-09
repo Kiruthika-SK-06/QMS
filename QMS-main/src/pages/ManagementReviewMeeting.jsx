@@ -632,40 +632,31 @@ Controlled Document - Published for all Course Staff and Auditors
         }
       />
 
-      {/* KPI Stat Cards (Tailored per role) */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-          gap: "14px",
-          marginBottom: "20px"
-        }}
-      >
+      {/* Top 3 Stat Cards with Circular Gauge Rings */}
+      <div className="stats-grid three-col" style={{ marginBottom: "20px" }}>
         {isCourseCoordinator ? (
           <>
-            <StatCard label="Scheduled Meetings" value={scheduledCount} icon={CalendarCheck} tone="blue" hint="Notified meetings to attend" />
-            <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official minutes available" />
-            <StatCard label="My Assigned Actions" value={myAssignedActionsCount} icon={FileText} tone="teal" hint="Action items assigned to you" />
+            <StatCard label="Scheduled Meetings" value={`${scheduledCount} Sessions`} tone="blue" direction="up" hint="Notified meetings to attend" />
+            <StatCard label="MoM Published" value={`${momPublishedCount} Published`} tone="teal" direction="up" hint="Official minutes available" />
+            <StatCard label="My Assigned Actions" value={`${myAssignedActionsCount} Actions`} tone="dark" direction="up" hint="Action items assigned to you" />
           </>
         ) : isInternalAuditor ? (
           <>
-            <StatCard label="Total Review Meetings" value={visibleMRMs.length} icon={CalendarCheck} tone="blue" hint="All accessible MRMs" />
-            <StatCard label="Scheduled Meetings" value={scheduledCount} icon={Mail} tone="teal" hint="Notified meetings to attend" />
-            <StatCard label="MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official minutes recorded" />
+            <StatCard label="Total Review Meetings" value={`${visibleMRMs.length} Sessions`} tone="blue" direction="up" hint="All accessible MRMs" />
+            <StatCard label="Scheduled Meetings" value={`${scheduledCount} Scheduled`} tone="teal" direction="up" hint="Notified meetings to attend" />
+            <StatCard label="MoM Published" value={`${momPublishedCount} Published`} tone="green" direction="up" hint="Official minutes recorded" />
           </>
         ) : isTrustHead ? (
           <>
-            <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
-            <StatCard label="Pending My Approval" value={pendingApprovalCount} icon={Clock} tone="amber" hint="Action required to review & approve" />
-            <StatCard label="Approved Meetings" value={auditorApprovedCount} icon={ShieldCheck} tone="teal" hint="Ratified meeting schedules" />
-            <StatCard label="Completed / MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" hint="Official meeting minutes published" />
+            <StatCard label="Total Review Meetings" value={`${totalMeetings} Sessions`} tone="blue" direction="up" hint="All accessible MRMs" />
+            <StatCard label="MoM Published" value={`${momPublishedCount} Published`} tone="teal" direction="up" hint="Official meeting minutes published" />
+            <StatCard label="Pending My Approval" value={`${pendingApprovalCount} Pending`} tone="dark" direction="down" hint="Action required to review & approve" />
           </>
         ) : (
           <>
-            <StatCard label="Total Meetings" value={totalMeetings} icon={CalendarCheck} tone="blue" />
-            <StatCard label="Pending Trust Head Approval" value={pendingApprovalCount} icon={Clock} tone="amber" />
-            <StatCard label="Ready for Email Notification" value={readyToEmailCount} icon={Mail} tone="teal" />
-            <StatCard label="Completed / MoM Published" value={momPublishedCount} icon={CheckCircle2} tone="green" />
+            <StatCard label="Total Review Meetings" value={`${totalMeetings} Sessions`} tone="blue" direction="up" hint="Institutional Quality Reviews" />
+            <StatCard label="MoM Published" value={`${momPublishedCount} Published`} tone="teal" direction="up" hint="Minutes recorded & published" />
+            <StatCard label="Pending Approval & Notice" value={`${pendingApprovalCount + readyToEmailCount} Pending`} tone="dark" direction="down" hint="Approval or Notification needed" />
           </>
         )}
       </div>

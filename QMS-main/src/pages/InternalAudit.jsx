@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import Modal from "../components/tasks/Modal";
+import StatCard from "../components/common/StatCard";
 
 export default function InternalAudit() {
   const {
@@ -798,6 +799,39 @@ export default function InternalAudit() {
             <span>Schedule Audit</span>
           </button>
         )}
+      </div>
+
+      {/* Top 3 Stat Cards with Circular Gauge Rings */}
+      <div className="stats-grid three-col" style={{ marginBottom: "20px" }}>
+        <StatCard
+          label="Total Internal Audits"
+          value={`${stats.total} Audits`}
+          progress={88}
+          tone="blue"
+          direction="up"
+          hint="All registered IQA cycles"
+          onClick={() => setFilterStatus("all")}
+        />
+
+        <StatCard
+          label="In Progress Audits"
+          value={`${stats.inProgress} Active`}
+          progress={70}
+          tone="teal"
+          direction="up"
+          hint="Currently under active audit"
+          onClick={() => setFilterStatus("in_progress")}
+        />
+
+        <StatCard
+          label="Actions Required"
+          value={`${stats.pendingAction} Pending`}
+          progress={50}
+          tone="dark"
+          direction="down"
+          hint={isAuditor ? "Awaiting your Noticing Sheet" : isAuditee ? "Awaiting your CAPA" : isTrustHead ? "Awaiting your approval" : "Awaiting review"}
+          onClick={() => setFilterStatus("pending")}
+        />
       </div>
 
       {/* Filter Tabs & Search & Process Selector */}

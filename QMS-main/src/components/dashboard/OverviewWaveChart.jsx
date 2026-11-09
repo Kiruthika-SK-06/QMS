@@ -308,3 +308,4 @@ export default function OverviewWaveChart({ title = "Quality Performance Index",
     </div>
   );
 }
+

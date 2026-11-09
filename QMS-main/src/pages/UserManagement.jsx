@@ -272,18 +272,11 @@ export default function UserManagement() {
         }
       />
 
-      {/* KPI / Statistics Cards Grid - Exactly 3 cards as requested */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "16px",
-          marginBottom: "20px"
-        }}
-      >
-        <StatCard label="Total User Accounts" value={totalUsers} icon={Users} tone="blue" />
-        <StatCard label="Course Coordinators" value={courseCoordinators} icon={Briefcase} tone="teal" />
-        <StatCard label="Internal Auditors" value={internalAuditors} icon={ShieldCheck} tone="purple" />
+      {/* Top 3 Stat Cards with Circular Gauge Rings */}
+      <div className="stats-grid three-col" style={{ marginBottom: "20px" }}>
+        <StatCard label="Total User Accounts" value={`${totalUsers} Users`} tone="blue" direction="up" hint="All active staff profiles" />
+        <StatCard label="Course Coordinators" value={`${courseCoordinators} Coordinators`} tone="teal" direction="up" hint="Process Owners & Authors" />
+        <StatCard label="Internal Auditors" value={`${internalAuditors} Auditors`} tone="dark" direction="up" hint="Quality Compliance Officers" />
       </div>
 
       {/* Filter and Search Bar */}

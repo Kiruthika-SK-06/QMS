@@ -36,6 +36,7 @@ import {
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 import Modal from "../components/tasks/Modal";
+import StatCard from "../components/common/StatCard";
 
 // 5-Step External Audit Workflow Progress Helper
 // Step 1: External Auditor schedules meeting & sends timetable to QMS Coordinator via email only.
@@ -612,6 +613,39 @@ Certified Compliant with International Standards - Centre for Development of Adv
           )
         }
       />
+
+      {/* Top 3 Stat Cards with Circular Gauge Rings */}
+      <div className="stats-grid three-col" style={{ marginBottom: "20px" }}>
+        <StatCard
+          label="Total Surveillance Cycles"
+          value={`${visibleAudits.length} Audits`}
+          progress={85}
+          tone="blue"
+          direction="up"
+          hint="ISO 9001:2015 Annual Surveillance"
+          onClick={() => setFilterStep("All")}
+        />
+
+        <StatCard
+          label="Certified & Closed"
+          value={`${certifiedCount} Certified`}
+          progress={100}
+          tone="green"
+          direction="up"
+          hint="Compliance Verified & Ratified"
+          onClick={() => setFilterStep("Step 5")}
+        />
+
+        <StatCard
+          label="Active Surveillance"
+          value={`${visibleAudits.length - certifiedCount} Active`}
+          progress={60}
+          tone="dark"
+          direction="down"
+          hint="In-progress surveillance stages"
+          onClick={() => setFilterStep("Step 2")}
+        />
+      </div>
 
       {/* Filter and Search Bar */}
       <div className="filter-bar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center", marginBottom: "20px" }}>

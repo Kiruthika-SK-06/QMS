@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   CalendarCheck,
@@ -14,6 +14,8 @@ import { sortMRMs } from "../../services/mrmService";
 import PageIntro from "../common/PageIntro";
 import SectionHeader from "../common/SectionHeader";
 import ProcessTable from "../tables/ProcessTable";
+import StatCard from "../common/StatCard";
+import OverviewWaveChart from "./OverviewWaveChart";
 
 const defaultProcessData = [
   {
@@ -54,6 +56,7 @@ const defaultProcessData = [
 ];
 
 export default function Head() {
+  const navigate = useNavigate();
   const { headOverview, processes = [], documents = [], mrmList = [], auditList = [], externalAuditList = [], currentUser } = useApp();
   const isAuditor = currentUser?.role === "auditor";
   const isTrustHead = currentUser?.role === "Head";
@@ -95,45 +98,37 @@ export default function Head() {
           description="Quality assurance inspection, noticing sheet verification, and review meeting Minutes of Meeting (MoM) access."
         />
 
-        {/* Core Cards for Auditor: Internal Audit and MRM */}
-        <div className="overview-cards-grid">
-          {/* Card 1: Internal Quality Audit */}
-          <NavLink to="/internal-audit" className="overview-context-card">
-            <div className="overview-card-header">
-              <div className="overview-card-icon green">
-                <ShieldCheck size={22} />
-              </div>
-              <div className="overview-card-title-group">
-                <h3>Internal Audit</h3>
-              </div>
-            </div>
-            <div className="overview-card-metric">
-              {auditList.length} <small>Total Audits</small>
-            </div>
-            <div className="overview-card-footer">
-              <span>Open Internal Audit</span>
-              <ArrowRight size={14} />
-            </div>
-          </NavLink>
+        {/* Core 3 Cards for Auditor with Circular Gauge Rings */}
+        <div className="stats-grid three-col">
+          <StatCard
+            label="Internal Quality Audits"
+            value={`${auditList.length} Audits`}
+            progress={85}
+            tone="blue"
+            direction="up"
+            hint="Scheduled & Active Audits"
+            onClick={() => navigate("/internal-audit")}
+          />
 
-          {/* Card 2: MRM & MoM Downloads */}
-          <NavLink to="/mrm" className="overview-context-card">
-            <div className="overview-card-header">
-              <div className="overview-card-icon purple">
-                <CalendarCheck size={22} />
-              </div>
-              <div className="overview-card-title-group">
-                <h3>MRM & MoM Downloads</h3>
-              </div>
-            </div>
-            <div className="overview-card-metric">
-              {publishedMRMs.length} <small>MoMs Available</small>
-            </div>
-            <div className="overview-card-footer">
-              <span>View MRMs & Download MoM</span>
-              <ArrowRight size={14} />
-            </div>
-          </NavLink>
+          <StatCard
+            label="Awaiting Noticing Sheets"
+            value={`${auditsAwaitingNoticing.length} Pending`}
+            progress={60}
+            tone="amber"
+            direction="down"
+            hint="Action Required: Inspection"
+            onClick={() => navigate("/internal-audit")}
+          />
+
+          <StatCard
+            label="MRM & MoM Downloads"
+            value={`${publishedMRMs.length} Available`}
+            progress={95}
+            tone="teal"
+            direction="up"
+            hint="Official Minutes of Meeting"
+            onClick={() => navigate("/mrm")}
+          />
         </div>
 
         {/* Row: Internal Quality Audits & Scheduled MRM (with MoM Download) */}
@@ -267,7 +262,7 @@ export default function Head() {
   }
 
   // =========================================================================
-  // TRUST HEAD EXECUTIVE VIEW (No Approval History)
+  // TRUST HEAD EXECUTIVE VIEW
   // =========================================================================
   return (
     <>
@@ -277,83 +272,45 @@ export default function Head() {
         description="Executive governance, institutional quality performance, and review meeting ratification."
       />
 
-      {/* Main Context Overview Cards: MRM, Process Overview, Docs Management, Internal Audit */}
-      <div className="overview-cards-grid four-col">
-        {/* Card 1: MRM */}
-        <NavLink to="/mrm" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon purple">
-              <CalendarCheck size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>MRM</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {mrmList.length} <small>Sessions</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>View MRM Schedule</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+      {/* Top 3 Stat Cards with Circular Gauge Rings & Directional Arrows */}
+      <div className="stats-grid three-col">
+        <StatCard
+          label="Total Processes"
+          value={`${totalProcesses} Monitored`}
+          progress={88}
+          tone="blue"
+          direction="up"
+          hint="All registered institutional processes"
+          onClick={() => navigate("/processes")}
+        />
 
-        {/* Card 2: Process Overview */}
-        <NavLink to="/processes" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon teal">
-              <BookOpen size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>Process Overview</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {totalProcesses} <small>Processes</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>Explore Processes</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+        <StatCard
+          label="Completed Processes"
+          value={`${completedProcesses} Completed`}
+          progress={100}
+          tone="teal"
+          direction="up"
+          hint="Processes signed off & verified"
+          onClick={() => navigate("/processes")}
+        />
 
-        {/* Card 3: Docs Management */}
-        <NavLink to="/documents" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon blue">
-              <FileText size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>Docs Management</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {documents.length || 12} <small>Controlled</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>Open Library</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+        <StatCard
+          label="Pending Audits & MRMs"
+          value={`${pendingAuditApprovals.length + pendingApprovalMRMs.length} Pending`}
+          progress={55}
+          tone="dark"
+          direction="down"
+          hint="Requires executive ratification"
+          onClick={() => navigate("/internal-audit")}
+        />
+      </div>
 
-        {/* Card 4: Internal Quality Audit */}
-        <NavLink to="/internal-audit" className="overview-context-card">
-          <div className="overview-card-header">
-            <div className="overview-card-icon green">
-              <ShieldCheck size={20} />
-            </div>
-            <div className="overview-card-title-group">
-              <h3>Internal Audit</h3>
-            </div>
-          </div>
-          <div className="overview-card-metric">
-            {auditList.length} <small>Audits</small>
-          </div>
-          <div className="overview-card-footer">
-            <span>Open Internal Audit</span>
-            <ArrowRight size={13} />
-          </div>
-        </NavLink>
+      {/* Flagship Overview Wave Chart */}
+      <div style={{ marginBottom: "24px" }}>
+        <OverviewWaveChart
+          metric={`${overallProgress}%`}
+          title="Executive Process & Quality Performance Index"
+        />
       </div>
 
       {/* Row: Institutional Process and Scheduled MRM */}
@@ -436,238 +393,6 @@ export default function Head() {
           </div>
         </section>
       </div>
-
-      {/* Institutional Process Progress Animated Pie Chart */}
-      <ProcessProgressPieChart processes={list} overallProgress={overallProgress} />
     </>
-  );
-}
-
-// Process Progress Animated Donut / Pie Chart Component
-function ProcessProgressPieChart({ processes = [], overallProgress = 0 }) {
-  const total = processes.length || 1;
-  const completed = processes.filter((p) => p.status === "Completed").length;
-  const inProgress = processes.filter((p) => p.status === "In Progress" || p.status === "Active").length;
-  const pending = Math.max(0, total - completed - inProgress);
-
-  const pCompleted = completed / total;
-  const pInProgress = inProgress / total;
-  const pPending = pending / total;
-
-  const radius = 68;
-  const circ = 2 * Math.PI * radius; // ~427.26
-
-  const strokeCompleted = pCompleted * circ;
-  const strokeInProgress = pInProgress * circ;
-  const strokePending = pPending * circ;
-
-  const offsetCompleted = 0;
-  const offsetInProgress = -strokeCompleted;
-  const offsetPending = -(strokeCompleted + strokeInProgress);
-
-  return (
-    <section className="panel" style={{ marginTop: "24px" }}>
-      <SectionHeader
-        title="Institutional Process Progress Breakdown"
-        action={<NavLink className="text-link" to="/processes">Explore all processes →</NavLink>}
-      />
-
-      <style>{`
-        @keyframes pieStrokeAnim {
-          from {
-            stroke-dasharray: 0 428;
-            opacity: 0.3;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes chartFadeIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .pie-chart-container {
-          animation: chartFadeIn 0.5s ease-out;
-        }
-        .pie-slice {
-          transition: stroke-width 0.25s ease, opacity 0.2s ease;
-        }
-        .pie-slice:hover {
-          stroke-width: 26;
-          opacity: 0.9;
-          cursor: pointer;
-        }
-      `}</style>
-
-      <div
-        className="pie-chart-container"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-around",
-          flexWrap: "wrap",
-          gap: "28px",
-          padding: "16px 8px"
-        }}
-      >
-        {/* Animated Donut / Pie Chart */}
-        <div style={{ position: "relative", width: "190px", height: "190px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="190" height="190" viewBox="0 0 190 190" style={{ transform: "rotate(-90deg)" }}>
-            {/* Background Track */}
-            <circle
-              cx="95"
-              cy="95"
-              r={radius}
-              fill="none"
-              stroke="#f1f5f9"
-              strokeWidth="20"
-            />
-
-            {/* Completed Slice (Green) */}
-            {completed > 0 && (
-              <circle
-                className="pie-slice"
-                cx="95"
-                cy="95"
-                r={radius}
-                fill="none"
-                stroke="#16a34a"
-                strokeWidth="20"
-                strokeDasharray={`${strokeCompleted} ${circ}`}
-                strokeDashoffset={offsetCompleted}
-                strokeLinecap="round"
-                style={{ animation: "pieStrokeAnim 0.7s ease-out" }}
-              />
-            )}
-
-            {/* In Progress Slice (Blue) */}
-            {inProgress > 0 && (
-              <circle
-                className="pie-slice"
-                cx="95"
-                cy="95"
-                r={radius}
-                fill="none"
-                stroke="#0284c7"
-                strokeWidth="20"
-                strokeDasharray={`${strokeInProgress} ${circ}`}
-                strokeDashoffset={offsetInProgress}
-                strokeLinecap="round"
-                style={{ animation: "pieStrokeAnim 0.85s ease-out" }}
-              />
-            )}
-
-            {/* Pending Slice (Amber) */}
-            {pending > 0 && (
-              <circle
-                className="pie-slice"
-                cx="95"
-                cy="95"
-                r={radius}
-                fill="none"
-                stroke="#f59e0b"
-                strokeWidth="20"
-                strokeDasharray={`${strokePending} ${circ}`}
-                strokeDashoffset={offsetPending}
-                strokeLinecap="round"
-                style={{ animation: "pieStrokeAnim 1s ease-out" }}
-              />
-            )}
-          </svg>
-
-          {/* Center Indicator */}
-          <div
-            style={{
-              position: "absolute",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              pointerEvents: "none"
-            }}
-          >
-            <span style={{ fontSize: "28px", fontWeight: "800", color: "var(--ink)", lineHeight: 1 }}>
-              {overallProgress}%
-            </span>
-            <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--muted)", marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Progress
-            </span>
-          </div>
-        </div>
-
-        {/* Legend and Metrics Breakdown */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", minWidth: "240px", flex: 1, maxWidth: "420px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px 14px",
-              background: "#f0fdf4",
-              border: "1px solid #bbf7d0",
-              borderRadius: "8px"
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#16a34a" }} />
-              <div>
-                <strong style={{ fontSize: "13px", color: "#166534", display: "block" }}>Completed Processes</strong>
-                <span style={{ fontSize: "11.5px", color: "#15803d" }}>100% Target Met</span>
-              </div>
-            </div>
-            <strong style={{ fontSize: "15px", color: "#166534" }}>
-              {completed} <small style={{ fontSize: "11px", fontWeight: "500" }}>({Math.round(pCompleted * 100)}%)</small>
-            </strong>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px 14px",
-              background: "#f0f9ff",
-              border: "1px solid #bae6fd",
-              borderRadius: "8px"
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#0284c7" }} />
-              <div>
-                <strong style={{ fontSize: "13px", color: "#0369a1", display: "block" }}>In Progress</strong>
-                <span style={{ fontSize: "11.5px", color: "#0284c7" }}>Under Active Execution</span>
-              </div>
-            </div>
-            <strong style={{ fontSize: "15px", color: "#0369a1" }}>
-              {inProgress} <small style={{ fontSize: "11px", fontWeight: "500" }}>({Math.round(pInProgress * 100)}%)</small>
-            </strong>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px 14px",
-              background: "#fffbeb",
-              border: "1px solid #fde68a",
-              borderRadius: "8px"
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#f59e0b" }} />
-              <div>
-                <strong style={{ fontSize: "13px", color: "#92400e", display: "block" }}>Pending / Scheduled</strong>
-                <span style={{ fontSize: "11.5px", color: "#b45309" }}>Awaiting Next Phase</span>
-              </div>
-            </div>
-            <strong style={{ fontSize: "15px", color: "#92400e" }}>
-              {pending} <small style={{ fontSize: "11px", fontWeight: "500" }}>({Math.round(pPending * 100)}%)</small>
-            </strong>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
