@@ -2692,9 +2692,13 @@ textarea:focus {
   transition: all 0.2s var(--ease);
 }
 
+.login-input-wrapper input:hover {
+  border-color: #C4CCEF;
+}
+
 .login-input-wrapper input:focus {
-  border-color: var(--navy-2);
-  box-shadow: 0 0 0 3px rgba(8, 118, 185, 0.12);
+  border-color: #384FB8;
+  box-shadow: 0 0 0 3px rgba(56, 79, 184, 0.15);
   outline: none;
 }
 
@@ -2836,32 +2840,41 @@ textarea:focus {
   width: 100%;
 }
 
-.role-dropdown-trigger {
+.role-dropdown-trigger,
+#role-picker-button {
   position: relative;
   width: 100%;
-  min-height: 44px;
+  min-height: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  background: white;
-  border: 1px solid #d4e0e7;
+  padding: 0 14px;
+  background: #ffffff !important;
+  border: 1px solid #DCE2F5 !important;
   border-radius: var(--radius-sm);
-  color: var(--ink);
+  color: #050B3B;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  box-sizing: border-box;
   transition: all 0.2s var(--ease);
 }
 
-.role-dropdown-trigger:hover {
-  border-color: #9cb8ca;
-  background: #fbfdfd;
+.role-dropdown-trigger:hover,
+#role-picker-button:hover {
+  border-color: #C4CCEF !important;
+  background: #ffffff !important;
 }
 
-.role-dropdown-trigger.active-focus {
-  border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(11, 52, 87, 0.12);
+.role-dropdown-trigger.active-focus,
+.role-dropdown-trigger:focus,
+#role-picker-button:focus,
+.custom-role-dropdown.is-open .role-dropdown-trigger,
+.custom-role-dropdown.is-open #role-picker-button {
+  border-color: #384FB8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 79, 184, 0.15) !important;
+  outline: none !important;
 }
 
 .role-trigger-inner {
@@ -2871,7 +2884,7 @@ textarea:focus {
 }
 
 .role-trigger-icon-badge {
-  color: var(--navy);
+  color: #384FB8;
   display: flex;
   align-items: center;
 }
@@ -2879,33 +2892,34 @@ textarea:focus {
 .role-trigger-text {
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink);
+  color: #050B3B;
 }
 
 .role-trigger-text.is-placeholder {
-  color: var(--muted-2);
+  color: #687395;
+  font-weight: 400;
 }
 
 .role-trigger-chevron {
-  color: #8da2b0;
+  color: #687395;
   transition: transform 0.2s var(--ease);
   flex-shrink: 0;
 }
 
 .role-trigger-chevron.rotated {
   transform: rotate(180deg);
-  color: var(--navy);
+  color: #384FB8;
 }
 
 .role-options-panel {
   position: absolute;
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #d4e0e7;
+  background: #ffffff;
+  border: 1px solid #DCE2F5;
   border-radius: var(--radius-md);
   padding: 5px;
-  box-shadow: 0 10px 25px rgba(15, 42, 63, 0.14);
+  box-shadow: 0 10px 25px rgba(5, 11, 59, 0.12);
   z-index: 1000;
   animation: fadeIn 0.15s ease-out;
   display: flex;
@@ -2921,7 +2935,7 @@ textarea:focus {
 .role-options-panel.open-upward {
   bottom: calc(100% + 6px);
   top: auto;
-  box-shadow: 0 -10px 25px rgba(15, 42, 63, 0.14);
+  box-shadow: 0 -10px 25px rgba(5, 11, 59, 0.12);
 }
 
 .role-option-button {
@@ -2931,23 +2945,23 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 0;
+  border: 0 !important;
   border-radius: 6px;
   background: transparent;
-  color: var(--ink);
+  color: #050B3B;
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
 }
 
 .role-option-button:hover {
-  background: var(--navy-subtle);
-  color: var(--navy);
+  background: #EBEDFE;
+  color: #0C1979;
 }
 
 .role-option-button.selected {
-  background: var(--navy-subtle);
-  color: var(--navy);
+  background: #EBEDFE;
+  color: #0C1979;
 }
 
 .role-option-main {
@@ -2960,8 +2974,8 @@ textarea:focus {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background: #f1f5f8;
-  color: var(--navy);
+  background: #EBEDFE;
+  color: #384FB8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2970,27 +2984,27 @@ textarea:focus {
 }
 
 .role-option-button:hover .role-option-icon-box {
-  background: var(--navy);
+  background: #384FB8;
   color: white;
 }
 
 .role-option-button.selected .role-option-icon-box {
-  background: var(--navy);
+  background: #384FB8;
   color: white;
 }
 
 .role-option-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
+  color: #050B3B;
 }
 
 .role-option-button.selected .role-option-title {
-  color: var(--navy);
+  color: #0C1979;
 }
 
 .role-option-checkmark {
-  color: var(--navy);
+  color: #384FB8;
   display: flex;
   align-items: center;
 }
@@ -4129,7 +4143,7 @@ button,
 .action-button,
 .icon-button,
 .login-submit-btn,
-button[type="button"],
+button[type="button"]:not(.role-dropdown-trigger):not(#role-picker-button),
 button[type="submit"],
 input[type="button"],
 input[type="submit"] {
@@ -4137,7 +4151,7 @@ input[type="submit"] {
   outline: none !important;
 }
 
-button:focus,
+button:focus:not(.role-dropdown-trigger):not(#role-picker-button),
 .btn:focus,
 .primary-button:focus,
 .secondary-button:focus,
