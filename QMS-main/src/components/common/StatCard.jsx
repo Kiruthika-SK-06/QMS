@@ -25,8 +25,8 @@ export default function StatCard({
   };
 
   const ringColor = color || toneColors[tone] || "#384FB8";
-  const size = 42;
-  const strokeWidth = 3.2;
+  const size = 38;
+  const strokeWidth = 3;
   const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -73,9 +73,9 @@ export default function StatCard({
         {/* Center Diagonal Arrow */}
         <div className="gauge-arrow-center" style={{ color: ringColor }}>
           {direction === "down" ? (
-            <ArrowDownRight size={15} strokeWidth={2.4} />
+            <ArrowDownRight size={14} strokeWidth={2.4} />
           ) : (
-            <ArrowUpRight size={15} strokeWidth={2.4} />
+            <ArrowUpRight size={14} strokeWidth={2.4} />
           )}
         </div>
       </div>
