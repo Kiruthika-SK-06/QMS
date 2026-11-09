@@ -23,7 +23,7 @@ export default function Header({ openMenu }) {
       <div className="header-left">
         <button className="menu-button" onClick={openMenu} aria-label="Toggle Navigation"><Menu size={22} /></button>
         <div className="header-title">
-          <strong className="header-workspace-title" style={{ fontSize: "16px", fontWeight: "700", color: "#021229", letterSpacing: "0.01em" }}>
+          <strong className="header-workspace-title" style={{ fontSize: "16px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "0.01em" }}>
             Centre for Development of Advanced Computing
           </strong>
         </div>

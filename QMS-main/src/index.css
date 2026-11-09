@@ -5,68 +5,71 @@
    ========================================================= */
 :root {
   /* =========================================================
-     SOFT MEDICAL PROFESSIONAL BLUE DESIGN SYSTEM
-     Five colors, one unified visual system:
-     1. #021229 - Deep Blue (High-contrast typography, midnight anchor)
-     2. #05477F - Dark Blue (Sidebar gradient, secondary anchor, depth)
-     3. #4196F7 - Vivid Blue (Primary CTA, buttons, interactive focus)
-     4. #BAD8FC - Soft Blue (Accent borders, soft pills, indicators)
-     5. #DFEDFE - Pale Blue (Clean medical canvas, ice surfaces, search pill)
+     PURE PREMIUM STAY BLUE COLOR PALETTE
+     1. #050B3B - Deep Dark Blue (Sidebar, dark backgrounds, primary text accents)
+     2. #0C1979 - Dark Blue (Headers, navigation, primary buttons)
+     3. #384FB8 - Royal Blue (Active menu items, links, highlights, icons)
+     4. #C4CCEF - Soft Blue (Secondary backgrounds, borders, hover states)
+     5. #EBEDFE - Pale Blue (Page backgrounds, cards, input backgrounds)
      ========================================================= */
 
-  /* 1. Core Brand Colors */
-  --navy: #4196F7;
-  /* Vivid Blue - Primary Interactive Action Color (#4196F7) */
-  --navy-deep: #021229;
-  /* Deep Blue - Midnight typography and dark anchor (#021229) */
-  --navy-light: #BAD8FC;
-  /* Soft Blue - Subtle highlights, active borders (#BAD8FC) */
-  --navy-accent: #4196F7;
-  /* Vivid Blue - Indicators, active badges, CTAs (#4196F7) */
-  --navy-subtle: #DFEDFE;
-  /* Pale Blue - Light surface tint for cards and pills (#DFEDFE) */
-  --navy-hover: #05477F;
-  /* Dark Blue on hover (#05477F) */
-  --navy-border: #BAD8FC;
-  /* Soft Blue border (#BAD8FC) */
+  /* 1. Explicit Palette Specification */
+  --primary-dark: #050B3B;
+  --primary: #0C1979;
+  --primary-blue: #384FB8;
+  --soft-blue: #C4CCEF;
+  --pale-blue: #EBEDFE;
+
+  --page-background: #F6F7FF;
+  --card-background: #FFFFFF;
+  --border-color: #DCE2F5;
+  --text-primary: #050B3B;
+  --text-secondary: #525C84;
+
+  /* 2. Harmonized System Mappings */
+  --navy: #0C1979;
+  /* Dark Blue - Primary Navigation & Headers */
+  --navy-deep: #050B3B;
+  /* Deep Dark Blue - Sidebar Anchor & Deep Text */
+  --navy-light: #384FB8;
+  /* Royal Blue - Active Menu Items & Highlights */
+  --navy-accent: #384FB8;
+  /* Royal Blue Accent */
+  --navy-subtle: #EBEDFE;
+  /* Pale Blue Surface Tint */
+  --navy-hover: #384FB8;
+  /* Royal Blue on hover */
+  --navy-border: #C4CCEF;
+  /* Soft Blue Border */
 
   /* System aliases */
-  --navy-2: #05477F;
-  --blue: #4196F7;
-  --blue-dark: #021229;
-  --blue-ocean: #05477F;
-  --blue-soft: #BAD8FC;
-  --blue-pale: #DFEDFE;
-  --cyan: #BAD8FC;
-  --canvas-pale: #F0F6FD;
+  --navy-2: #0C1979;
+  --blue: #0C1979;
+  --blue-dark: #050B3B;
+  --blue-ocean: #0C1979;
+  --blue-royal: #384FB8;
+  --blue-soft: #C4CCEF;
+  --blue-pale: #EBEDFE;
+  --cyan: #384FB8;
+  --canvas-pale: #F6F7FF;
 
-  /* 2. Content Surfaces & Canvas */
+  /* Surfaces & Canvas */
   --surface: #ffffff;
-  /* Crisp clean white for cards, forms, tables, modals */
-  --surface-alt: #F8FBFE;
-  /* Subtle alternate row / hover tint */
-  --canvas: #F0F6FD;
-  /* Soft Medical Pale Blue canvas (#F0F6FD to #DFEDFE) */
+  --surface-alt: #F8F9FE;
+  --canvas: #F6F7FF;
 
-  /* 3. Neutral Borders & Dividers */
-  --line: #D5E5F7;
-  /* Soft Blue component border derived from #BAD8FC */
-  --line-soft: #EAF2FB;
-  /* Soft inner divider */
-  --line-focus: #4196F7;
-  /* Active focus ring */
+  /* Borders & Dividers */
+  --line: #DCE2F5;
+  --line-soft: #EBEDFE;
+  --line-focus: #384FB8;
 
-  /* 4. Professional High-Contrast Typography (15.8:1 contrast) */
-  --ink: #021229;
-  /* Deep Blue for primary body text & headings (#021229) */
-  --ink-soft: #05477F;
-  /* Dark Blue for secondary headings, form labels (#05477F) */
-  --muted: #426388;
-  /* Secondary labels, descriptions, timestamps */
-  --muted-2: #6B8FB8;
-  /* Table headers, helper text, placeholders */
+  /* Typography */
+  --ink: #050B3B;
+  --ink-soft: #101943;
+  --muted: #525C84;
+  --muted-2: #7E88AF;
 
-  /* 5. Semantic Status Tokens (Harmonized with medical system) */
+  /* Semantic Status Tokens */
   --status-green: #0DAE4B;
   --status-green-bg: #DCFCE7;
   --status-green-border: #BBF7D0;
@@ -79,23 +82,22 @@
   --status-red-bg: #FEE2E2;
   --status-red-border: #FECACA;
 
-  --status-blue: #05477F;
-  --status-blue-bg: #DFEDFE;
-  --status-blue-border: #BAD8FC;
+  --status-blue: #0C1979;
+  --status-blue-bg: #EBEDFE;
+  --status-blue-border: #C4CCEF;
 
-  --status-neutral: #55779C;
-  --status-neutral-bg: #F0F6FD;
-  --status-neutral-border: #D5E5F7;
+  --status-neutral: #525C84;
+  --status-neutral-bg: #F6F7FF;
+  --status-neutral-border: #DCE2F5;
 
-  /* Legacy semantic variables harmonized */
   --green: #0DAE4B;
   --green-bg: #DCFCE7;
   --amber: #B45309;
   --amber-bg: #FEF3C7;
   --red: #DC2626;
   --red-bg: #FEE2E2;
-  --teal: #05477F;
-  --teal-bg: #DFEDFE;
+  --teal: #384FB8;
+  --teal-bg: #EBEDFE;
 
   /* 6. Radii */
   --radius-sm: 7px;
@@ -437,7 +439,7 @@ tbody tr:nth-child(8) {
   position: fixed;
   inset: 0 auto 0 0;
   width: 268px;
-  background: linear-gradient(180deg, #021229 0%, #05477F 100%);
+  background: linear-gradient(180deg, #050B3B 0%, #091357 50%, #0C1979 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 4px 0 24px rgba(3, 22, 39, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   color: #dbe9f0;
@@ -896,8 +898,8 @@ tbody tr:nth-child(8) {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #021229;
-  background: #DFEDFE !important;
+  color: #050B3B;
+  background: #EBEDFE !important;
   border: none !important;
   padding: 0 16px;
   border-radius: 9999px !important;
@@ -936,7 +938,7 @@ tbody tr:nth-child(8) {
   background: transparent !important;
   font-size: 13px;
   font-weight: 500;
-  color: #021229 !important;
+  color: #050B3B !important;
 }
 
 .icon-button,
@@ -997,7 +999,7 @@ tbody tr:nth-child(8) {
 .large-avatar {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #4196F7 0%, #4196F7 100%);
+  background: linear-gradient(135deg, #384FB8 0%, #384FB8 100%);
   color: #ffffff;
   font-weight: 700;
   border-radius: 50%;
@@ -1096,7 +1098,7 @@ h1 {
   font-size: 27px;
   letter-spacing: -0.03em;
   margin: 6px 0 6px;
-  color: #021229;
+  color: #050B3B;
 }
 
 h2 {
@@ -1104,7 +1106,7 @@ h2 {
   font-size: 15.5px;
   letter-spacing: -0.01em;
   margin: 0;
-  color: #021229;
+  color: #050B3B;
 }
 
 .page-intro p {
@@ -1216,7 +1218,7 @@ h2 {
   display: block;
   font: 700 23px "Inter", sans-serif;
   margin: 4px 0 2px;
-  color: #021229;
+  color: #050B3B;
 }
 
 /* =========================================================
@@ -1306,8 +1308,8 @@ h2 {
 .primary-button,
 .btn,
 .btn-primary {
-  --btn-bg-top: #4196F7;
-  --btn-bg-bottom: #4196F7;
+  --btn-bg-top: #384FB8;
+  --btn-bg-bottom: #384FB8;
   --btn-border: #01537a;
   --btn-text: #ffffff;
   --btn-shadow: rgba(2, 101, 148, 0.35);
@@ -1326,7 +1328,7 @@ h2 {
   outline: none !important;
   border-radius: 7px;
 
-  background: #4196F7 !important;
+  background: #384FB8 !important;
   color: var(--btn-text) !important;
 
   font-size: 13px;
@@ -1384,14 +1386,14 @@ h2 {
 .btn:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
-  background: #05477F !important;
+  background: #0C1979 !important;
   border: none !important;
   outline: none !important;
   color: #ffffff !important;
   box-shadow: 0 6px 18px rgba(5, 71, 127, 0.35) !important;
 }
 
-/* Global Borderless Button System - Pure #4196F7 Logo Blue with zero dark border */
+/* Global Borderless Button System - Pure #384FB8 Logo Blue with zero dark border */
 button.primary-button,
 button.btn-blue,
 .primary-button,
@@ -1403,7 +1405,7 @@ button[type="submit"].primary-button,
 button[type="submit"].btn-blue {
   border: none !important;
   outline: none !important;
-  background: #4196F7 !important;
+  background: #384FB8 !important;
 }
 
 button.primary-button:hover,
@@ -1417,7 +1419,7 @@ button[type="submit"].primary-button:hover,
 button[type="submit"].btn-blue:hover {
   border: none !important;
   outline: none !important;
-  background: #05477F !important;
+  background: #0C1979 !important;
 }
 
 .primary-button:hover::after,
@@ -1475,8 +1477,8 @@ button[type="submit"].btn-blue:hover {
   outline: none !important;
   border-radius: 7px;
 
-  background: #DFEDFE !important;
-  color: #021229 !important;
+  background: #EBEDFE !important;
+  color: #050B3B !important;
 
   font-size: 13px;
   font-weight: 600;
@@ -1503,13 +1505,13 @@ button[type="submit"].btn-blue:hover {
 .secondary-button svg,
 .btn-secondary svg {
   flex-shrink: 0;
-  color: #4196F7;
+  color: #384FB8;
   transition: transform 180ms ease, color 160ms ease;
 }
 
 .secondary-button:hover,
 .btn-secondary:hover {
-  background: #BAD8FC !important;
+  background: #C4CCEF !important;
   border: none !important;
   color: #013550 !important;
   transform: translateY(-1.5px);
@@ -1528,7 +1530,7 @@ button[type="submit"].btn-blue:hover {
 .btn-secondary:active {
   transform: translateY(0.5px) scale(0.985);
   background: #e4edf5 !important;
-  border-color: #4196F7 !important;
+  border-color: #384FB8 !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
   transition-duration: 60ms;
 }
@@ -1564,7 +1566,7 @@ button[type="submit"].btn-blue:hover {
 [data-tone="purple"],
 [data-tone="teal"],
 [data-tone="amber"] {
-  background: #4196F7 !important;
+  background: #384FB8 !important;
   color: #ffffff !important;
   border: none !important;
   outline: none !important;
@@ -1583,14 +1585,14 @@ button[type="submit"].btn-blue:hover {
 .primary-button.btn-teal:hover,
 .primary-button.amber:hover,
 .primary-button.btn-amber:hover {
-  background: #05477F !important;
+  background: #0C1979 !important;
   border: none !important;
   outline: none !important;
   color: #ffffff !important;
   box-shadow: 0 6px 18px rgba(5, 71, 127, 0.35) !important;
 }
 
-/* Global Borderless Button System - Pure #4196F7 Logo Blue with zero dark border */
+/* Global Borderless Button System - Pure #384FB8 Logo Blue with zero dark border */
 button.primary-button,
 button.btn-blue,
 .primary-button,
@@ -1602,7 +1604,7 @@ button[type="submit"].primary-button,
 button[type="submit"].btn-blue {
   border: none !important;
   outline: none !important;
-  background: #4196F7 !important;
+  background: #384FB8 !important;
 }
 
 button.primary-button:hover,
@@ -1616,7 +1618,7 @@ button[type="submit"].primary-button:hover,
 button[type="submit"].btn-blue:hover {
   border: none !important;
   outline: none !important;
-  background: #05477F !important;
+  background: #0C1979 !important;
 }
 
 /* Approval / Success ratification */
@@ -1738,7 +1740,7 @@ table {
 }
 
 th {
-  color: #021229;
+  color: #050B3B;
   background: #f4f8fb;
   text-align: left;
   font-family: "Inter", sans-serif;
@@ -1754,7 +1756,7 @@ th {
 td {
   padding: 13px 16px;
   border-bottom: 1px solid var(--line-soft);
-  color: #021229;
+  color: #050B3B;
   font-size: 12.5px;
   white-space: nowrap;
   transition: background var(--dur-fast) var(--ease);
@@ -1783,7 +1785,7 @@ td small {
 }
 
 td strong {
-  color: #021229;
+  color: #050B3B;
   font-size: 12.5px;
   font-weight: 600;
 }
@@ -1946,7 +1948,7 @@ td small {
   flex: none;
   margin-top: 5px;
   background: var(--blue);
-  box-shadow: 0 0 0 3px rgba(8, 118, 185, 0.12);
+  box-shadow: 0 0 0 3px rgba(56, 79, 184, 0.22);
 }
 
 .activity-dot.amber,
@@ -2004,7 +2006,7 @@ td small {
 
 .chart-bar span {
   width: 40px;
-  background: linear-gradient(180deg, #4196F7 0%, #4196F7 100%);
+  background: linear-gradient(180deg, #384FB8 0%, #384FB8 100%);
   border-radius: 6px 6px 0 0;
   box-shadow: 0 2px 8px rgba(11, 52, 87, 0.2);
   transition: height 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms ease;
@@ -2013,7 +2015,7 @@ td small {
 
 .chart-bar:hover span {
   transform: scaleY(1.05);
-  background: linear-gradient(180deg, #4196F7 0%, #4196F7 100%);
+  background: linear-gradient(180deg, #384FB8 0%, #384FB8 100%);
 }
 
 .chart-bar small {
@@ -2225,7 +2227,7 @@ input,
 select,
 textarea {
   width: 100%;
-  border: 1px solid #d4e0e7;
+  border: 1px solid #DCE2F5;
   border-radius: var(--radius-sm);
   outline: 0;
   padding: 10px 13px;
@@ -2239,8 +2241,8 @@ textarea {
 input:hover,
 select:hover,
 textarea:hover {
-  border-color: #9cb8ca;
-  background: #fafcfe;
+  border-color: #C4CCEF;
+  background: #F8F9FE;
 }
 
 textarea {
@@ -2251,9 +2253,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--navy);
+  border-color: #384FB8;
   background: #ffffff;
-  box-shadow: 0 0 0 3.5px rgba(11, 52, 87, 0.12);
+  box-shadow: 0 0 0 3px rgba(56, 79, 184, 0.20);
 }
 
 /* =========================================================
@@ -2540,7 +2542,7 @@ textarea:focus {
 }
 
 .login-visual {
-  background: linear-gradient(145deg, #021229 0%, #05477F 55%, #17446D 100%);
+  background: linear-gradient(145deg, #050B3B 0%, #0C1979 60%, #16248C 100%);
   color: white;
   padding: 44px 8%;
   display: flex;
@@ -2583,7 +2585,7 @@ textarea:focus {
 }
 
 .login-visual-copy span {
-  color: #DFEDFE;
+  color: #EBEDFE;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.2em;
@@ -2643,7 +2645,7 @@ textarea:focus {
   margin-top: 4px;
   font-size: 26px;
   font-weight: 700;
-  color: #021229;
+  color: #050B3B;
   letter-spacing: -0.02em;
 }
 
@@ -2682,7 +2684,7 @@ textarea:focus {
   width: 100%;
   height: 42px;
   padding: 10px 38px;
-  border: 1px solid #d4e0e7;
+  border: 1px solid #DCE2F5;
   border-radius: var(--radius-sm);
   font-size: 13px;
   color: var(--ink);
@@ -2705,7 +2707,7 @@ textarea:focus {
 .login-input-icon {
   position: absolute;
   left: 12px;
-  color: #8da2b0;
+  color: #384FB8;
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -2801,14 +2803,16 @@ textarea:focus {
   font-weight: 600;
   border: none !important;
   outline: none !important;
-  background: #4196F7 !important;
-  box-shadow: 0 4px 14px rgba(65, 150, 247, 0.32) !important;
+  background: linear-gradient(135deg, #0C1979 0%, #384FB8 100%) !important;
+  box-shadow: 0 4px 14px rgba(12, 25, 121, 0.35) !important;
 }
 
 .login-submit-btn:hover {
   border: none !important;
   outline: none !important;
-  background: #05477F !important;
+  background: linear-gradient(135deg, #071052 0%, #2A3C94 100%) !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 18px rgba(12, 25, 121, 0.45) !important;
 }
 
 /* =========================================================
@@ -3821,8 +3825,8 @@ textarea:focus {
 }
 
 .overview-card-icon.blue {
-  background: #DFEDFE;
-  color: #4196F7;
+  background: #EBEDFE;
+  color: #384FB8;
 }
 
 .overview-card-icon.teal {
@@ -3848,7 +3852,7 @@ textarea:focus {
 .overview-card-title-group h3 {
   font-size: 14px;
   font-weight: 700;
-  color: #021229;
+  color: #050B3B;
   margin: 0 0 2px 0;
   letter-spacing: -0.01em;
 }
@@ -4143,15 +4147,15 @@ button:focus,
   box-shadow: 0 0 0 3px rgba(0, 104, 143, 0.28) !important;
 }
 /* =========================================================
-   #021229 UNIFIED TYPOGRAPHY TEXT SYSTEM
-   All headings, titles, labels, card copy, table content anchored to #021229
+   #050B3B UNIFIED TYPOGRAPHY TEXT SYSTEM
+   All headings, titles, labels, card copy, table content anchored to #050B3B
    ========================================================= */
 h1, h2, h3, h4, h5, h6 {
-  color: #021229;
+  color: #050B3B;
 }
 
 body {
-  color: #021229;
+  color: #050B3B;
 }
 
 .page-intro p,
@@ -4165,5 +4169,5 @@ body {
 label,
 .login-heading,
 .header-workspace-title {
-  color: #021229;
+  color: #050B3B;
 }
