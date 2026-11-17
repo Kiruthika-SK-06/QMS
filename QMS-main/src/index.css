@@ -2619,31 +2619,46 @@ textarea:focus {
 }
 
 /* =========================================================
-   LOGIN PAGE
+   LOGIN PAGE (FIT-TO-WINDOW SCREEN, ZERO UNWANTED SCROLLING)
    ========================================================= */
+html:has(.login-page),
+body:has(.login-page) {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
 .login-page {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   background: #f7fafb;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .login-visual {
   background: linear-gradient(145deg, #050B3B 0%, #0C1979 60%, #16248C 100%);
   color: white;
-  padding: 44px 8%;
+  padding: 32px 7%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
+  box-sizing: border-box;
 }
 
 .login-visual .brand .brand-logo-img {
   background: #ffffff;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border-radius: 8px;
-  height: 46px;
+  height: 38px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -2665,7 +2680,7 @@ textarea:focus {
 }
 
 .login-visual-copy {
-  max-width: 560px;
+  max-width: 520px;
   position: relative;
   z-index: 1;
   margin-top: 0;
@@ -2674,63 +2689,70 @@ textarea:focus {
 .login-visual-copy span {
   color: #EBEDFE;
   font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.2em;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
 }
 
 .login-visual-copy h1 {
-  font-size: clamp(34px, 4vw, 52px);
-  line-height: 1.08;
-  margin: 18px 0;
+  font-size: clamp(26px, 3.2vw, 42px);
+  line-height: 1.12;
+  margin: 12px 0;
   color: white;
 }
 
 .login-visual-copy p {
   color: #e6f4fa;
-  line-height: 1.7;
-  max-width: 450px;
-  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 440px;
+  font-size: 13px;
+  margin: 0;
 }
 
 .login-visual>small {
   position: relative;
   z-index: 1;
   color: rgba(255, 255, 255, 0.85);
-  font-size: 11px;
+  font-size: 10.5px;
 }
 
 .login-panel {
-  display: grid;
-  place-items: center;
-  padding: 30px 20px;
-  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 24px;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .login-card {
-  width: min(440px, 100%);
+  width: min(420px, 100%);
   background: #ffffff;
-  padding: 38px 36px;
+  padding: 24px 28px;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(200, 217, 230, 0.7);
   box-shadow: 0 4px 6px -1px rgba(11, 52, 87, 0.04), 0 20px 40px -8px rgba(11, 52, 87, 0.1);
   animation: cardFloatSlow 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-sizing: border-box;
 }
 
 .login-card>.brand .brand-logo-img {
-  height: 48px;
+  height: 38px;
   width: auto;
-  max-width: 150px;
+  max-width: 140px;
   object-fit: contain;
 }
 
 .login-card>.brand {
   color: var(--navy);
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .login-heading {
-  margin-top: 4px;
-  font-size: 26px;
+  margin-top: 0;
+  font-size: 22px;
   font-weight: 700;
   color: #050B3B;
   letter-spacing: -0.02em;
@@ -2738,26 +2760,26 @@ textarea:focus {
 
 .login-subheading {
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-  margin-top: 6px;
-  margin-bottom: 22px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 4px;
+  margin-bottom: 14px;
 }
 
 .login-card form {
   display: grid;
-  gap: 16px;
+  gap: 11px;
 }
 
 .login-field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .login-field-group label {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
@@ -2769,11 +2791,11 @@ textarea:focus {
 
 .login-input-wrapper input {
   width: 100%;
-  height: 42px;
-  padding: 10px 38px;
+  height: 38px;
+  padding: 8px 36px;
   border: 1px solid #DCE2F5;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ink);
   background: #ffffff;
   transition: all 0.2s var(--ease);
@@ -2797,7 +2819,7 @@ textarea:focus {
 
 .login-input-icon {
   position: absolute;
-  left: 12px;
+  left: 11px;
   color: #384FB8;
   pointer-events: none;
   display: flex;
@@ -2806,7 +2828,7 @@ textarea:focus {
 
 .password-toggle-button {
   position: absolute;
-  right: 10px;
+  right: 9px;
   background: transparent;
   border: 0;
   color: #8da2b0;
@@ -2826,21 +2848,21 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .checkbox {
   display: flex !important;
   align-items: center;
-  gap: 7px !important;
-  font-size: 12.5px;
+  gap: 6px !important;
+  font-size: 12px;
   color: var(--ink-soft);
   cursor: pointer;
 }
 
 .checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   accent-color: var(--navy-2);
   cursor: pointer;
 }
@@ -2849,7 +2871,7 @@ textarea:focus {
   border: 0;
   background: transparent;
   color: var(--navy-2);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -2862,34 +2884,34 @@ textarea:focus {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #b91c1c;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
-  line-height: 1.4;
-  margin-bottom: 16px;
+  line-height: 1.35;
+  margin-bottom: 10px;
 }
 
 .login-success-alert {
   background: #f0fdf4;
   border: 1px solid #86efac;
   color: #166534;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
-  line-height: 1.4;
-  margin-bottom: 16px;
+  line-height: 1.35;
+  margin-bottom: 10px;
 }
 
 .login-submit-btn {
   width: 100%;
-  height: 42px;
-  margin-top: 4px;
+  height: 38px;
+  margin-top: 2px;
   font-size: 13px;
   font-weight: 600;
   border: none !important;
@@ -2912,13 +2934,13 @@ textarea:focus {
 .role-picker-container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   position: relative;
 }
 
 .role-field-label {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
@@ -2931,12 +2953,12 @@ textarea:focus {
 #role-picker-button {
   position: relative;
   width: 100%;
-  min-height: 42px;
-  height: 42px;
+  min-height: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  padding: 0 12px;
   background: #ffffff !important;
   border: 1px solid #DCE2F5 !important;
   border-radius: var(--radius-sm);
@@ -3099,9 +3121,9 @@ textarea:focus {
 .login-footnote {
   display: block;
   color: var(--muted-2);
-  font-size: 11px;
+  font-size: 10.5px;
   text-align: center;
-  margin-top: 24px;
+  margin-top: 14px;
 }
 
 /* =========================================================
@@ -3473,27 +3495,38 @@ textarea:focus {
   }
 
   .login-page {
+    height: auto;
+    min-height: 100vh;
     grid-template-columns: 1fr;
+    overflow-y: auto;
   }
 
   .login-visual {
-    min-height: 340px;
-    padding: 30px;
+    min-height: 220px;
+    padding: 24px 20px;
+    height: auto;
   }
 
   .login-visual-copy h1 {
-    font-size: 38px;
+    font-size: 28px;
+    margin: 8px 0;
   }
 
   .login-card>.brand .brand-logo-img {
-    height: 48px;
+    height: 36px;
     width: auto;
-    max-width: 150px;
+    max-width: 140px;
     object-fit: contain;
   }
 
   .login-card>.brand {
-    margin-bottom: 30px;
+    margin-bottom: 12px;
+  }
+
+  .login-panel {
+    padding: 24px 16px;
+    height: auto;
+    min-height: auto;
   }
 
   .head-timeline-item {
@@ -4592,4 +4625,49 @@ label,
   height: 6px;
   border-radius: 50%;
   background: #06B6D4;
+}
+
+/* Fit-to-screen optimization for compact vertical laptop heights */
+@media (min-width: 901px) and (max-height: 640px) {
+  .login-card {
+    padding: 16px 22px;
+  }
+  .login-card>.brand {
+    margin-bottom: 6px;
+  }
+  .login-card>.brand .brand-logo-img {
+    height: 30px;
+  }
+  .login-heading {
+    font-size: 19px;
+  }
+  .login-subheading {
+    margin-bottom: 8px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  .login-card form {
+    gap: 8px;
+  }
+  .login-input-wrapper input,
+  .role-dropdown-trigger,
+  #role-picker-button,
+  .login-submit-btn {
+    height: 34px;
+    min-height: 34px;
+  }
+  .login-footnote {
+    margin-top: 8px;
+  }
+  .login-visual {
+    padding: 20px 6%;
+  }
+  .login-visual-copy h1 {
+    font-size: 26px;
+    margin: 6px 0;
+  }
+  .login-visual-copy p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
 }
