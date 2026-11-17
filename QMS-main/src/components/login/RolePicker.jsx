@@ -22,7 +22,7 @@ export default function RolePicker({ role, onChange, disabled = false }) {
       const rect = pickerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       // If less than 170px available below, flip to open upwards so it never goes off-screen
-      setOpenUpward(spaceBelow < 170);
+      setOpenUpward(spaceBelow < 195);
     }
     setOpen((prev) => !prev);
   };
