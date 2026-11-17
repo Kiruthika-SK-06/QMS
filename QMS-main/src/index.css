@@ -2642,7 +2642,7 @@ body:has(.login-page) {
 .login-visual {
   background: linear-gradient(145deg, #050B3B 0%, #0C1979 60%, #16248C 100%);
   color: white;
-  padding: clamp(36px, 5vh, 52px) clamp(28px, 6vw, 56px);
+  padding: clamp(44px, 6vh, 64px) clamp(36px, 6vw, 68px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -2656,10 +2656,10 @@ body:has(.login-page) {
 
 .login-visual .brand .brand-logo-img {
   background: #ffffff;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 8px;
-  height: 46px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  height: 48px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .login-visual .brand {
@@ -2670,13 +2670,14 @@ body:has(.login-page) {
 .visual-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.14;
+  opacity: 0.08;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
-  background-size: 50px 50px;
-  transform: perspective(500px) rotateX(55deg) scale(1.5);
+    linear-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.25) 1px, transparent 1px);
+  background-size: 75px 75px;
+  transform: perspective(600px) rotateX(50deg) scale(1.4);
   transform-origin: bottom;
+  pointer-events: none;
 }
 
 .login-visual-copy {
@@ -2687,25 +2688,34 @@ body:has(.login-page) {
 }
 
 .login-visual-copy span {
+  display: inline-block;
   color: #EBEDFE;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.2em;
+  margin-bottom: clamp(14px, 2vh, 18px);
+  background: rgba(235, 237, 254, 0.12);
+  border: 1px solid rgba(235, 237, 254, 0.22);
+  padding: 5px 14px;
+  border-radius: 20px;
 }
 
 .login-visual-copy h1 {
-  font-size: clamp(30px, 3.6vw, 46px);
-  line-height: 1.14;
-  margin: 16px 0;
+  font-size: clamp(28px, 3.4vw, 42px);
+  line-height: 1.36;
+  margin: 0 0 clamp(16px, 2.2vh, 22px) 0;
   color: white;
+  letter-spacing: -0.015em;
+  font-weight: 700;
 }
 
 .login-visual-copy p {
   color: #e6f4fa;
-  line-height: 1.6;
-  max-width: 460px;
-  font-size: 14px;
+  line-height: 1.78;
+  max-width: 470px;
+  font-size: 14.5px;
   margin: 0;
+  letter-spacing: 0.01em;
 }
 
 .login-visual>small {
@@ -2713,6 +2723,7 @@ body:has(.login-page) {
   z-index: 1;
   color: rgba(255, 255, 255, 0.85);
   font-size: 11.5px;
+  letter-spacing: 0.03em;
 }
 
 .login-panel {
