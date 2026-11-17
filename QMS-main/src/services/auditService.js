@@ -210,7 +210,7 @@ export const auditService = {
       timeline: [
         {
           action: "Audit Scheduled",
-          actor: payload.scheduledBy?.name || "Rahul Kumar (QMS Coordinator)",
+          actor: payload.scheduledBy?.name || "QMS Coordinator",
           timestamp: formatNow(),
           details: `Scheduled ${payload.process} audit for ${scheduledDateStr}. Automatically submitted to Trust Head for formal ratification & approval.`
         }
@@ -290,7 +290,7 @@ export const auditService = {
       scheduleShared: {
         shared: true,
         sharedAt: formatNow(),
-        sharedBy: "Rahul Kumar (QMS Coordinator)",
+        sharedBy: "QMS Coordinator",
         docTitle: `Internal_Audit_Schedule_${id}.pdf`,
         recipients: [
           { role: "Course Coordinator", name: existing.internalAuditee?.name, email: existing.internalAuditee?.email },
@@ -302,7 +302,7 @@ export const auditService = {
         ...(existing.timeline || []),
         {
           action: "Schedule Dispatched to All Stakeholders",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: formatNow(),
           details: `QMS Coordinator officially dispatched confirmed audit schedule to Course Coordinator (${existing.internalAuditee?.name}), Trust Head, and Internal Auditor (${existing.internalAuditor?.name}).`
         }
@@ -380,7 +380,7 @@ export const auditService = {
       stageLabel: "NC Docs Shared (Action Required: Auditee CAPA)",
       ncDocs: {
         shared: true,
-        sharedBy: "Rahul Kumar (QMS Coordinator)",
+        sharedBy: "QMS Coordinator",
         sharedAt: formatNow(),
         fileName: payload.fileName || `NC_Formal_Notice_${id}.pdf`,
         remarks: payload.remarks || "NC notice validated and issued to Auditee.",
@@ -393,7 +393,7 @@ export const auditService = {
         ...(existing.timeline || []),
         {
           action: "NC Docs Shared",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: formatNow(),
           details: `QMS Coordinator reviewed Noticing Sheet and shared official NC Docs with Auditee and Auditor.`
         }
@@ -472,7 +472,7 @@ export const auditService = {
       stageLabel: "Closed & Conforming",
       qmsFinalClosure: {
         closed: true,
-        closedBy: "Rahul Kumar (QMS Coordinator)",
+        closedBy: "QMS Coordinator",
         closedAt: formatNow(),
         remarks: remarks || "Audit verification completed successfully. All items closed.",
         completedAt: formatNow()
@@ -481,7 +481,7 @@ export const auditService = {
         ...(existing.timeline || []),
         {
           action: "Final Audit Sign-off Completed",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: formatNow(),
           details: `QMS Coordinator verified CAPA effectiveness and officially signed off and completed the audit process.`
         }

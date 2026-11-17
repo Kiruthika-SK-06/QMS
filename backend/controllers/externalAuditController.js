@@ -223,9 +223,9 @@ export const logIncomingExternalAuditSchedule = (req, res) => {
         received: true,
         receivedAt: formatNow(),
         from: `${auditorName} <${leadAuditor?.email || "lead.auditor@tuvsud.com"}>`,
-        to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+        to: "QMS Coordinator <qm@cdac.in>",
         subject: incomingScheduleEmail?.subject || `Official Notice: ISO 9001:2015 External Audit Schedule (${auditId})`,
-        bodyHtml: incomingScheduleEmail?.bodyHtml || `<p>Dear Rahul Kumar (QMS Coordinator),</p><p>This email confirms that the ISO 9001:2015 External Audit for "${title.trim()}" is scheduled for <strong>${scheduledDate} at ${scheduledTime || "09:30 AM"}</strong>.</p><p>The auditor will visit the office in person to audit the system. Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
+        bodyHtml: incomingScheduleEmail?.bodyHtml || `<p>Dear QMS Coordinator,</p><p>This email confirms that the ISO 9001:2015 External Audit for "${title.trim()}" is scheduled for <strong>${scheduledDate} at ${scheduledTime || "09:30 AM"}</strong>.</p><p>The auditor will visit the office in person to audit the system. Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
         attachments: [
           {
             fileName: incomingScheduleEmail?.fileName || `ISO_9001_External_Audit_Plan_${auditId}.pdf`,
@@ -276,7 +276,7 @@ export const logIncomingExternalAuditSchedule = (req, res) => {
       title: "External Audit Email Received",
       detail: newAudit.title,
       text: `External Auditor schedule received from ${auditorName} for ${scheduledDate}.`,
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       time: "Just now",
       tone: "blue",
       timestamp: new Date().toISOString()
@@ -318,13 +318,13 @@ export const shareExternalAuditSchedule = (req, res) => {
     audit.shareWithStakeholders = {
       shared: true,
       sharedAt: now,
-      sharedBy: "Rahul Kumar (QMS Coordinator)",
+      sharedBy: "QMS Coordinator",
       noticeSubject: noticeSubject || `External Audit Schedule Notice: ${audit.title} on ${audit.scheduledDate}`,
       noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${audit.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${audit.scheduledDate} at ${audit.scheduledTime}. The auditor will visit the campus in person to audit the system.`,
       recipients: [
         { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
         { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator.ai@cdac.in" },
         { role: "Course Coordinator", name: "Course Coordinator (Cyber Security)", email: "coordinator.cyber@cdac.in" },
         { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
@@ -332,7 +332,7 @@ export const shareExternalAuditSchedule = (req, res) => {
 
     audit.timeline.push({
       action: "Schedule & Meeting Details Shared to All Stakeholders",
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       timestamp: now,
       details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor.`
     });
@@ -358,7 +358,7 @@ export const shareExternalAuditSchedule = (req, res) => {
       title: "External Audit Schedule Dispatched",
       detail: audit.title,
       text: `External audit meeting schedule shared to all Course Coordinators, Trust Head, and Internal Auditor.`,
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       time: "Just now",
       tone: "purple",
       timestamp: new Date().toISOString()
@@ -410,7 +410,7 @@ export const uploadExternalAuditNCDocs = (req, res) => {
       receivedAtOffice: now,
       isScannedPaperCopy: true,
       uploadedAt: now,
-      uploadedBy: "Rahul Kumar (QMS Coordinator)",
+      uploadedBy: "QMS Coordinator",
       sharedWithCourseCoordinatorsOnly: true,
       fileName: fileName || `${audit.id}_Scanned_Paper_NC_Report.pdf`,
       fileSize: fileSize || "2.1 MB",
@@ -432,7 +432,7 @@ export const uploadExternalAuditNCDocs = (req, res) => {
 
     audit.timeline.push({
       action: "On-Site Audit Conducted & Scanned Paper NC Uploaded",
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       timestamp: now,
       details: `External Auditor audited system in person at office and handed paper NC doc. Scanned copy (${audit.ncDocument.fileName}) uploaded and shared exclusively to Course Coordinators for resolution.`
     });
@@ -455,7 +455,7 @@ export const uploadExternalAuditNCDocs = (req, res) => {
       title: "Scanned NC Report Shared to Course Coordinators",
       detail: audit.title,
       text: `Scanned copy of paper NC doc uploaded and shared exclusively to Course Coordinators for resolution.`,
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       time: "Just now",
       tone: "amber",
       timestamp: new Date().toISOString()
@@ -607,7 +607,7 @@ export const closeExternalAuditProcess = (req, res) => {
     audit.qmsClosure = {
       closed: true,
       closedAt: now,
-      closedBy: "Rahul Kumar (QMS Coordinator)",
+      closedBy: "QMS Coordinator",
       remarks: qmsRemarks || `External Audit lifecycle completed and closed in full conformance with ISO 9001:2015 following auditor approval received via ${mode}.`
     };
 
@@ -620,7 +620,7 @@ export const closeExternalAuditProcess = (req, res) => {
 
     audit.timeline.push({
       action: "External Audit Process Officially Closed",
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       timestamp: now,
       details: `Full process closed by QMS Coordinator. All previous stages validated. ISO 9001:2015 certification ratified for all divisions.`
     });
@@ -645,7 +645,7 @@ export const closeExternalAuditProcess = (req, res) => {
       title: "ISO 9001 External Audit Closed",
       detail: audit.title,
       text: `External audit approved by External Auditor (${mode}) and officially closed with ISO 9001:2015 certification (${certNum}).`,
-      actor: "Rahul Kumar (QMS Coordinator)",
+      actor: "QMS Coordinator",
       time: "Just now",
       tone: "green",
       timestamp: new Date().toISOString()

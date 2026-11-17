@@ -10,7 +10,7 @@ const mrmSchema = new mongoose.Schema(
     status: { type: String, default: "Scheduled" },
     approvalStatus: { type: String, default: "Pending" },
     chairperson: { type: String, default: "Trust Head" },
-    coordinator: { type: String, default: "Rahul Kumar (QMS Coordinator)" },
+    coordinator: { type: String, default: "QMS Coordinator" },
     agenda: [{ type: String }],
     attendees: [{ type: mongoose.Schema.Types.Mixed }],
     mom: { type: mongoose.Schema.Types.Mixed, default: null },

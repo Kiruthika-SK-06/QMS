@@ -244,7 +244,7 @@ export const createMRM = (req, res) => {
         "Trust Head",
         "Internal Auditor",
         "Course Coordinator",
-        "Dr. Rajesh Verma (Course Coordinator - AI)",
+        "Course Coordinator (AI)",
         "Course Coordinator (Cyber Security)"
       ],
       approvals: {

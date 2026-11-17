@@ -17,7 +17,7 @@ export let processesData = [
   {
     id: "PROC-002",
     name: "Training & Development",
-    owner: "Rohan Desai",
+    owner: "Course Coordinator",
     employees: 24,
     active: 8,
     completed: 46,

@@ -238,7 +238,7 @@ export default function InternalAudit() {
         venue: "Academic Block & QMS Portal",
         scope: `Verification of operational procedures and ISO 9001:2015 compliance for ${finalProcess}.`,
         scheduledBy: {
-          name: currentUser?.name || "Rahul Kumar",
+          name: currentUser?.name || "QMS Coordinator",
           role: currentUser?.roleTitle || "QMS Coordinator"
         }
       };
@@ -1233,7 +1233,7 @@ export default function InternalAudit() {
                     <option value="Course Coordinator">Course Coordinator (Adv Computing)</option>
                     <option value="Course Coordinator (AI)">Course Coordinator (AI)</option>
                     <option value="Course Coordinator (Cyber Security)">Course Coordinator (Cyber Security)</option>
-                    <option value="Rohan Desai">Rohan Desai (Training Coord)</option>
+                    <option value="Course Coordinator">Course Coordinator (Training)</option>
                     <option value="Course Coordinator (IT)">Course Coordinator (IT)</option>
                     <option value="__custom__">+ Enter Other Auditee...</option>
                   </select>

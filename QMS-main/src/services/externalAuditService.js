@@ -196,11 +196,11 @@ export const externalAuditService = {
         received: true,
         receivedAt: now,
         from: `${auditorName} <${auditData.auditorEmail || "lead.auditor@tuvsud.com"}>`,
-        to: "Rahul Kumar (QMS Coordinator) <qm@cdac.in>",
+        to: "QMS Coordinator <qm@cdac.in>",
         subject: auditData.emailSubject || `Official Notice: ISO 9001:2015 External Audit Schedule (${auditId})`,
         bodyHtml: auditData.emailBody
           ? `<p>${auditData.emailBody.replace(/\n/g, "<br/>")}</p>`
-          : `<p>Dear Rahul Kumar (QMS Coordinator),</p><p>This email confirms that the ISO 9001:2015 External Audit is scheduled for <strong>${auditData.scheduledDate} at ${auditData.scheduledTime || "09:30 AM"}</strong>.</p><p>The auditor will visit the office in person to audit the system. Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
+          : `<p>Dear QMS Coordinator,</p><p>This email confirms that the ISO 9001:2015 External Audit is scheduled for <strong>${auditData.scheduledDate} at ${auditData.scheduledTime || "09:30 AM"}</strong>.</p><p>The auditor will visit the office in person to audit the system. Please notify your course coordinators, trust head, and internal auditors.</p><p>Regards,<br/><strong>${auditorName}</strong> (${agencyName})</p>`,
         attachments: [
           {
             fileName: auditData.planFileName || `ISO_9001_External_Audit_Plan_${auditId}.pdf`,
@@ -263,7 +263,7 @@ export const externalAuditService = {
       shareWithStakeholders: {
         shared: true,
         sharedAt: now,
-        sharedBy: "Rahul Kumar (QMS Coordinator)",
+        sharedBy: "QMS Coordinator",
         noticeSubject: noticeSubject || `External Audit Schedule Notice: ${existing.title} on ${existing.scheduledDate}`,
         noticeMessage: noticeMessage || `All Course Coordinators, Trust Head, and Internal Auditor: Please be informed that ${existing.externalAgency} has scheduled an ISO 9001:2015 External Audit on ${existing.scheduledDate} at ${existing.scheduledTime}. The auditor will visit the campus in person to audit the system.`,
         recipients: [
@@ -278,7 +278,7 @@ export const externalAuditService = {
         ...(existing.timeline || []),
         {
           action: "Schedule & Meeting Details Shared to All Stakeholders",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: now,
           details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor.`
         }
@@ -319,7 +319,7 @@ export const externalAuditService = {
         receivedAtOffice: now,
         isScannedPaperCopy: true,
         uploadedAt: now,
-        uploadedBy: "Rahul Kumar (QMS Coordinator)",
+        uploadedBy: "QMS Coordinator",
         sharedWithCourseCoordinatorsOnly: true,
         fileName: ncData.fileName || `${existing.id}_Scanned_Paper_NC_Report.pdf`,
         fileSize: ncData.fileSize || "2.1 MB",
@@ -342,7 +342,7 @@ export const externalAuditService = {
         ...(existing.timeline || []),
         {
           action: "On-Site Audit Conducted & Scanned Paper NC Uploaded",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: now,
           details: `External Auditor visited office in person to audit system and handed paper NC document. Scanned copy (${ncData.fileName || `${existing.id}_Scanned_Paper_NC_Report.pdf`}) uploaded and shared exclusively to Course Coordinators for resolution.`
         }
@@ -451,7 +451,7 @@ export const externalAuditService = {
       qmsClosure: {
         closed: true,
         closedAt: now,
-        closedBy: "Rahul Kumar (QMS Coordinator)",
+        closedBy: "QMS Coordinator",
         remarks: closureData.qmsRemarks || `External Audit lifecycle completed and closed in full conformance with ISO 9001:2015 following auditor approval received via ${mode}.`
       },
       timeline: [
@@ -464,7 +464,7 @@ export const externalAuditService = {
         },
         {
           action: "External Audit Process Officially Closed",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: now,
           details: `Full process closed by QMS Coordinator. All previous stages validated. ISO 9001:2015 certification ratified for all divisions.`
         }

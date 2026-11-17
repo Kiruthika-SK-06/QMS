@@ -190,7 +190,7 @@ export const mrmService = {
       scheduledDate: payload.scheduledDate || new Date().toISOString().split("T")[0],
       scheduledTime: payload.scheduledTime || "10:30 AM",
       venue: payload.venue || "Main Boardroom / Webex Video Conference (Room 402)",
-      plannedBy: payload.plannedBy || "Rahul Kumar",
+      plannedBy: payload.plannedBy || "QMS Coordinator",
       plannedByRole: payload.plannedByRole || "QMS Coordinator",
       department: payload.department || "Academic Quality & Compliance",
       process: payload.process || "All Processes (Comprehensive Academic Quality Review)",
@@ -202,7 +202,7 @@ export const mrmService = {
         "Recommendations for continual curriculum modernization"
       ],
       attendees: Array.isArray(payload.attendees) && payload.attendees.length > 0 ? payload.attendees : [
-        "Rahul Kumar (QMS Coordinator)",
+        "QMS Coordinator",
         "Trust Head",
         "Internal Auditor",
         "Course Coordinator (Course Coordinator)",
@@ -236,7 +236,7 @@ export const mrmService = {
       timeline: [
         {
           action: "Meeting Planned by QMS Coordinator",
-          actor: payload.plannedBy || "Rahul Kumar (QMS Coordinator)",
+          actor: payload.plannedBy || "QMS Coordinator",
           timestamp: formatNow(),
           version: "1.0",
           details: `Meeting scheduled for ${payload.scheduledDate || "upcoming date"} at ${payload.scheduledTime || "10:30 AM"}. Submitted to Trust Head for formal approval.`
@@ -336,7 +336,7 @@ export const mrmService = {
     const existing = currentList.find((m) => m.id === id);
     if (!existing) return null;
 
-    const senderName = "Rahul Kumar";
+    const senderName = "QMS Coordinator";
     const senderRole = "QMS Coordinator";
     const dispatchTimestamp = formatNow();
 
@@ -396,7 +396,7 @@ export const mrmService = {
     const existing = currentList.find((m) => m.id === id);
     if (!existing) return null;
 
-    const uploaderName = "Rahul Kumar";
+    const uploaderName = "QMS Coordinator";
     const uploaderRole = "QMS Coordinator";
     const uploadTimestamp = formatNow();
     const fileName = momPayload.fileName || `MRM_${existing.id}_Minutes_Of_Meeting.pdf`;
@@ -477,7 +477,7 @@ export const mrmService = {
         ...(existing.timeline || []),
         {
           action: "Approval Requested from Trust Head",
-          actor: "Rahul Kumar (QMS Coordinator)",
+          actor: "QMS Coordinator",
           timestamp: formatNow(),
           version: existing.version || "1.0",
           details: "Proposal submitted to Trust Head Trust Head for formal authorization."

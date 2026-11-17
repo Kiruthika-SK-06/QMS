@@ -200,15 +200,15 @@ const initialDocuments = [
     name: "Lab Infrastructure Maintenance Procedure",
     type: "Procedures",
     process: "IT Support Management",
-    owner: "Rohan Desai",
+    owner: "Course Coordinator",
     version: "2.0",
     updated: "06 Sep 2026",
-    updatedBy: "Rohan Desai",
+    updatedBy: "Course Coordinator",
     status: "Approved",
-    submittedBy: "Rohan Desai",
+    submittedBy: "Course Coordinator",
     versions: [
-      { version: "2.0", date: "06 Sep 2026", author: "Rohan Desai", status: "Current" },
-      { version: "1.0", date: "25 Aug 2026", author: "Rohan Desai", status: "Archived" }
+      { version: "2.0", date: "06 Sep 2026", author: "Course Coordinator", status: "Current" },
+      { version: "1.0", date: "25 Aug 2026", author: "Course Coordinator", status: "Archived" }
     ]
   }
 ];
@@ -326,7 +326,7 @@ const initialUsersList = [
     id: "CC-210",
     name: "Course Coordinator (AI)",
     email: "coordinator.ai@cdac.in",
-    username: "rajesh.verma",
+    username: "coordinator.ai",
     designation: "Senior Course Coordinator",
     department: "Artificial Intelligence Division",
     role: "owner",

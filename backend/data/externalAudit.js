@@ -106,7 +106,7 @@ export let externalAuditData = [
       recipients: [
         { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
         { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator.ai@cdac.in" },
         { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
     },
@@ -171,7 +171,7 @@ export let externalAuditData = [
       noticeMessage: "External audit schedule received and shared to all Course Coordinators, Trust Head, and Internal Auditor.",
       recipients: [
         { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
-        { role: "Course Coordinator", name: "Dr. Rajesh Verma", email: "rajesh.verma@cdac.in" },
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator.ai@cdac.in" },
         { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
         { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
       ]
@@ -205,7 +205,7 @@ export let externalAuditData = [
           type: "Minor Non-Conformance",
           clause: "ISO 9001:2015 Clause 7.5.3",
           description: "Version stamp missing on practical module appendix documents in student repository.",
-          assignedTo: "Dr. Rajesh Verma (Course Coordinator)",
+          assignedTo: "Course Coordinator",
           deadline: "2026-11-18",
           status: "Pending Action"
         }

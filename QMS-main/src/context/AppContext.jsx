@@ -621,10 +621,10 @@ export function AppProvider({ children }) {
           category: "Quality Governance & MRM",
           type: "Meeting Minutes",
           version: "1.0",
-          author: currentUser?.name || "Rahul Kumar (QMS Coordinator)",
+          author: currentUser?.name || "QMS Coordinator",
           authorRole: "QMS Coordinator",
           updated: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-          updatedBy: currentUser?.name || "Rahul Kumar",
+          updatedBy: currentUser?.name || "QMS Coordinator",
           status: "Approved",
           securityClassification: "Internal Controlled",
           fileSize: momPayload.fileSize || "2.4 MB",
@@ -633,7 +633,7 @@ export function AppProvider({ children }) {
             {
               version: "1.0",
               date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-              author: currentUser?.name || "Rahul Kumar",
+              author: currentUser?.name || "QMS Coordinator",
               status: "Approved",
               notes: "Official published Minutes of Management Review Meeting."
             }

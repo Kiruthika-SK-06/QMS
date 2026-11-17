@@ -93,9 +93,9 @@ export let dummyUsers = [
   },
   {
     id: "CC-210",
-    username: "rajesh.verma",
+    username: "coordinator.ai",
     email: "coordinator.ai@cdac.in",
-    aliases: ["rajesh.verma", "coordinator.ai@cdac.in"],
+    aliases: ["coordinator.ai", "coordinator.ai@cdac.in"],
     password: "1234",
     name: "Course Coordinator (AI)",
     role: "owner",

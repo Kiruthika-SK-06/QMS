@@ -26,13 +26,13 @@ export let documentsData = [
     owner: "Course Coordinator",
     version: "2.0",
     updated: "15 Sep 2026",
-    updatedBy: "Arun Kumar",
+    updatedBy: "HR Coordinator",
     status: "Changes Requested",
     submittedBy: "Course Coordinator",
     reviewComments: "Please update section 4 to include emergency contacts and verify the compliance disclaimer.",
     description: "Onboarding form for newly joined personnel detailing statutory information and hardware requests.",
     versions: [
-      { version: "2.0", date: "15 Sep 2026", author: "Arun Kumar", status: "Current", notes: "Revised employee tax verification checklist" },
+      { version: "2.0", date: "15 Sep 2026", author: "HR Coordinator", status: "Current", notes: "Revised employee tax verification checklist" },
       { version: "1.0", date: "04 Sep 2026", author: "Course Coordinator", status: "Archived", notes: "Initial release" }
     ]
   },
@@ -91,16 +91,16 @@ export let documentsData = [
     name: "Course Management Procedure",
     type: "Procedures",
     process: "Training & Development",
-    owner: "Rohan Desai",
+    owner: "Course Coordinator",
     version: "2.0",
     updated: "06 Sep 2026",
-    updatedBy: "Rohan Desai",
+    updatedBy: "Course Coordinator",
     status: "Approved",
-    submittedBy: "Rohan Desai",
+    submittedBy: "Course Coordinator",
     description: "Procedure outlining curriculum approval, instructor assignment, and attendance recording.",
     versions: [
-      { version: "2.0", date: "06 Sep 2026", author: "Rohan Desai", status: "Current", notes: "Automated LMS integration workflow" },
-      { version: "1.0", date: "25 Aug 2026", author: "Rohan Desai", status: "Archived", notes: "Initial document release" }
+      { version: "2.0", date: "06 Sep 2026", author: "Course Coordinator", status: "Current", notes: "Automated LMS integration workflow" },
+      { version: "1.0", date: "25 Aug 2026", author: "Course Coordinator", status: "Archived", notes: "Initial document release" }
     ]
   },
   {
@@ -108,15 +108,15 @@ export let documentsData = [
     name: "IT Security Incident Report",
     type: "Forms",
     process: "IT Support Management",
-    owner: "Karthik Verma",
+    owner: "IT Systems Coordinator",
     version: "1.0",
     updated: "22 Sep 2026",
-    updatedBy: "Karthik Verma",
+    updatedBy: "IT Systems Coordinator",
     status: "Under Review",
-    submittedBy: "Karthik Verma",
+    submittedBy: "IT Systems Coordinator",
     description: "Standard reporting format for physical and cyber incident disclosure in compliance with QMS policies.",
     versions: [
-      { version: "1.0", date: "22 Sep 2026", author: "Karthik Verma", status: "Current", notes: "Standardized severity classification matrix" }
+      { version: "1.0", date: "22 Sep 2026", author: "IT Systems Coordinator", status: "Current", notes: "Standardized severity classification matrix" }
     ]
   },
   {

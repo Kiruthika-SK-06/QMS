@@ -214,7 +214,7 @@ export const createAudit = (req, res) => {
     const scheduledDateStr = startDate;
     const auditorName = internalAuditor.name;
     const auditeeName = internalAuditee.name;
-    const scheduledByName = req.user?.name || "Rahul Kumar";
+    const scheduledByName = req.user?.name || "QMS Coordinator";
     const scheduledByRole = req.user?.roleTitle || "QMS Coordinator";
 
     const newAudit = {
@@ -371,7 +371,7 @@ export const shareSchedule = (req, res) => {
       return res.status(404).json({ success: false, message: "Internal Audit not found" });
     }
 
-    const userName = req.user?.name || "Rahul Kumar";
+    const userName = req.user?.name || "QMS Coordinator";
     const userRole = req.user?.roleTitle || "QMS Coordinator";
 
     audit.scheduleShared = {
@@ -524,7 +524,7 @@ export const shareNCDocs = (req, res) => {
       return res.status(404).json({ success: false, message: "Internal Audit not found" });
     }
 
-    const userName = req.user?.name || "Rahul Kumar";
+    const userName = req.user?.name || "QMS Coordinator";
     const userRole = req.user?.roleTitle || "QMS Coordinator";
     const { remarks, fileName } = req.body;
 
@@ -661,7 +661,7 @@ export const finalCloseAudit = (req, res) => {
       return res.status(404).json({ success: false, message: "Internal Audit not found" });
     }
 
-    const userName = req.user?.name || "Rahul Kumar";
+    const userName = req.user?.name || "QMS Coordinator";
     const userRole = req.user?.roleTitle || "QMS Coordinator";
     const { remarks } = req.body;
 
@@ -736,7 +736,7 @@ OVERALL STATUS:        ${audit.status.toUpperCase()}
 --------------------------------------------------------------------------------
 KEY STAKEHOLDERS & PARTICIPANTS
 --------------------------------------------------------------------------------
-* QMS Coordinator:     ${audit.scheduledBy?.name || "Rahul Kumar"}
+* QMS Coordinator:     ${audit.scheduledBy?.name || "QMS Coordinator"}
 * Trust Head:          ${audit.trustHeadConfirmation?.confirmedBy || "Trust Head"}
 * Internal Auditor:    ${audit.internalAuditor?.name} (${audit.internalAuditor?.department})
 * Internal Auditee:    ${audit.internalAuditee?.name} (${audit.internalAuditee?.department})

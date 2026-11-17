@@ -27,7 +27,7 @@ const defaultProcessData = [
   },
   {
     name: "Training Management",
-    owner: "Course Coordinator (Rohan Desai)",
+    owner: "Course Coordinator",
     progress: 91,
     status: "In Progress",
     target: "28 Sep 2026",
@@ -48,7 +48,7 @@ const defaultProcessData = [
   },
   {
     name: "Quality Governance & MRM",
-    owner: "QMS Coordinator (Rahul Kumar)",
+    owner: "QMS Coordinator (QMS Coordinator)",
     progress: 95,
     status: "Completed",
     target: "15 Oct 2026",

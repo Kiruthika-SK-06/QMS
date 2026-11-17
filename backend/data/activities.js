@@ -33,8 +33,8 @@ export let activitiesData = [
   {
     id: "ACT-004",
     title: "Task Assigned",
-    detail: "Complete joining documentation (Arun Kumar)",
-    text: "Task assigned to Arun Kumar: Complete joining documentation",
+    detail: "Complete joining documentation (HR Coordinator)",
+    text: "Task assigned to HR Coordinator: Complete joining documentation",
     actor: "Course Coordinator",
     time: "14 Sep 2026, 09:30 AM",
     tone: "green",
