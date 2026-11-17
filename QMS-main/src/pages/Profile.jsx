@@ -10,10 +10,10 @@ export default function Profile() {
 
   if (!currentUser) return null;
 
-  // Resolve institutional identity (role name or login ID) — strictly no dummy person names
+  // Resolve institutional identity and entered details — strictly NO Emp ID
   const roleTitle = roles[currentUser.role] || currentUser.roleTitle || "Workspace User";
-  const displayName = currentUser.roleTitle || roleTitle || currentUser.username || currentUser.id || "User";
-  const displayId = currentUser.employeeId || currentUser.id || currentUser.username || "N/A";
+  const displayName = currentUser.roleTitle || roleTitle || "User";
+  const enteredEmail = currentUser.loginIdentifier || currentUser.email || currentUser.username || "Not specified";
   const avatarInitials = currentUser.initials || (displayName ? displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "QM");
 
   return (
@@ -21,22 +21,19 @@ export default function Profile() {
       <PageIntro
         eyebrow="Account Identity"
         title="Profile"
-        description="Your QMS workspace identity, role assignments, and security clearances."
+        description="Your QMS workspace identity, entered credentials, and role assignments."
       />
       <section className="panel profile-card">
         <div className="large-avatar">{avatarInitials}</div>
         <div>
           <h2>{displayName}</h2>
-          <p>{currentUser.email}</p>
-          <StatusBadge status={roleTitle} />
+          <p>{enteredEmail}</p>
+          <StatusBadge status="Active" />
         </div>
         <div className="detail-list">
-          <Detail label="Login ID / Username" value={currentUser.username || currentUser.id || displayId} />
-          <Detail label="Role Name" value={roleTitle} />
-          <Detail label="Staff / Member ID" value={displayId} />
-          <Detail label="Department" value={currentUser.department || "Quality Management Group"} />
-          <Detail label="Mapped Scope" value={currentUser.process || "All Controlled Processes"} />
-          <Detail label="Access Model" value="Role-Based Access Control (RBAC)" />
+          <Detail label="Work Email / Username" value={enteredEmail} />
+          <Detail label="Role" value={roleTitle} />
+          <Detail label="Status" value="Active" />
         </div>
         <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
           <button
@@ -52,4 +49,3 @@ export default function Profile() {
     </>
   );
 }
-

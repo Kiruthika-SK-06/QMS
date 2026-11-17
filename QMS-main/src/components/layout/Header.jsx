@@ -60,7 +60,7 @@ export default function Header({ openMenu }) {
           </span>
           <span className="user-summary">
             <strong>{currentUser?.roleTitle || (currentUser?.role ? roles[currentUser.role] : null) || currentUser?.username || "User"}</strong>
-            <small>{currentUser?.employeeId || currentUser?.id || (currentUser?.role ? roles[currentUser.role] : "Workspace User")}</small>
+            <small>{currentUser?.loginIdentifier || currentUser?.email || currentUser?.username || (currentUser?.role ? roles[currentUser.role] : "Workspace User")}</small>
           </span>
           <ChevronDown size={16} />
         </button>

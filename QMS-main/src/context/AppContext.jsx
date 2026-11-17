@@ -58,8 +58,9 @@ const sanitizeUserIdentity = (user) => {
   };
   const initials = initialsMap[user.role] || (roleName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase());
 
+  const { employeeId, empId, ...rest } = user;
   return {
-    ...user,
+    ...rest,
     name: roleName,
     roleTitle: roleName,
     initials

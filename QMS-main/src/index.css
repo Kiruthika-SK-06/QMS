@@ -2756,14 +2756,11 @@ body:has(.login-page) {
   font-weight: 700;
   color: #050B3B;
   letter-spacing: -0.02em;
+  margin-bottom: clamp(18px, 2.4vh, 24px);
 }
 
 .login-subheading {
-  color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.5;
-  margin-top: 4px;
-  margin-bottom: clamp(16px, 2.2vh, 22px);
+  display: none;
 }
 
 .login-card form {

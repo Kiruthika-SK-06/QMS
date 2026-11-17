@@ -52,19 +52,28 @@ export default function LoginForm() {
       });
 
       if (res && res.success && res.user) {
+        // Build clean user containing strictly the entered details (no emp id)
+        const sessionUser = {
+          ...res.user,
+          loginIdentifier: email.trim(),
+          email: res.user.email || email.trim()
+        };
+        delete sessionUser.employeeId;
+        delete sessionUser.empId;
+
         // Guarantee immediate synchronous persistence to localStorage
         if (res.token) localStorage.setItem("qms_token", res.token);
-        if (res.user) localStorage.setItem("qms_user", JSON.stringify(res.user));
+        localStorage.setItem("qms_user", JSON.stringify(sessionUser));
 
         // Save user and token in application context
         if (app && typeof app.loginUser === "function") {
-          app.loginUser(res.user, res.token);
+          app.loginUser(sessionUser, res.token);
         } else if (app && typeof app.login === "function") {
-          app.login(res.user?.role || role);
+          app.login(sessionUser.role || role);
         }
 
         // Determine destination dashboard based on verified user role
-        const userRole = res.user.role;
+        const userRole = sessionUser.role;
         const path =
           userRole === "owner"
             ? "/process-owner/dashboard"
@@ -90,9 +99,6 @@ export default function LoginForm() {
         <Logo />
 
         <h1 className="login-heading">Sign in to QMS</h1>
-        <p className="login-subheading">
-          Enter your email ID, password, and select your role to access the workspace.
-        </p>
 
         {successMessage && (
           <div className="login-success-alert" role="status">
