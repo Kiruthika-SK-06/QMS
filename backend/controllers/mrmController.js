@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { MRM } from "../models/MRM.js";
 import { mrmData } from "../data/mrm.js";
 import { notificationsData } from "../data/notifications.js";
 import { activitiesData } from "../data/activities.js";
@@ -10,7 +12,22 @@ import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 const TMP_MRM_STORE = path.join(os.tmpdir(), "qms_mrm_store.json");
 
-const loadMRMFromDisk = () => {
+const loadMRMFromDisk = async () => {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const dbMrms = await MRM.find({}).lean();
+      if (dbMrms && dbMrms.length > 0) {
+        const map = new Map();
+        dbMrms.forEach((m) => m && m.id && map.set(m.id, m));
+        mrmData.forEach((m) => m && m.id && !map.has(m.id) && map.set(m.id, m));
+        const merged = Array.from(map.values());
+        mrmData.length = 0;
+        mrmData.push(...merged);
+        return;
+      }
+    } catch {}
+  }
+
   try {
     if (fs.existsSync(TMP_MRM_STORE)) {
       const content = fs.readFileSync(TMP_MRM_STORE, "utf-8");
@@ -27,10 +44,24 @@ const loadMRMFromDisk = () => {
   } catch {}
 };
 
-const saveMRMToDisk = () => {
+const saveMRMToDisk = (targetMRM = null) => {
   try {
     fs.writeFileSync(TMP_MRM_STORE, JSON.stringify(mrmData), "utf-8");
   } catch {}
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      if (targetMRM && targetMRM.id) {
+        MRM.findOneAndUpdate({ id: targetMRM.id }, targetMRM, { upsert: true }).catch(() => {});
+      } else {
+        for (const item of mrmData) {
+          if (item && item.id) {
+            MRM.findOneAndUpdate({ id: item.id }, item, { upsert: true }).catch(() => {});
+          }
+        }
+      }
+    } catch {}
+  }
 };
 
 loadMRMFromDisk();
@@ -38,7 +69,7 @@ loadMRMFromDisk();
 // Helper to notify all real-time listeners
 const notifyMRMChange = (action, mrm) => {
   try {
-    saveMRMToDisk();
+    saveMRMToDisk(mrm);
     broadcastRealtimeEvent("MRM_UPDATED", { action, mrm });
   } catch (err) {
     console.error("Real-time MRM broadcast error:", err);

@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { ExternalAudit } from "../models/ExternalAudit.js";
 import { externalAuditData } from "../data/externalAudit.js";
 import { notificationsData } from "../data/notifications.js";
 import { activitiesData } from "../data/activities.js";
@@ -9,7 +11,22 @@ import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 const TMP_EXTERNAL_AUDIT_STORE = path.join(os.tmpdir(), "qms_external_audits_store.json");
 
-const loadFromDisk = () => {
+const loadFromDisk = async () => {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const dbAudits = await ExternalAudit.find({}).lean();
+      if (dbAudits && dbAudits.length > 0) {
+        const map = new Map();
+        dbAudits.forEach((a) => a && a.id && map.set(a.id, a));
+        externalAuditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
+        const merged = Array.from(map.values());
+        externalAuditData.length = 0;
+        externalAuditData.push(...merged);
+        return;
+      }
+    } catch {}
+  }
+
   try {
     if (fs.existsSync(TMP_EXTERNAL_AUDIT_STORE)) {
       const content = fs.readFileSync(TMP_EXTERNAL_AUDIT_STORE, "utf-8");
@@ -26,17 +43,31 @@ const loadFromDisk = () => {
   } catch {}
 };
 
-const saveToDisk = () => {
+const saveToDisk = (targetAudit = null) => {
   try {
     fs.writeFileSync(TMP_EXTERNAL_AUDIT_STORE, JSON.stringify(externalAuditData), "utf-8");
   } catch {}
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      if (targetAudit && targetAudit.id) {
+        ExternalAudit.findOneAndUpdate({ id: targetAudit.id }, targetAudit, { upsert: true }).catch(() => {});
+      } else {
+        for (const item of externalAuditData) {
+          if (item && item.id) {
+            ExternalAudit.findOneAndUpdate({ id: item.id }, item, { upsert: true }).catch(() => {});
+          }
+        }
+      }
+    } catch {}
+  }
 };
 
 loadFromDisk();
 
 const notifyChange = (action, audit) => {
   try {
-    saveToDisk();
+    saveToDisk(audit);
     broadcastRealtimeEvent("EXTERNAL_AUDIT_UPDATED", { action, audit });
   } catch (err) {
     console.error("Real-time External Audit broadcast error:", err);

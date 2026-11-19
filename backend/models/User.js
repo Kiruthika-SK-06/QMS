@@ -8,13 +8,13 @@ const userSchema = new mongoose.Schema(
     employeeId: { type: String, required: true, unique: true, uppercase: true, trim: true },
     password: { type: String, required: true },
     name: { type: String, required: true, trim: true },
-    role: { type: String, required: true, enum: ["owner", "qm", "Head", "auditor"] },
+    role: { type: String, required: true },
     roleTitle: { type: String, required: true },
     initials: { type: String },
     department: { type: String, default: "Quality Management" },
     process: { type: String, default: "All Processes" },
     designation: { type: String },
-    status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
+    status: { type: String, default: "Active" },
     joinDate: { type: String },
     aliases: [{ type: String }],
     privileges: [{ type: String }]
@@ -24,4 +24,3 @@ const userSchema = new mongoose.Schema(
 
 export const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;
-

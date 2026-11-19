@@ -2,13 +2,32 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import mongoose from "mongoose";
+import { Audit } from "../models/Audit.js";
 import { auditData } from "../data/audits.js";
 import { notificationsData } from "../data/notifications.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
 const TMP_STORE_PATH = path.join(os.tmpdir(), "qms_audits_store.json");
 
-const loadAuditsFromDisk = () => {
+const loadAuditsFromDisk = async () => {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const dbAudits = await Audit.find({}).lean();
+      if (dbAudits && dbAudits.length > 0) {
+        const map = new Map();
+        dbAudits.forEach((a) => a && a.id && map.set(a.id, a));
+        auditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
+        const merged = Array.from(map.values());
+        auditData.length = 0;
+        auditData.push(...merged);
+        return;
+      }
+    } catch (e) {
+      // Ignore Mongo read errors
+    }
+  }
+
   try {
     if (fs.existsSync(TMP_STORE_PATH)) {
       const content = fs.readFileSync(TMP_STORE_PATH, "utf-8");
@@ -37,11 +56,27 @@ const loadAuditsFromDisk = () => {
   }
 };
 
-const saveAuditsToDisk = () => {
+const saveAuditsToDisk = (targetAudit = null) => {
   try {
     fs.writeFileSync(TMP_STORE_PATH, JSON.stringify(auditData), "utf-8");
   } catch (e) {
     // Ignore tmp write errors
+  }
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      if (targetAudit && targetAudit.id) {
+        Audit.findOneAndUpdate({ id: targetAudit.id }, targetAudit, { upsert: true }).catch(() => {});
+      } else {
+        for (const item of auditData) {
+          if (item && item.id) {
+            Audit.findOneAndUpdate({ id: item.id }, item, { upsert: true }).catch(() => {});
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore Mongo write errors
+    }
   }
 };
 

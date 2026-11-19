@@ -1,21 +1,42 @@
+import mongoose from "mongoose";
+import { Employee } from "../models/Employee.js";
 import { employeesData } from "../data/employees.js";
 import { tasksData } from "../data/tasks.js";
 
+// Helper for dynamic enrichment of task counts
+const enrichEmployees = (list) => {
+  return list.map((emp) => {
+    const empTasks = tasksData.filter((t) => (t.employee || t.assignedTo || "").toLowerCase() === (emp.name || "").toLowerCase());
+    const completed = empTasks.filter((t) => t.status === "Completed").length;
+    const pending = empTasks.filter((t) => t.status !== "Completed").length;
+    return {
+      ...emp,
+      assigned: empTasks.length || emp.assigned || 0,
+      completed: completed !== undefined ? completed : emp.completed || 0,
+      pending: pending !== undefined ? pending : emp.pending || 0
+    };
+  });
+};
+
 // GET /api/employees
-export const getAllEmployees = (req, res) => {
+export const getAllEmployees = async (req, res) => {
   try {
-    // Dynamic recalculation of task counts
-    const enriched = employeesData.map((emp) => {
-      const empTasks = tasksData.filter((t) => t.employee.toLowerCase() === emp.name.toLowerCase());
-      const completed = empTasks.filter((t) => t.status === "Completed").length;
-      const pending = empTasks.filter((t) => t.status !== "Completed").length;
-      return {
-        ...emp,
-        assigned: empTasks.length || emp.assigned,
-        completed: completed || emp.completed,
-        pending: pending !== undefined ? pending : emp.pending
-      };
-    });
+    let list = [...employeesData];
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbEmps = await Employee.find({}).lean();
+        if (dbEmps && dbEmps.length > 0) {
+          list = dbEmps;
+          employeesData.length = 0;
+          employeesData.push(...dbEmps);
+        }
+      } catch (err) {
+        console.warn("MongoDB read error in getAllEmployees:", err.message);
+      }
+    }
+
+    const enriched = enrichEmployees(list);
 
     res.json({
       success: true,
@@ -28,13 +49,24 @@ export const getAllEmployees = (req, res) => {
 };
 
 // GET /api/employees/:id
-export const getEmployeeById = (req, res) => {
+export const getEmployeeById = async (req, res) => {
   try {
-    const emp = employeesData.find((e) => e.id === req.params.id);
+    let emp = employeesData.find((e) => e.id === req.params.id);
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbEmp = await Employee.findOne({ id: req.params.id }).lean();
+        if (dbEmp) emp = dbEmp;
+      } catch (err) {
+        console.warn("MongoDB query error in getEmployeeById:", err.message);
+      }
+    }
+
     if (!emp) {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
-    const empTasks = tasksData.filter((t) => t.employee.toLowerCase() === emp.name.toLowerCase());
+
+    const empTasks = tasksData.filter((t) => (t.employee || t.assignedTo || "").toLowerCase() === (emp.name || "").toLowerCase());
     res.json({
       success: true,
       employee: emp,
@@ -46,7 +78,7 @@ export const getEmployeeById = (req, res) => {
 };
 
 // POST /api/employees
-export const createEmployee = (req, res) => {
+export const createEmployee = async (req, res) => {
   try {
     const { name, email, process, designation, department } = req.body;
     if (!name || !email) {
@@ -65,10 +97,18 @@ export const createEmployee = (req, res) => {
       designation: designation || "Project Engineer",
       department: department || "Operations"
     };
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await Employee.create(newEmp);
+      } catch (err) {
+        console.warn("MongoDB createEmployee error:", err.message);
+      }
+    }
+
     employeesData.push(newEmp);
     res.status(201).json({ success: true, employee: newEmp });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-

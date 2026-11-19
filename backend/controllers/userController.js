@@ -1,3 +1,6 @@
+import mongoose from "mongoose";
+import { User } from "../models/User.js";
+import { Activity } from "../models/Activity.js";
 import { dummyUsers, normalizeRole } from "../data/users.js";
 import { activitiesData } from "../data/activities.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
@@ -9,11 +12,35 @@ const sanitizeUser = (user) => {
   return safeUser;
 };
 
+const logActivity = async (entry) => {
+  activitiesData.unshift(entry);
+  if (mongoose.connection.readyState === 1) {
+    try {
+      await Activity.create(entry);
+    } catch (err) {
+      console.warn("Activity DB log error:", err.message);
+    }
+  }
+};
+
 // GET /api/users - List all users with privileges and details
-export const getAllUsers = (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const { role, department, status, search, sort } = req.query;
     let list = [...dummyUsers];
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbUsers = await User.find({}).lean();
+        if (dbUsers && dbUsers.length > 0) {
+          list = dbUsers;
+          dummyUsers.length = 0;
+          dummyUsers.push(...dbUsers);
+        }
+      } catch (err) {
+        console.warn("MongoDB read error in getAllUsers:", err.message);
+      }
+    }
 
     if (role && role !== "All") {
       list = list.filter((u) => u.role === normalizeRole(role));
@@ -31,9 +58,9 @@ export const getAllUsers = (req, res) => {
       const q = search.toLowerCase();
       list = list.filter(
         (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          u.username.toLowerCase().includes(q) ||
+          u.name?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q) ||
+          u.username?.toLowerCase().includes(q) ||
           u.department?.toLowerCase().includes(q) ||
           u.roleTitle?.toLowerCase().includes(q) ||
           (Array.isArray(u.privileges) && u.privileges.some((p) => p.toLowerCase().includes(q)))
@@ -42,13 +69,13 @@ export const getAllUsers = (req, res) => {
 
     // Sorting
     if (sort === "name-asc") {
-      list.sort((a, b) => a.name.localeCompare(b.name));
+      list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     } else if (sort === "name-desc") {
-      list.sort((a, b) => b.name.localeCompare(a.name));
+      list.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
     } else if (sort === "role") {
-      list.sort((a, b) => a.roleTitle.localeCompare(b.roleTitle));
+      list.sort((a, b) => (a.roleTitle || "").localeCompare(b.roleTitle || ""));
     } else if (sort === "status") {
-      list.sort((a, b) => a.status.localeCompare(b.status));
+      list.sort((a, b) => (a.status || "").localeCompare(b.status || ""));
     }
 
     const safeUsers = list.map(sanitizeUser);
@@ -63,9 +90,21 @@ export const getAllUsers = (req, res) => {
 };
 
 // GET /api/users/:id - Get single user
-export const getUserById = (req, res) => {
+export const getUserById = async (req, res) => {
   try {
-    const user = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
+    let user = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbUser = await User.findOne({
+          $or: [{ id: req.params.id }, { employeeId: req.params.id }]
+        }).lean();
+        if (dbUser) user = dbUser;
+      } catch (err) {
+        console.warn("MongoDB query error in getUserById:", err.message);
+      }
+    }
+
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
@@ -76,7 +115,7 @@ export const getUserById = (req, res) => {
 };
 
 // POST /api/users - QMS Coordinator adds new user / staff and assigns privileges
-export const createUser = (req, res) => {
+export const createUser = async (req, res) => {
   try {
     // Only QMS Coordinator can add users
     if (req.user && req.user.role !== "qm") {
@@ -147,10 +186,20 @@ export const createUser = (req, res) => {
       privileges: Array.isArray(privileges) && privileges.length ? privileges : defaultPrivileges
     };
 
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await User.create(newUser);
+      } catch (err) {
+        console.warn("MongoDB createUser error:", err.message);
+      }
+    }
+
     dummyUsers.push(newUser);
 
-    activitiesData.unshift({
+    await logActivity({
       id: `ACT-${Date.now()}`,
+      title: "User Created",
+      detail: `${newUser.name} (${newUser.roleTitle})`,
       text: `New user "${newUser.name}" (${newUser.roleTitle}) created by QMS Coordinator`,
       actor: req.user?.name || "QMS Coordinator",
       time: "Just now",
@@ -172,7 +221,7 @@ export const createUser = (req, res) => {
 };
 
 // PUT /api/users/:id - QMS Coordinator edits user and updates privileges
-export const updateUser = (req, res) => {
+export const updateUser = async (req, res) => {
   try {
     if (req.user && req.user.role !== "qm") {
       return res.status(403).json({
@@ -213,10 +262,24 @@ export const updateUser = (req, res) => {
       status: status !== undefined ? status : existing.status
     };
 
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await User.findOneAndUpdate(
+          { $or: [{ id: req.params.id }, { employeeId: req.params.id }] },
+          updatedUser,
+          { new: true, upsert: true }
+        );
+      } catch (err) {
+        console.warn("MongoDB updateUser error:", err.message);
+      }
+    }
+
     dummyUsers[index] = updatedUser;
 
-    activitiesData.unshift({
+    await logActivity({
       id: `ACT-${Date.now()}`,
+      title: "User Updated",
+      detail: `${updatedUser.name}`,
       text: `User details & security privileges updated for "${updatedUser.name}"`,
       actor: req.user?.name || "QMS Coordinator",
       time: "Just now",
@@ -238,7 +301,7 @@ export const updateUser = (req, res) => {
 };
 
 // PATCH /api/users/:id/status - Activate or Deactivate user account
-export const toggleUserStatus = (req, res) => {
+export const toggleUserStatus = async (req, res) => {
   try {
     if (req.user && req.user.role !== "qm") {
       return res.status(403).json({
@@ -256,8 +319,21 @@ export const toggleUserStatus = (req, res) => {
     const newStatus = user.status === "Active" ? "Inactive" : "Active";
     user.status = newStatus;
 
-    activitiesData.unshift({
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await User.findOneAndUpdate(
+          { $or: [{ id: req.params.id }, { employeeId: req.params.id }] },
+          { status: newStatus }
+        );
+      } catch (err) {
+        console.warn("MongoDB toggleUserStatus error:", err.message);
+      }
+    }
+
+    await logActivity({
       id: `ACT-${Date.now()}`,
+      title: "Account Status Changed",
+      detail: `${user.name} (${newStatus})`,
       text: `User account "${user.name}" status changed to ${newStatus}`,
       actor: req.user?.name || "QMS Coordinator",
       time: "Just now",
@@ -279,7 +355,7 @@ export const toggleUserStatus = (req, res) => {
 };
 
 // DELETE /api/users/:id - Deactivate or remove user
-export const deleteUser = (req, res) => {
+export const deleteUser = async (req, res) => {
   try {
     if (req.user && req.user.role !== "qm") {
       return res.status(403).json({
@@ -295,8 +371,20 @@ export const deleteUser = (req, res) => {
 
     const removed = dummyUsers.splice(index, 1)[0];
 
-    activitiesData.unshift({
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await User.findOneAndDelete({
+          $or: [{ id: req.params.id }, { employeeId: req.params.id }]
+        });
+      } catch (err) {
+        console.warn("MongoDB deleteUser error:", err.message);
+      }
+    }
+
+    await logActivity({
       id: `ACT-${Date.now()}`,
+      title: "User Removed",
+      detail: `${removed.name}`,
       text: `User "${removed.name}" removed from workspace directory`,
       actor: req.user?.name || "QMS Coordinator",
       time: "Just now",

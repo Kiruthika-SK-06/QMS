@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+import { Process } from "../models/Process.js";
 import { processesData } from "../data/processes.js";
 import { timelineData } from "../data/timeline.js";
 import { documentsData } from "../data/documents.js";
@@ -13,17 +15,29 @@ export const getEnrichedProcesses = () => {
     const completedTasks = tasksData.filter((t) => t.process === proc.name && t.status === "Completed").length;
     return {
       ...proc,
-      documents: docCount || proc.documents,
-      employees: empCount || proc.employees,
-      active: activeTasks || proc.active,
-      completed: completedTasks || proc.completed
+      documents: docCount || proc.documents || 0,
+      employees: empCount || proc.employees || 0,
+      active: activeTasks !== undefined ? activeTasks : proc.active || 0,
+      completed: completedTasks !== undefined ? completedTasks : proc.completed || 0
     };
   });
 };
 
 // GET /api/processes
-export const getAllProcesses = (req, res) => {
+export const getAllProcesses = async (req, res) => {
   try {
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbProcs = await Process.find({}).lean();
+        if (dbProcs && dbProcs.length > 0) {
+          processesData.length = 0;
+          processesData.push(...dbProcs);
+        }
+      } catch (err) {
+        console.warn("MongoDB read error in getAllProcesses:", err.message);
+      }
+    }
+
     const enriched = getEnrichedProcesses();
     res.json({
       success: true,
@@ -36,7 +50,7 @@ export const getAllProcesses = (req, res) => {
 };
 
 // POST /api/processes
-export const createProcess = (req, res) => {
+export const createProcess = async (req, res) => {
   try {
     const { name, owner, description, target } = req.body;
     if (!name || !owner) {
@@ -56,6 +70,15 @@ export const createProcess = (req, res) => {
       target: target || "30 Nov 2026",
       description: description || "Controlled QMS business process"
     };
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await Process.create(newProcess);
+      } catch (err) {
+        console.warn("MongoDB createProcess error:", err.message);
+      }
+    }
+
     processesData.unshift(newProcess);
     res.status(201).json({ success: true, process: newProcess });
   } catch (error) {
@@ -64,8 +87,20 @@ export const createProcess = (req, res) => {
 };
 
 // GET /api/processes/head-overview
-export const getHeadOverview = (req, res) => {
+export const getHeadOverview = async (req, res) => {
   try {
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbProcs = await Process.find({}).lean();
+        if (dbProcs && dbProcs.length > 0) {
+          processesData.length = 0;
+          processesData.push(...dbProcs);
+        }
+      } catch (err) {
+        console.warn("MongoDB read error in getHeadOverview:", err.message);
+      }
+    }
+
     const enriched = getEnrichedProcesses();
     const totalProcesses = enriched.length;
     const completedProcesses = enriched.filter((p) => p.status === "Completed").length;
