@@ -303,6 +303,107 @@ The application features a built-in self-service password reset system:
 
 All data structures are defined as official Mongoose models in `backend/models/` and exported via `backend/models/index.js`.
 
+### 5.0 Entity-Relationship (ER) Diagram
+The following diagram illustrates the structural relationships between institutional stakeholders, quality processes, controlled documents, 7-stage internal audits, 5-step external audits, and Management Review Meetings:
+
+```mermaid
+erDiagram
+    USER ||--o{ PROCESS : "owns as coordinator"
+    USER ||--o{ DOCUMENT : "authors or submits"
+    USER ||--o{ TASK : "assigned to"
+    USER ||--o{ AUDIT : "assigned as auditor or auditee"
+    USER ||--o{ MRM : "approves or attends"
+    USER ||--o{ NOTIFICATION : "receives alerts"
+    USER ||--o{ ACTIVITY : "generates audit log"
+
+    PROCESS ||--o{ DOCUMENT : "governs documents"
+    PROCESS ||--o{ TASK : "groups tasks"
+    PROCESS ||--o{ AUDIT : "audited under"
+    PROCESS ||--o{ EMPLOYEE : "allocates personnel"
+
+    DOCUMENT ||--|{ DOCUMENT_VERSION : "maintains history"
+    DOCUMENT ||--o{ TASK : "referenced by"
+
+    AUDIT ||--o| NOTICING_SHEET : "produces findings at Stage 4"
+    AUDIT ||--o| CAPA_RECORD : "resolves findings at Stage 6"
+    AUDIT ||--o{ AUDIT_TIMELINE : "logs 7 stages"
+
+    EXTERNAL_AUDIT ||--o| INCOMING_SCHEDULE_EMAIL : "Step 1: Ingests"
+    EXTERNAL_AUDIT ||--o| NC_PACKAGE : "Step 3: Scans paper NC"
+    EXTERNAL_AUDIT ||--o| COORDINATOR_RESOLUTION : "Step 4: Remediates"
+    EXTERNAL_AUDIT ||--o| EXTERNAL_APPROVAL : "Step 5: Ratifies"
+    EXTERNAL_AUDIT ||--o{ AUDIT_TIMELINE : "logs surveillance steps"
+
+    MRM ||--|{ MRM_APPROVAL : "requires dual approval"
+    MRM ||--o| MINUTES_OF_MEETING : "publishes official MoM"
+    MRM ||--o{ TASK : "spawns action items"
+
+    USER {
+        string id PK
+        string username UK
+        string email UK
+        string employeeId UK
+        string role
+        string roleTitle
+        string department
+    }
+
+    PROCESS {
+        string id PK
+        string name
+        string owner
+        int progress
+        string status
+    }
+
+    DOCUMENT {
+        string id PK
+        string name
+        string type
+        string process FK
+        string owner FK
+        string version
+        string status
+    }
+
+    TASK {
+        string id PK
+        string title
+        string employee FK
+        string process FK
+        string status
+        string priority
+    }
+
+    AUDIT {
+        string id PK
+        string title
+        string process FK
+        int stage
+        string status
+        string internalAuditor FK
+        string internalAuditee FK
+    }
+
+    EXTERNAL_AUDIT {
+        string id PK
+        string title
+        int stage
+        string status
+        string externalAgency
+        string leadAuditor
+    }
+
+    MRM {
+        string id PK
+        string title
+        string scheduledDate
+        int stage
+        string status
+        string plannedBy
+    }
+```
+
 ### 5.1 User Collection (`User.js`)
 Stores authenticated institutional accounts and role credentials.
 ```javascript
