@@ -19,7 +19,7 @@ function syncBackground(url, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
     fetch(url, { ...options, signal: controller.signal })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => clearTimeout(timeoutId));
   } catch {
     // Ignore offline errors
@@ -72,7 +72,7 @@ export function saveStoredMRMs(mrms) {
       const channel = new BroadcastChannel("qms_mrm_channel");
       channel.postMessage({ type: "MRM_UPDATE", mrms: sorted });
       channel.close();
-    } catch {}
+    } catch { }
 
     // Cross-tab and server sync so other user accounts / tabs immediately receive new MRMs
     syncBackground(`${API_BASE}/sync`, {
@@ -128,7 +128,7 @@ export const mrmService = {
       try {
         const u = JSON.parse(localStorage.getItem("qms_user") || "null");
         if (u?.role) currentRole = u.role;
-      } catch {}
+      } catch { }
     }
 
     try {

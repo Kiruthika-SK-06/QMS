@@ -239,6 +239,45 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// PATCH /api/users/:id/status
+export const toggleUserStatus = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: "Database not connected" });
+    }
+
+    const user = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const requestedStatus = req.body.status;
+    if (requestedStatus) {
+      user.status = requestedStatus;
+    } else {
+      user.status = user.status === "Active" ? "Inactive" : "Active";
+    }
+
+    await user.save();
+
+    await logActivity({
+      text: `User account '${user.name}' status changed to '${user.status}' by ${req.user?.name || "Admin"}`,
+      actor: req.user?.name || "Admin",
+      tone: user.status === "Active" ? "green" : "amber"
+    });
+
+    broadcastRealtimeEvent("USER_UPDATED", { action: "STATUS_TOGGLED", user: sanitizeUser(user.toObject()) });
+
+    res.json({
+      success: true,
+      message: `User status changed to ${user.status}`,
+      user: sanitizeUser(user.toObject())
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // DELETE /api/users/:id
 export const deleteUser = async (req, res) => {
   try {
@@ -275,5 +314,6 @@ export default {
   getUserById,
   createUser,
   updateUser,
+  toggleUserStatus,
   deleteUser
 };
