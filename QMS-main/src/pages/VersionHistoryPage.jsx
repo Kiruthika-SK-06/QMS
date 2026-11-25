@@ -326,19 +326,8 @@ export default function VersionHistoryPage() {
               <h3>Internal Quality Audit Workflow</h3>
             </div>
           </div>
-          <div className="overview-card-metric" style={{ fontSize: "13px" }}>
+          <div className="overview-card-metric" style={{ fontSize: "13px", marginBottom: "16px" }}>
             {totalInternal} <small>IQA Cycles ({completedInternal} Concluded)</small>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "6px 0 16px 0" }}>
-            <span style={{ fontSize: "13px", fontWeight: "600", padding: "3px 8px", borderRadius: "4px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }}>
-              Stage 1-3: Scheduling & Acceptance
-            </span>
-            <span style={{ fontSize: "13px", fontWeight: "600", padding: "3px 8px", borderRadius: "4px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }}>
-              Stage 4-5: Noticing & NCs
-            </span>
-            <span style={{ fontSize: "13px", fontWeight: "600", padding: "3px 8px", borderRadius: "4px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }}>
-              Stage 6-7: CAPA & Closure
-            </span>
           </div>
           <NavLink
             to="/internal-audit"
@@ -371,19 +360,8 @@ export default function VersionHistoryPage() {
               <h3>External Quality Audit Workflow</h3>
             </div>
           </div>
-          <div className="overview-card-metric" style={{ fontSize: "13px" }}>
+          <div className="overview-card-metric" style={{ fontSize: "13px", marginBottom: "16px" }}>
             {totalExternal} <small>Surveillance Cycles ({certifiedExternal} ISO 9001 Certified)</small>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "6px 0 16px 0" }}>
-            <span style={{ fontSize: "13px", fontWeight: "600", padding: "3px 8px", borderRadius: "4px", background: "#eff6ff", color: "#1e40af", border: "1px solid #bfdbfe" }}>
-              Step 1-2: Email Schedule Dispatched
-            </span>
-            <span style={{ fontSize: "13px", fontWeight: "600", padding: "3px 8px", borderRadius: "4px", background: "#eff6ff", color: "#1e40af", border: "1px solid #bfdbfe" }}>
-              Step 3-4: Paper NC & CC Closure
-            </span>
-            <span style={{ fontSize: "13px", fontWeight: "600", padding: "3px 8px", borderRadius: "4px", background: "#eff6ff", color: "#1e40af", border: "1px solid #bfdbfe" }}>
-              Step 5: ISO 9001 Endorsement
-            </span>
           </div>
           <NavLink
             to="/external-audit"
