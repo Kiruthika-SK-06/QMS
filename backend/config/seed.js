@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 import {
   User,
   Document,
@@ -32,8 +33,14 @@ export const seedDatabase = async () => {
     // 1. Seed or Sync Users
     const userCount = await User.countDocuments();
     if (userCount === 0 && Array.isArray(dummyUsers)) {
-      await User.insertMany(dummyUsers);
-      console.log(`✅ Seeded ${dummyUsers.length} controlled users into MongoDB`);
+      const usersToInsert = await Promise.all(
+        dummyUsers.map(async (u) => {
+          const hashedPassword = await bcrypt.hash(u.password || "1234", 10);
+          return { ...u, password: hashedPassword };
+        })
+      );
+      await User.insertMany(usersToInsert);
+      console.log(`✅ Seeded ${usersToInsert.length} controlled users with bcrypt hashed passwords into MongoDB`);
     } else {
       const dbUsers = await User.find({}).lean();
       if (dbUsers.length > 0) {

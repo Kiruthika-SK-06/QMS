@@ -4,9 +4,11 @@ import path from "path";
 import os from "os";
 import mongoose from "mongoose";
 import { Audit } from "../models/Audit.js";
-import { auditData } from "../data/audits.js";
-import { notificationsData } from "../data/notifications.js";
+import { Notification } from "../models/Notification.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+
+const auditData = [];
+const notificationsData = [];
 
 const TMP_STORE_PATH = path.join(os.tmpdir(), "qms_audits_store.json");
 
@@ -14,15 +16,11 @@ const loadAuditsFromDisk = async () => {
   if (mongoose.connection.readyState === 1) {
     try {
       const dbAudits = await Audit.find({}).lean();
+      auditData.length = 0;
       if (dbAudits && dbAudits.length > 0) {
-        const map = new Map();
-        dbAudits.forEach((a) => a && a.id && map.set(a.id, a));
-        auditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
-        const merged = Array.from(map.values());
-        auditData.length = 0;
-        auditData.push(...merged);
-        return;
+        auditData.push(...dbAudits);
       }
+      return;
     } catch (e) {
       // Ignore Mongo read errors
     }

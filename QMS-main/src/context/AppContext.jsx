@@ -1,22 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import {
-  users,
-  initialDocuments,
-  initialTasks,
-  initialNotifications,
-  processes as initialProcesses,
-  employees as initialEmployees,
-  initialUsersList,
-  initialMRMList,
-  initialAuditList,
-  activities as initialActivities
-} from "../data/mockData";
 import { authService } from "../services/authService";
 import { documentService } from "../services/documentService";
 import { taskService } from "../services/taskService";
 import { notificationService } from "../services/notificationService";
 import { processService } from "../services/processService";
 import { userService } from "../services/userService";
+import { dashboardService } from "../services/dashboardService";
 import { mrmService, getStoredMRMs, saveStoredMRMs, sortMRMs } from "../services/mrmService";
 import { auditService, getStoredAudits, saveStoredAudits, sortAudits } from "../services/auditService";
 import {
@@ -25,6 +14,15 @@ import {
   saveStoredExternalAudits,
   sortExternalAudits
 } from "../services/externalAuditService";
+
+const roles = {
+  Head: "Trust Head",
+  head: "Trust Head",
+  qm: "QMS Coordinator",
+  owner: "Course Coordinator",
+  auditor: "Internal Auditor",
+  employee: "Employee"
+};
 
 const AppContext = createContext(null);
 
@@ -82,17 +80,18 @@ export function AppProvider({ children }) {
   });
 
   const [token, setToken] = useState(() => localStorage.getItem("qms_token") || null);
-  const [documents, setDocuments] = useState(initialDocuments);
-  const [tasks, setTasks] = useState(initialTasks);
-  const [notifications, setNotifications] = useState(initialNotifications);
-  const [processes, setProcesses] = useState(initialProcesses);
-  const [employees, setEmployees] = useState(initialEmployees);
-  const [usersList, setUsersList] = useState(initialUsersList);
+  const [documents, setDocuments] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [processes, setProcesses] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [usersList, setUsersList] = useState([]);
   const [mrmList, setMrmList] = useState(() => sortMRMs(getStoredMRMs()));
   const [auditList, setAuditList] = useState(() => sortAudits(getStoredAudits()));
   const [externalAuditList, setExternalAuditList] = useState(() => sortExternalAudits(getStoredExternalAudits()));
-  const [activities, setActivities] = useState(initialActivities);
+  const [activities, setActivities] = useState([]);
   const [headOverview, setHeadOverview] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState(() => new Date());
@@ -100,7 +99,7 @@ export function AppProvider({ children }) {
   // Silent background fetch that updates live data without full-page loading indicators
   const silentRefresh = useCallback(async () => {
     try {
-      const [docs, tsks, notifs, procs, emps, acts, headData, liveUsers, liveMRMs, liveAudits, liveExternalAudits] = await Promise.allSettled([
+      const [docs, tsks, notifs, procs, emps, acts, headData, liveUsers, liveMRMs, liveAudits, liveExternalAudits, statsData] = await Promise.allSettled([
         documentService.fetchDocuments(),
         taskService.fetchTasks(),
         notificationService.fetchNotifications(token),
@@ -111,7 +110,8 @@ export function AppProvider({ children }) {
         userService.fetchUsers(),
         mrmService.fetchMRMs(token, currentUser?.role),
         auditService.fetchAudits(token),
-        externalAuditService.fetchExternalAudits(token, currentUser?.role)
+        externalAuditService.fetchExternalAudits(token, currentUser?.role),
+        dashboardService.getStats()
       ]);
 
       if (docs.status === "fulfilled" && Array.isArray(docs.value)) {
@@ -146,6 +146,9 @@ export function AppProvider({ children }) {
       }
       if (liveExternalAudits.status === "fulfilled" && Array.isArray(liveExternalAudits.value)) {
         setExternalAuditList(sortExternalAudits(liveExternalAudits.value));
+      }
+      if (statsData.status === "fulfilled" && statsData.value) {
+        setDashboardStats(statsData.value);
       }
       setLastSyncTime(new Date());
     } catch (err) {
@@ -1009,6 +1012,18 @@ export function AppProvider({ children }) {
     }
   };
 
+  const uploadDocumentWithFile = async (formData) => {
+    try {
+      const created = await documentService.uploadDocumentWithFile(formData, token);
+      setDocuments((items) => [created, ...items]);
+      silentRefresh();
+      return created;
+    } catch (err) {
+      console.error("uploadDocumentWithFile failed:", err);
+      throw err;
+    }
+  };
+
   const addVersion = async (id, notes = "") => {
     try {
       const updated = await documentService.createVersion(id, notes, token);
@@ -1175,11 +1190,13 @@ export function AppProvider({ children }) {
         updateTaskStatus,
         deleteTask,
         createDocument,
+        uploadDocumentWithFile,
         deleteDocument,
         updateDocument,
         addVersion,
         updateDocumentStatus,
         downloadDocument,
+        dashboardStats,
         markNotificationRead,
         markAllNotificationsRead,
         pushNotification,

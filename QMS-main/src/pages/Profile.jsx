@@ -1,9 +1,16 @@
 import React from "react";
 import { useApp } from "../context/AppContext";
-import { roles } from "../data/mockData";
 import PageIntro from "../components/common/PageIntro";
 import Detail from "../components/common/Detail";
 import StatusBadge from "../components/common/StatusBadge";
+
+const roles = {
+  Head: "Trust Head",
+  qm: "QMS Coordinator",
+  owner: "Course Coordinator",
+  auditor: "Internal Auditor",
+  employee: "Employee"
+};
 
 export default function Profile() {
   const { currentUser, logout } = useApp();

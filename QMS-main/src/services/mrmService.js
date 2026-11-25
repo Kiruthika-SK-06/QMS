@@ -1,5 +1,4 @@
 // Frontend service for Management Review Meeting (MRM) API with cross-tab real-time sync and localStorage persistence
-import { initialMRMList } from "../data/mockData";
 
 const API_BASE = "/api/mrm";
 
@@ -61,7 +60,7 @@ export function getStoredMRMs() {
   } catch (e) {
     console.warn("Error reading qms_mrms from localStorage", e);
   }
-  return sortMRMs(initialMRMList);
+  return [];
 }
 
 // Helper to save MRMs and broadcast to other open tabs

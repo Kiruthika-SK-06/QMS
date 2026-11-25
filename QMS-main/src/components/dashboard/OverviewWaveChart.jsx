@@ -25,13 +25,15 @@ const DATASETS = {
   }
 };
 
-export default function OverviewWaveChart({ title = "Quality Performance Index", metric = "87.4%" }) {
+export default function OverviewWaveChart({ title = "Quality Performance Index", metric = "87.4%", data = null }) {
   const [selectedFilter, setSelectedFilter] = useState("This Year");
   const [hoverIndex, setHoverIndex] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const currentData = DATASETS[selectedFilter] || DATASETS["This Year"];
-  const { months, series1, series2, primaryMetric, primaryLabel } = currentData;
+  const currentData = (data && Array.isArray(data.months) && data.months.length > 0)
+    ? data
+    : (DATASETS[selectedFilter] || DATASETS["This Year"]);
+  const { months = ["Jan", "Feb", "Mar", "Apr"], series1 = [0, 0, 0, 0], series2 = [0, 0, 0, 0], primaryMetric, primaryLabel } = currentData;
 
   // Chart coordinate space
   const svgWidth = 680;

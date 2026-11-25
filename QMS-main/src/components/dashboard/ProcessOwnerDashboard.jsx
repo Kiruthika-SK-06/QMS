@@ -39,6 +39,18 @@ export default function ProcessOwnerDashboard() {
     (m) => !!m.momFile || m.status === "MoM Uploaded"
   ).length;
 
+  const mrmProgress = accessibleMRMs.length > 0
+    ? Math.round((accessibleMRMs.filter((m) => !!m.momFile || m.status === "MoM Uploaded" || (m.stage && m.stage >= 4)).length / accessibleMRMs.length) * 100)
+    : 0;
+
+  const processProgress = processes.length > 0
+    ? Math.round(processes.reduce((acc, p) => acc + (p.progress || 0), 0) / processes.length)
+    : 0;
+
+  const docCompliance = documents.length > 0
+    ? Math.round((documents.filter((d) => d.status === "Approved" || d.status === "Current").length / documents.length) * 100)
+    : 0;
+
   return (
     <>
       <PageIntro
@@ -52,7 +64,7 @@ export default function ProcessOwnerDashboard() {
         <StatCard
           label="MRM Sessions"
           value={`${accessibleMRMs.length} Sessions`}
-          progress={82}
+          progress={mrmProgress}
           tone="blue"
           direction="up"
           hint="Scheduled & MoM Published"
@@ -62,7 +74,7 @@ export default function ProcessOwnerDashboard() {
         <StatCard
           label="Monitored Processes"
           value={`${processes.length} Processes`}
-          progress={95}
+          progress={processProgress}
           tone="teal"
           direction="up"
           hint="Active Course Processes"
@@ -72,7 +84,7 @@ export default function ProcessOwnerDashboard() {
         <StatCard
           label="Controlled Documents"
           value={`${documents.length} Documents`}
-          progress={75}
+          progress={docCompliance}
           tone="dark"
           direction="up"
           hint="Open Document Library"

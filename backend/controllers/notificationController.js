@@ -1,39 +1,32 @@
 import mongoose from "mongoose";
 import { Notification } from "../models/Notification.js";
-import { notificationsData } from "../data/notifications.js";
 
 // GET /api/notifications
 export const getAllNotifications = async (req, res) => {
   try {
-    const role = req.user?.role?.toLowerCase();
-    let list = [...notificationsData];
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        const dbNotifs = await Notification.find({}).sort({ createdAt: -1 }).lean();
-        if (dbNotifs && dbNotifs.length > 0) {
-          list = dbNotifs;
-          notificationsData.length = 0;
-          notificationsData.push(...dbNotifs);
-        }
-      } catch (err) {
-        console.warn("MongoDB read error in getAllNotifications:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ success: true, unreadCount: 0, notifications: [] });
     }
+
+    const role = (req.user?.role || "").toLowerCase();
+    const query = {};
 
     if (role && role !== "head" && role !== "admin") {
-      list = list.filter((n) => {
-        const target = (n.targetRole || n.role || "all").toLowerCase();
-        return !target || target === "all" || target === role;
-      });
+      query.$or = [
+        { targetRole: "all" },
+        { targetRole: role },
+        { role: role },
+        { targetRole: { $exists: false } }
+      ];
     }
 
-    const unreadCount = list.filter((n) => !n.read).length;
+    const notifications = await Notification.find(query).sort({ createdAt: -1 }).limit(50).lean();
+    const unreadCount = notifications.filter((n) => !n.read).length;
 
     res.json({
       success: true,
       unreadCount,
-      notifications: list
+      notifications
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -43,47 +36,39 @@ export const getAllNotifications = async (req, res) => {
 // PATCH /api/notifications/:id/read
 export const markNotificationRead = async (req, res) => {
   try {
-    const paramId = req.params.id;
-    const numId = parseInt(paramId, 10);
-    const item = notificationsData.find((n) => String(n.id) === String(paramId) || n.id === numId);
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await Notification.findOneAndUpdate(
-          { $or: [{ id: paramId }, { id: isNaN(numId) ? null : numId }] },
-          { read: true }
-        );
-      } catch (err) {
-        console.warn("MongoDB update notification error:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: "Database not connected" });
     }
 
-    if (!item) {
-      return res.status(404).json({ success: false, message: "Notification not found" });
-    }
-    item.read = true;
-    res.json({ success: true, notification: item });
+    const notif = await Notification.findOneAndUpdate(
+      { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+      { read: true },
+      { new: true }
+    );
+
+    res.json({ success: true, notification: notif });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/notifications/read-all
+// POST /api/notifications/mark-all-read
 export const markAllNotificationsRead = async (req, res) => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await Notification.updateMany({}, { read: true });
-      } catch (err) {
-        console.warn("MongoDB updateMany notifications error:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: "Database not connected" });
     }
 
-    notificationsData.forEach((n) => {
-      n.read = true;
-    });
+    await Notification.updateMany({ read: false }, { read: true });
+
     res.json({ success: true, message: "All notifications marked as read" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+};
+
+export default {
+  getAllNotifications,
+  markNotificationRead,
+  markAllNotificationsRead
 };

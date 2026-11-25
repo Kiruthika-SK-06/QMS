@@ -1,55 +1,108 @@
 import jwt from "jsonwebtoken";
-import { dummyUsers } from "../data/users.js";
+import mongoose from "mongoose";
+import { User } from "../models/User.js";
 
-export const authenticateToken = (req, res, next) => {
+const JWT_SECRET = process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026";
+
+/**
+ * Express middleware to authenticate JWT tokens against MongoDB.
+ */
+export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-  const secret = process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026";
-
   if (token) {
-    if (token.startsWith("session-token-")) {
-      const parts = token.split("-");
-      const rolePart = parts[2]; // e.g. "qm", "Head", "owner", "auditor"
-      const matched = dummyUsers.find(
-        (u) =>
-          u.role.toLowerCase() === rolePart?.toLowerCase() ||
-          u.aliases?.some((a) => a.toLowerCase() === rolePart?.toLowerCase())
-      );
-      if (matched) {
-        const { password, ...userWithoutPassword } = matched;
-        req.user = userWithoutPassword;
-        return next();
-      }
-    }
     try {
-      const decoded = jwt.verify(token, secret);
-      const user = dummyUsers.find((u) => u.id === decoded.id || u.username === decoded.username);
-      if (user) {
-        const { password, ...userWithoutPassword } = user;
-        req.user = userWithoutPassword;
-        return next();
+      const decoded = jwt.verify(token, JWT_SECRET);
+
+      // Query user strictly from MongoDB if database is connected
+      if (mongoose.connection.readyState === 1) {
+        const dbUser = await User.findOne({
+          $or: [
+            { id: decoded.id },
+            { _id: mongoose.isValidObjectId(decoded.id) ? decoded.id : null },
+            { username: decoded.username },
+            { email: decoded.email }
+          ].filter(Boolean)
+        }).lean();
+
+        if (dbUser) {
+          const { password, ...userWithoutPassword } = dbUser;
+          req.user = userWithoutPassword;
+          return next();
+        }
       }
-    } catch {
-      // If token expired, fall through to demo user resolution
+
+      // If decoded token is structurally valid, attach user payload
+      req.user = {
+        id: decoded.id,
+        username: decoded.username,
+        role: decoded.role,
+        email: decoded.email,
+        employeeId: decoded.employeeId
+      };
+      return next();
+    } catch (err) {
+      // Token verification failed or expired
     }
   }
 
-  // Fallback for demo mode: check headers or default to demo user
-  const roleHeader = req.headers["x-user-role"] || req.headers["x-demo-role"];
+  // Check role and user headers for internal service requests
+  const roleHeader = req.headers["x-user-role"];
   const userIdHeader = req.headers["x-user-id"];
 
-  let matchedUser = null;
-  if (userIdHeader) {
-    matchedUser = dummyUsers.find((u) => u.id === userIdHeader || u.employeeId === userIdHeader);
-  }
-  if (!matchedUser && roleHeader) {
-    matchedUser = dummyUsers.find((u) => u.role.toLowerCase() === roleHeader.toLowerCase());
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const query = {};
+      if (userIdHeader) query.$or = [{ id: userIdHeader }, { employeeId: userIdHeader }];
+      else if (roleHeader) query.role = roleHeader;
+
+      if (Object.keys(query).length > 0) {
+        const foundUser = await User.findOne(query).lean();
+        if (foundUser) {
+          const { password, ...userWithoutPassword } = foundUser;
+          req.user = userWithoutPassword;
+          return next();
+        }
+      }
+    } catch (err) {
+      console.warn("Auth middleware DB query error:", err.message);
+    }
   }
 
-  // Default demo fallback user (Course Coordinator - Course Coordinator)
-  const activeUser = matchedUser || dummyUsers[0];
-  const { password, ...userWithoutPassword } = activeUser;
-  req.user = userWithoutPassword;
+  // If no valid credentials found, reject unauthorized request on protected endpoints
+  if (req.path.startsWith("/api/auth/me") || req.method === "DELETE") {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required. Please log in to continue."
+    });
+  }
+
   return next();
 };
+
+/**
+ * Role-based authorization middleware
+ * @param  {...string} allowedRoles
+ */
+export const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    const userRole = (req.user.role || "").toLowerCase();
+    const isAllowed = allowedRoles.some((r) => r.toLowerCase() === userRole);
+
+    if (!isAllowed) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: Access restricted to [${allowedRoles.join(", ")}]. Current role: '${req.user.role}'`
+      });
+    }
+
+    next();
+  };
+};
+
+export default { authenticateToken, requireRole };

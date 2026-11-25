@@ -6,82 +6,16 @@ import StatCard from "../common/StatCard";
 import StatusBadge from "../common/StatusBadge";
 import OverviewWaveChart from "./OverviewWaveChart";
 
-const processData = [
-  {
-    name: "Course Administration",
-    owner: "Course Coordinator",
-    progress: 82,
-    status: "In Progress",
-    target: "30 Sep 2026",
-  },
-  {
-    name: "Training Management",
-    owner: "Course Coordinator",
-    progress: 91,
-    status: "In Progress",
-    target: "28 Sep 2026",
-  },
-  {
-    name: "Course Management",
-    owner: "Course Coordinator (Course Coordinator (AI))",
-    progress: 100,
-    status: "Completed",
-    target: "20 Sep 2026",
-  },
-  {
-    name: "IT Support Management",
-    owner: "IT Systems Coordinator",
-    progress: 64,
-    status: "In Progress",
-    target: "05 Oct 2026",
-  },
-  {
-    name: "Quality Governance & MRM",
-    owner: "QMS Coordinator (QMS Coordinator)",
-    progress: 95,
-    status: "Completed",
-    target: "15 Oct 2026",
-  },
-];
-
-const timelineData = [
-  {
-    date: "01 Sep",
-    title: "HR Management",
-    description: "Process review started",
-    status: "completed",
-  },
-  {
-    date: "05 Sep",
-    title: "Training Management",
-    description: "Process documentation under review",
-    status: "completed",
-  },
-  {
-    date: "15 Sep",
-    title: "IT Support Management",
-    description: "Process activities in progress",
-    status: "active",
-  },
-  {
-    date: "20 Sep",
-    title: "Course Management",
-    description: "Process completed",
-    status: "completed",
-  },
-  {
-    date: "25 Sep",
-    title: "Finance Management",
-    description: "Process review scheduled",
-    status: "upcoming",
-  },
-];
-
 export default function TrustHeadDashboard() {
   const navigate = useNavigate();
-  const { auditList = [] } = useApp();
+  const { headOverview, processes = [], auditList = [], dashboardStats } = useApp();
 
-  const pendingAudits = auditList.filter((a) => a.stage === 2);
+  const pendingAudits = (auditList || []).filter((a) => a.stage === 2);
+  const processData = (headOverview?.processData && headOverview.processData.length > 0)
+    ? headOverview.processData
+    : processes;
+  const timelineData = headOverview?.timelineData || [];
+
   const totalProcesses = processData.length;
 
   const completedProcesses = processData.filter(
@@ -89,19 +23,21 @@ export default function TrustHeadDashboard() {
   ).length;
 
   const inProgressProcesses = processData.filter(
-    (process) => process.status === "In Progress"
+    (process) => process.status === "In Progress" || process.status === "Active"
   ).length;
 
   const pendingProcesses = processData.filter(
     (process) => process.status === "Pending"
   ).length;
 
-  const overallProgress = Math.round(
-    processData.reduce(
-      (total, process) => total + process.progress,
-      0
-    ) / processData.length
-  );
+  const overallProgress = totalProcesses > 0
+    ? Math.round(
+        processData.reduce(
+          (total, process) => total + (process.progress || 0),
+          0
+        ) / totalProcesses
+      )
+    : 0;
 
   return (
     <div>
@@ -118,7 +54,7 @@ export default function TrustHeadDashboard() {
 
         <div>
           <span className="muted-text">Last Updated</span>
-          <strong>21 Sep 2026</strong>
+          <strong>{new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</strong>
         </div>
       </div>
 
@@ -139,64 +75,46 @@ export default function TrustHeadDashboard() {
             boxShadow: "0 2px 6px rgba(29, 78, 216, 0.08)"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "#1e40af" }}>
-            <AlertCircle size={22} color="#2563eb" />
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <AlertCircle size={20} color="#1d4ed8" />
             <div>
-              <strong style={{ display: "block", fontSize: "14px" }}>
-                Action Required: {pendingAudits.length} Internal Quality Audit schedule{pendingAudits.length > 1 ? "s" : ""} awaiting your confirmation
+              <strong style={{ color: "#1e3a8a", display: "block", fontSize: "14px" }}>
+                Action Required: {pendingAudits.length} Internal Quality Audit Schedule{pendingAudits.length > 1 ? "s" : ""} Awaiting Your Approval
               </strong>
-              <span style={{ fontSize: "12px", color: "#3b82f6" }}>
-                Latest: {pendingAudits[0]?.process} ({pendingAudits[0]?.scheduledDate}). QMS Coordinator is awaiting authorization.
+              <span style={{ fontSize: "13px", color: "#3b82f6" }}>
+                Audits are scheduled by QMS Coordinator and require Trust Head confirmation before execution.
               </span>
             </div>
           </div>
           <button
-            type="button"
-            className="primary-button btn-blue"
             onClick={() => navigate("/internal-audit")}
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", fontSize: "12px" }}
+            style={{
+              padding: "7px 14px",
+              background: "#1d4ed8",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
           >
-            <span>Review & Confirm in Internal Audit</span>
+            <ClipboardCheck size={16} />
+            Review & Approve
             <ArrowRight size={14} />
           </button>
         </div>
       )}
 
-      {/* Top 3 Stat Cards with Circular Gauge Rings & Directional Arrows */}
-      <div className="stats-grid three-col">
-        <StatCard
-          label="Total Processes"
-          value={`${totalProcesses} Monitored`}
-          progress={88}
-          tone="blue"
-          direction="up"
-          hint="All registered institutional processes"
-        />
-
-        <StatCard
-          label="Completed Processes"
-          value={`${completedProcesses} Completed`}
-          progress={100}
-          tone="teal"
-          direction="up"
-          hint="Processes signed off & verified"
-        />
-
-        <StatCard
-          label="Pending Audits & Reviews"
-          value={`${pendingAudits.length + inProgressProcesses} Pending`}
-          progress={55}
-          tone="dark"
-          direction="down"
-          hint="Requires coordinator attention"
-        />
-      </div>
-
-      {/* Flagship Overview Wave Chart */}
+      {/* Top Wave Chart Section */}
       <div style={{ marginBottom: "24px" }}>
         <OverviewWaveChart
-          metric={`${overallProgress}%`}
-          title="Overall Process & Compliance Index"
+          title="Quality Performance Index"
+          metric={dashboardStats?.waveData?.primaryMetric || (totalProcesses > 0 ? `${overallProgress}%` : "0%")}
+          data={dashboardStats?.waveData}
         />
       </div>
 
@@ -212,31 +130,37 @@ export default function TrustHeadDashboard() {
           </div>
 
           <div className="process-overview-list">
-            {processData.map((process) => (
-              <div className="process-overview-item" key={process.name}>
-                <div className="process-overview-top">
-                  <div>
-                    <strong>{process.name}</strong>
-                    <span>{process.owner}</span>
+            {processData.length > 0 ? (
+              processData.map((process) => (
+                <div className="process-overview-item" key={process.name}>
+                  <div className="process-overview-top">
+                    <div>
+                      <strong>{process.name}</strong>
+                      <span>{process.owner}</span>
+                    </div>
+                    <strong>{process.progress || 0}%</strong>
                   </div>
-                  <strong>{process.progress}%</strong>
-                </div>
 
-                <div className="progress-bar small">
-                  <div
-                    className="progress-bar-fill"
-                    style={{
-                      width: `${process.progress}%`,
-                    }}
-                  />
-                </div>
+                  <div className="progress-bar small">
+                    <div
+                      className="progress-bar-fill"
+                      style={{
+                        width: `${process.progress || 0}%`,
+                      }}
+                    />
+                  </div>
 
-                <div className="process-overview-bottom">
-                  <StatusBadge status={process.status} />
-                  <span>Target: {process.target}</span>
+                  <div className="process-overview-bottom">
+                    <StatusBadge status={process.status} />
+                    <span>Target: {process.target || "Active"}</span>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div style={{ padding: "32px 16px", textAlign: "center", color: "#64748b" }}>
+                <p style={{ margin: 0, fontSize: "13px" }}>No registered processes found in database.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -287,30 +211,36 @@ export default function TrustHeadDashboard() {
             <h2>Process Timeline</h2>
             <p>High-level timeline of major QMS activities.</p>
           </div>
-          <span className="timeline-period">September 2026</span>
+          <span className="timeline-period">Current Cycle</span>
         </div>
 
         <div className="head-timeline">
-          {timelineData.map((item, index) => (
-            <div
-              className={`head-timeline-item ${item.status}`}
-              key={`${item.title}-${index}`}
-            >
-              <div className="head-timeline-date">{item.date}</div>
+          {timelineData.length > 0 ? (
+            timelineData.map((item, index) => (
+              <div
+                className={`head-timeline-item ${item.status}`}
+                key={`${item.title}-${index}`}
+              >
+                <div className="head-timeline-date">{item.date}</div>
 
-              <div className="head-timeline-line">
-                <span className="head-timeline-dot" />
-                {index !== timelineData.length - 1 && (
-                  <span className="head-timeline-connector" />
-                )}
-              </div>
+                <div className="head-timeline-line">
+                  <span className="head-timeline-dot" />
+                  {index !== timelineData.length - 1 && (
+                    <span className="head-timeline-connector" />
+                  )}
+                </div>
 
-              <div className="head-timeline-content">
-                <strong>{item.title}</strong>
-                <p>{item.description}</p>
+                <div className="head-timeline-content">
+                  <strong>{item.title}</strong>
+                  <p>{item.description}</p>
+                </div>
               </div>
+            ))
+          ) : (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: "#64748b" }}>
+              <p style={{ margin: 0, fontSize: "13px" }}>No recent process timeline activities recorded.</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

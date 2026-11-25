@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Mail,
   CheckCircle2,
@@ -8,29 +8,46 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
-  KeyRound
+  KeyRound,
+  RotateCw
 } from "lucide-react";
 import Modal from "../tasks/Modal";
 import { authService } from "../../services/authService";
 
 export default function ForgotPasswordModal({ initialIdentifier = "", onClose, onSuccess }) {
-  // Modes: "request" (enter email) | "sent" (check your email) | "code" (enter code & new password) | "done"
+  // Modes: "request" (enter email) | "verify" (enter 6-digit OTP) | "reset" (set new password) | "done" (success)
   const [mode, setMode] = useState("request");
   const [email, setEmail] = useState(initialIdentifier);
 
-  // For code reset mode
+  // OTP and password state
   const [code, setCode] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Status & countdown timer
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(60);
   const [error, setError] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
 
-  // Handler: Request password reset link
+  // 60-second countdown timer for resend OTP
+  useEffect(() => {
+    let timer = null;
+    if (mode === "verify" && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [mode, countdown]);
+
+  // Step 1: Send verification code to email
   const handleSendResetLink = async (e) => {
     if (e) e.preventDefault();
     const cleanEmail = email.trim();
@@ -40,7 +57,6 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
       return;
     }
 
-    // Basic email format check if an @ is expected
     if (cleanEmail.includes("@") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       setError("Please enter a valid email address.");
       return;
@@ -50,61 +66,75 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
     setLoading(true);
 
     try {
-      await authService.forgotPassword(cleanEmail);
-      setMode("sent");
+      const res = await authService.forgotPassword(cleanEmail);
+      setInfoMessage(res.message || "A 6-digit verification code has been dispatched to your email address.");
+      setCountdown(60);
+      setMode("verify");
     } catch (err) {
-      // In production / real-time enterprise systems, if the email isn't found,
-      // some show the sent confirmation anyway (OWASP user enumeration prevention),
-      // but if a specific error is returned, show a clean message.
-      if (err.message && err.message.toLowerCase().includes("not found")) {
-        setError(err.message);
-      } else {
-        // Default to clean transition or friendly notice
-        setMode("sent");
-      }
+      setError(err.message || "No registered account found matching that email. Please verify your email.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handler: Resend email
+  // Step 2: Resend code with 60-second cooldown
   const handleResend = async () => {
-    if (resendLoading || resendSuccess) return;
+    if (countdown > 0 || resendLoading) return;
     setResendLoading(true);
+    setError("");
+
     try {
-      await authService.forgotPassword(email.trim());
-      setResendSuccess(true);
-      setTimeout(() => setResendSuccess(false), 4000);
-    } catch {
-      setResendSuccess(true);
-      setTimeout(() => setResendSuccess(false), 4000);
+      const res = await authService.resendOtp(email.trim());
+      setInfoMessage(res.message || "A new 6-digit verification code has been sent.");
+      setCountdown(60);
+    } catch (err) {
+      setError(err.message || "Failed to resend verification code. Please wait and try again.");
     } finally {
       setResendLoading(false);
     }
   };
 
-  // Handler: Reset password using verification code
-  const handleResetWithCode = async (e) => {
+  // Step 3: Verify the 6-digit OTP
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    const cleanCode = code.trim();
+
+    if (!cleanCode) {
+      setError("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    if (cleanCode.length !== 6 || !/^\d{6}$/.test(cleanCode)) {
+      setError("Verification code must be exactly 6 numeric digits.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await authService.verifyOtp({ email: email.trim(), code: cleanCode });
+      setVerificationToken(res.verificationToken || "");
+      setMode("reset");
+    } catch (err) {
+      setError(err.message || "Invalid verification code. Please check and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 4: Reset password
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!email.trim()) {
-      setError("Please enter your registered email address.");
-      return;
-    }
-
-    if (!code.trim()) {
-      setError("Please enter the verification code.");
-      return;
-    }
 
     if (!newPassword) {
       setError("Please enter a new password.");
       return;
     }
 
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long.");
+    if (newPassword.length < 4) {
+      setError("Password must be at least 4 characters long.");
       return;
     }
 
@@ -116,16 +146,16 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
     setLoading(true);
 
     try {
-      const res = await authService.resetPassword({
-        identifier: email.trim(),
+      await authService.resetPassword({
+        email: email.trim(),
+        verificationToken,
         code: code.trim(),
-        newPassword
+        newPassword,
+        confirmPassword
       });
-
       setMode("done");
     } catch (err) {
-      console.error("Reset password failed:", err);
-      setError(err.message || "Failed to reset password. Please check your verification code.");
+      setError(err.message || "Failed to reset password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -133,12 +163,7 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
 
   const handleReturnToLogin = () => {
     if (mode === "done" && onSuccess) {
-      onSuccess({
-        identifier: email.trim(),
-        newPassword
-      });
-    } else if (mode === "sent" && onSuccess) {
-      onSuccess(email.trim());
+      onSuccess({ identifier: email.trim(), newPassword });
     } else {
       onClose();
     }
@@ -146,14 +171,14 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
 
   const getModalTitle = () => {
     switch (mode) {
-      case "sent":
-        return "Check your email";
-      case "code":
-        return "Set new password";
+      case "verify":
+        return "Verify Email OTP";
+      case "reset":
+        return "Set New Password";
       case "done":
-        return "Password updated";
+        return "Password Reset Complete";
       default:
-        return "Reset password";
+        return "Forgot Password";
     }
   };
 
@@ -182,53 +207,35 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
           </div>
         )}
 
-        {/* 1. Standard Initial View: Enter Email */}
+        {/* 1. Request OTP View: Enter Email */}
         {mode === "request" && (
           <form onSubmit={handleSendResetLink}>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#475569",
-                marginBottom: "20px",
-                lineHeight: "1.5"
-              }}
-            >
-              Enter the email address associated with your account, and we will send you instructions to reset your password.
+            <p style={{ fontSize: "14px", color: "#475569", marginBottom: "20px", lineHeight: "1.5" }}>
+              Enter your registered institutional email address. We will verify your account in the system database and send a secure 6-digit verification code.
             </p>
 
             <div style={{ marginBottom: "22px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  color: "#1e293b",
-                  marginBottom: "6px"
-                }}
-              >
-                Email address
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#1e293b", marginBottom: "6px" }}>
+                Registered Email Address
               </label>
               <div style={{ position: "relative" }}>
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (error) setError("");
                   }}
-                  placeholder="name@cdac.in"
+                  placeholder="e.g. coursecoordinator@cdac.in"
                   style={{
                     width: "100%",
-                    padding: "10px 12px 10px 38px",
+                    padding: "10px 14px 10px 38px",
                     border: "1px solid #cbd5e1",
                     borderRadius: "6px",
                     fontSize: "14px",
-                    boxSizing: "border-box",
-                    outline: "none"
+                    boxSizing: "border-box"
                   }}
-                  autoFocus
-                  disabled={loading}
-                  required
                 />
                 <Mail
                   size={16}
@@ -243,469 +250,285 @@ export default function ForgotPasswordModal({ initialIdentifier = "", onClose, o
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-                alignItems: "center"
-              }}
-            >
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={onClose}
-                disabled={loading}
-              >
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "24px" }}>
+              <button type="button" className="secondary-button" onClick={onClose} disabled={loading}>
                 Cancel
               </button>
               <button
                 type="submit"
                 className="primary-button btn-blue"
-                disabled={!email.trim() || loading}
-                style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                disabled={loading || !email.trim()}
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
-                {loading && <Loader2 size={16} className="animate-spin" />}
-                <span>{loading ? "Sending link..." : "Send reset link"}</span>
-              </button>
-            </div>
-
-            {/* Subtle Link for Code-based Reset */}
-            <div
-              style={{
-                marginTop: "18px",
-                paddingTop: "14px",
-                borderTop: "1px solid #f1f5f9",
-                textAlign: "center"
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setError("");
-                  setMode("code");
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--navy)",
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  textDecoration: "underline"
-                }}
-              >
-                Have a verification code? Reset here
+                {loading && <Loader2 size={16} className="spin" />}
+                <span>{loading ? "Verifying..." : "Send Verification Code"}</span>
               </button>
             </div>
           </form>
         )}
 
-        {/* 2. Standard Real-Time Sent Confirmation View */}
-        {mode === "sent" && (
-          <div style={{ textAlign: "center", padding: "12px 6px" }}>
-            <div
-              style={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                color: "#16a34a",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "4px auto 16px auto"
-              }}
-            >
-              <CheckCircle2 size={32} />
-            </div>
-
-            <h3
-              style={{
-                fontSize: "18px",
-                fontWeight: "700",
-                color: "#0f172a",
-                margin: "0 0 8px 0"
-              }}
-            >
-              Instructions sent
-            </h3>
-
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#475569",
-                margin: "0 0 16px 0",
-                lineHeight: "1.5"
-              }}
-            >
-              We have sent password reset instructions to:
-            </p>
-
-            <div
-              style={{
-                display: "inline-block",
-                padding: "6px 14px",
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: "6px",
-                fontWeight: "600",
-                fontSize: "14px",
-                color: "#1e293b",
-                marginBottom: "20px",
-                wordBreak: "break-all"
-              }}
-            >
-              {email}
-            </div>
-
-            <p
-              style={{
-                fontSize: "12px",
-                color: "#64748b",
-                margin: "0 0 24px 0",
-                lineHeight: "1.5"
-              }}
-            >
-              Please check your inbox. If you do not see the email within a few minutes, check your spam or junk folder.
-            </p>
-
-            <button
-              type="button"
-              className="primary-button btn-blue"
-              onClick={handleReturnToLogin}
-              style={{
-                width: "100%",
-                padding: "11px",
-                fontSize: "14px",
-                justifyContent: "center"
-              }}
-            >
-              Return to sign in
-            </button>
-
-            <div style={{ marginTop: "16px", textAlign: "center" }}>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendLoading}
+        {/* 2. Verify OTP View */}
+        {mode === "verify" && (
+          <form onSubmit={handleVerifyOtp}>
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <div
                 style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--navy)",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  cursor: "pointer"
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: "#eff6ff",
+                  color: "#1d4ed8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 12px auto"
                 }}
               >
-                {resendLoading
-                  ? "Resending..."
-                  : resendSuccess
-                  ? "✓ Email resent!"
-                  : "Didn't receive the email? Resend link"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 3. Verification Code Entry (Clean, no unwanted demo text) */}
-        {mode === "code" && (
-          <form onSubmit={handleResetWithCode}>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#475569",
-                marginBottom: "16px",
-                lineHeight: "1.5"
-              }}
-            >
-              Enter the verification code sent to your email and your new password.
-            </p>
-
-            {/* Email Address */}
-            <div style={{ marginBottom: "14px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  color: "#1e293b",
-                  marginBottom: "6px"
-                }}
-              >
-                Email address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@cdac.in"
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  boxSizing: "border-box"
-                }}
-                disabled={loading}
-                required
-              />
+                <KeyRound size={24} />
+              </div>
+              <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#050B3B", margin: "0 0 6px 0" }}>
+                Enter Verification Code
+              </h3>
+              <p style={{ fontSize: "13px", color: "#475569", margin: 0, lineHeight: "1.4" }}>
+                {infoMessage || `A 6-digit code was sent to ${email}. Valid for 5 minutes.`}
+              </p>
             </div>
 
-            {/* 6-Digit Code */}
-            <div style={{ marginBottom: "14px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  color: "#1e293b",
-                  marginBottom: "6px"
-                }}
-              >
-                Verification code
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#1e293b", marginBottom: "8px", textAlign: "center" }}>
+                6-Digit Security Code
               </label>
               <input
                 type="text"
+                required
+                maxLength={6}
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Enter 6-digit code"
+                onChange={(e) => {
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  if (error) setError("");
+                }}
+                placeholder="123456"
+                autoFocus
                 style={{
                   width: "100%",
-                  padding: "9px 12px",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "6px",
-                  fontSize: "15px",
-                  letterSpacing: "2px",
-                  fontFamily: "'Roboto Mono', monospace",
-                  fontWeight: "600",
+                  textAlign: "center",
+                  letterSpacing: "8px",
+                  fontSize: "24px",
+                  fontWeight: "700",
+                  padding: "12px",
+                  border: "2px solid #384FB8",
+                  borderRadius: "8px",
+                  color: "#0C1979",
                   boxSizing: "border-box"
                 }}
-                disabled={loading}
-                required
               />
             </div>
 
-            {/* New Password */}
-            <div style={{ marginBottom: "14px" }}>
-              <label
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", fontSize: "13px" }}>
+              <button
+                type="button"
+                onClick={() => setMode("request")}
+                style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+              >
+                <ArrowLeft size={14} /> Change Email
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={countdown > 0 || resendLoading}
                 style={{
-                  display: "block",
-                  fontSize: "13px",
+                  background: "none",
+                  border: "none",
+                  color: countdown > 0 ? "#94a3b8" : "#2563eb",
+                  cursor: countdown > 0 ? "not-allowed" : "pointer",
                   fontWeight: "600",
-                  color: "#1e293b",
-                  marginBottom: "6px"
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px"
                 }}
               >
-                New password
+                <RotateCw size={14} className={resendLoading ? "spin" : ""} />
+                {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button type="button" className="secondary-button" onClick={onClose} disabled={loading}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="primary-button btn-blue"
+                disabled={loading || code.trim().length !== 6}
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                {loading && <Loader2 size={16} className="spin" />}
+                <span>{loading ? "Verifying..." : "Verify Code"}</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* 3. Reset Password View */}
+        {mode === "reset" && (
+          <form onSubmit={handleResetPassword}>
+            <p style={{ fontSize: "14px", color: "#475569", marginBottom: "20px" }}>
+              Code verified successfully. Enter your new password for account <strong>{email}</strong>:
+            </p>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#1e293b", marginBottom: "6px" }}>
+                New Password
               </label>
               <div style={{ position: "relative" }}>
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 6 characters"
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Enter at least 4 characters"
                   style={{
                     width: "100%",
-                    padding: "9px 36px 9px 12px",
+                    padding: "10px 40px 10px 38px",
                     border: "1px solid #cbd5e1",
                     borderRadius: "6px",
                     fontSize: "14px",
                     boxSizing: "border-box"
                   }}
-                  disabled={loading}
-                  required
+                />
+                <Lock
+                  size={16}
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#94a3b8"
+                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={{
                     position: "absolute",
-                    right: "10px",
+                    right: "12px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    color: "#64748b",
                     cursor: "pointer",
-                    padding: 0,
-                    display: "flex"
+                    color: "#94a3b8"
                   }}
-                  title={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div style={{ marginBottom: "22px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  color: "#1e293b",
-                  marginBottom: "6px"
-                }}
-              >
-                Confirm new password
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#1e293b", marginBottom: "6px" }}>
+                Confirm New Password
               </label>
               <div style={{ position: "relative" }}>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
+                  required
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Re-enter password"
                   style={{
                     width: "100%",
-                    padding: "9px 36px 9px 12px",
-                    border: `1px solid ${
-                      confirmPassword && newPassword !== confirmPassword
-                        ? "#f87171"
-                        : confirmPassword && newPassword === confirmPassword
-                        ? "#4ade80"
-                        : "#cbd5e1"
-                    }`,
+                    padding: "10px 40px 10px 38px",
+                    border: "1px solid #cbd5e1",
                     borderRadius: "6px",
                     fontSize: "14px",
                     boxSizing: "border-box"
                   }}
-                  disabled={loading}
-                  required
+                />
+                <Lock
+                  size={16}
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#94a3b8"
+                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={{
                     position: "absolute",
-                    right: "10px",
+                    right: "12px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    color: "#64748b",
                     cursor: "pointer",
-                    padding: 0,
-                    display: "flex"
+                    color: "#94a3b8"
                   }}
-                  title={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {confirmPassword && newPassword !== confirmPassword && (
-                <span
-                  style={{
-                    fontSize: "11px",
-                    color: "#dc2626",
-                    marginTop: "4px",
-                    display: "block"
-                  }}
-                >
-                  Passwords do not match
-                </span>
-              )}
             </div>
 
-            {/* Action Buttons */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
-            >
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setError("");
-                  setMode("request");
-                }}
-                disabled={loading}
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-              >
-                <ArrowLeft size={16} />
-                <span>Back</span>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button type="button" className="secondary-button" onClick={onClose} disabled={loading}>
+                Cancel
               </button>
-
               <button
                 type="submit"
                 className="primary-button btn-blue"
-                disabled={
-                  !code.trim() ||
-                  !newPassword ||
-                  newPassword.length < 6 ||
-                  newPassword !== confirmPassword ||
-                  loading
-                }
-                style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                disabled={loading || !newPassword || !confirmPassword}
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
-                {loading && <Loader2 size={16} className="animate-spin" />}
-                <span>{loading ? "Updating..." : "Reset password"}</span>
+                {loading && <Loader2 size={16} className="spin" />}
+                <span>{loading ? "Updating..." : "Reset Password"}</span>
               </button>
             </div>
           </form>
         )}
 
-        {/* 4. Password Updated Successfully Confirmation */}
+        {/* 4. Done View */}
         {mode === "done" && (
-          <div style={{ textAlign: "center", padding: "16px 8px" }}>
+          <div style={{ textAlign: "center", padding: "10px 0" }}>
             <div
               style={{
-                width: "56px",
-                height: "56px",
+                width: "52px",
+                height: "52px",
                 borderRadius: "50%",
                 background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
                 color: "#16a34a",
-                display: "inline-flex",
+                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                margin: "4px auto 16px auto"
+                margin: "0 auto 16px auto"
               }}
             >
-              <CheckCircle2 size={32} />
+              <CheckCircle2 size={30} />
             </div>
-
-            <h3
-              style={{
-                fontSize: "18px",
-                fontWeight: "700",
-                color: "#0f172a",
-                margin: "0 0 8px 0"
-              }}
-            >
-              Password updated
+            <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#1e293b", margin: "0 0 8px 0" }}>
+              Password Reset Successfully
             </h3>
-
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#475569",
-                margin: "0 0 24px 0",
-                lineHeight: "1.5"
-              }}
-            >
-              Your password has been changed successfully. You can now use your new password to sign in.
+            <p style={{ fontSize: "14px", color: "#64748b", margin: "0 0 24px 0", lineHeight: "1.5" }}>
+              Your account password has been updated in the database. You can now log in using your new credentials.
             </p>
-
             <button
               type="button"
               className="primary-button btn-blue"
               onClick={handleReturnToLogin}
-              style={{
-                width: "100%",
-                padding: "11px",
-                fontSize: "14px",
-                justifyContent: "center"
-              }}
+              style={{ width: "100%", padding: "12px", justifyContent: "center" }}
             >
-              Return to sign in
+              Return to Login
             </button>
           </div>
         )}

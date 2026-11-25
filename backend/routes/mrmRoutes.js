@@ -22,6 +22,7 @@ import {
   deleteMRM
 } from "../controllers/mrmController.js";
 import { authenticateToken } from "../middleware/authMiddleware.js";
+import { upload } from "../utils/upload.js";
 
 const router = express.Router();
 
@@ -46,9 +47,9 @@ router.post("/:id/share-email", authenticateToken, shareMeetingEmail);
 router.post("/:id/share", authenticateToken, shareMeetingEmail);
 
 // Minutes of Meeting (MoM) file upload & download
-router.post("/:id/upload-mom", authenticateToken, uploadMoMFile);
-router.post("/:id/mom", authenticateToken, uploadMoMFile);
-router.put("/:id/mom", authenticateToken, uploadMoMFile);
+router.post("/:id/upload-mom", authenticateToken, upload.single("file"), uploadMoMFile);
+router.post("/:id/mom", authenticateToken, upload.single("file"), uploadMoMFile);
+router.put("/:id/mom", authenticateToken, upload.single("file"), uploadMoMFile);
 router.get("/:id/mom-download", downloadMoMFile);
 
 // Utility endpoints

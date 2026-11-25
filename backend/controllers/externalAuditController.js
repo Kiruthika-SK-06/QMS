@@ -4,10 +4,13 @@ import os from "os";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { ExternalAudit } from "../models/ExternalAudit.js";
-import { externalAuditData } from "../data/externalAudit.js";
-import { notificationsData } from "../data/notifications.js";
-import { activitiesData } from "../data/activities.js";
+import { Notification } from "../models/Notification.js";
+import { Activity } from "../models/Activity.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+
+const externalAuditData = [];
+const notificationsData = [];
+const activitiesData = [];
 
 const TMP_EXTERNAL_AUDIT_STORE = path.join(os.tmpdir(), "qms_external_audits_store.json");
 
@@ -15,15 +18,11 @@ const loadFromDisk = async () => {
   if (mongoose.connection.readyState === 1) {
     try {
       const dbAudits = await ExternalAudit.find({}).lean();
+      externalAuditData.length = 0;
       if (dbAudits && dbAudits.length > 0) {
-        const map = new Map();
-        dbAudits.forEach((a) => a && a.id && map.set(a.id, a));
-        externalAuditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
-        const merged = Array.from(map.values());
-        externalAuditData.length = 0;
-        externalAuditData.push(...merged);
-        return;
+        externalAuditData.push(...dbAudits);
       }
+      return;
     } catch {}
   }
 

@@ -33,6 +33,12 @@ const documentSchema = new mongoose.Schema(
     reviewComments: { type: String },
     description: { type: String },
     content: { type: String },
+    fileUrl: { type: String, default: "" },
+    fileName: { type: String, default: "" },
+    originalName: { type: String, default: "" },
+    fileSize: { type: String, default: "" },
+    mimeType: { type: String, default: "" },
+    storagePath: { type: String, default: "" },
     versions: [versionSchema],
     metadata: { type: mongoose.Schema.Types.Mixed, default: {} }
   },

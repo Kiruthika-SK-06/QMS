@@ -1,31 +1,35 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 import { Document } from "../models/Document.js";
 import { Activity } from "../models/Activity.js";
 import { Notification } from "../models/Notification.js";
-import { documentsData } from "../data/documents.js";
-import { tasksData } from "../data/tasks.js";
-import { activitiesData } from "../data/activities.js";
-import { notificationsData } from "../data/notifications.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 
-// Helper to log activity to both DB and memory
+// Helper to log activity strictly to MongoDB
 const logActivity = async (entry) => {
-  activitiesData.unshift(entry);
   if (mongoose.connection.readyState === 1) {
     try {
-      await Activity.create(entry);
+      await Activity.create({
+        ...entry,
+        id: entry.id || `ACT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        timestamp: entry.timestamp || new Date().toISOString()
+      });
     } catch (err) {
       console.warn("Activity DB log error:", err.message);
     }
   }
 };
 
-// Helper to log notification to both DB and memory
+// Helper to log notification strictly to MongoDB
 const logNotification = async (entry) => {
-  notificationsData.unshift(entry);
   if (mongoose.connection.readyState === 1) {
     try {
-      await Notification.create(entry);
+      await Notification.create({
+        ...entry,
+        id: entry.id || `NOTIF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        createdAt: entry.createdAt || new Date().toISOString()
+      });
     } catch (err) {
       console.warn("Notification DB log error:", err.message);
     }
@@ -37,49 +41,41 @@ export const getAllDocuments = async (req, res) => {
   try {
     const { search, type, status, process } = req.query;
 
-    let list = [...documentsData];
-
-    // If MongoDB is connected and has records, use fresh DB records
-    if (mongoose.connection.readyState === 1) {
-      try {
-        const dbDocs = await Document.find({}).lean();
-        if (dbDocs && dbDocs.length > 0) {
-          list = dbDocs;
-          documentsData.length = 0;
-          documentsData.push(...dbDocs);
-        }
-      } catch (err) {
-        console.warn("MongoDB read error in getAllDocuments:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ success: true, count: 0, documents: [] });
     }
 
+    const filter = {};
+
     if (type && type !== "All") {
-      list = list.filter((doc) => (doc.type || "").toLowerCase() === type.toLowerCase());
+      filter.type = { $regex: new RegExp(`^${type}$`, "i") };
     }
 
     if (status && status !== "All") {
-      list = list.filter((doc) => (doc.status || "").toLowerCase() === status.toLowerCase());
+      filter.status = { $regex: new RegExp(`^${status}$`, "i") };
     }
 
     if (process && process !== "All") {
-      list = list.filter((doc) => (doc.process || "").toLowerCase() === process.toLowerCase());
+      filter.process = { $regex: new RegExp(`^${process}$`, "i") };
     }
 
     if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (doc) =>
-          (doc.name || "").toLowerCase().includes(q) ||
-          (doc.id || "").toLowerCase().includes(q) ||
-          (doc.process || "").toLowerCase().includes(q) ||
-          (doc.owner || "").toLowerCase().includes(q)
-      );
+      const q = search.trim();
+      filter.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { title: { $regex: q, $options: "i" } },
+        { id: { $regex: q, $options: "i" } },
+        { process: { $regex: q, $options: "i" } },
+        { owner: { $regex: q, $options: "i" } }
+      ];
     }
+
+    const documents = await Document.find(filter).sort({ updatedAt: -1 }).lean();
 
     res.json({
       success: true,
-      count: list.length,
-      documents: list
+      count: documents.length,
+      documents
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -89,59 +85,52 @@ export const getAllDocuments = async (req, res) => {
 // GET /api/documents/:id
 export const getDocumentById = async (req, res) => {
   try {
-    let doc = documentsData.find((d) => d.id === req.params.id);
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        const dbDoc = await Document.findOne({ id: req.params.id }).lean();
-        if (dbDoc) doc = dbDoc;
-      } catch (err) {
-        console.warn("MongoDB query error in getDocumentById:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
     }
 
+    const doc = await Document.findOne({ id: req.params.id }).lean();
     if (!doc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const relatedTasks = tasksData.filter((t) => t.document === doc.name);
-
     res.json({
       success: true,
-      document: doc,
-      relatedTasks
+      document: doc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/documents
+// POST /api/documents (Create controlled document metadata)
 export const createDocument = async (req, res) => {
   try {
-    const { name, type, process, description, content } = req.body;
-    if (!name || !type || !process) {
+    const { name, title, type, process, description, content, owner } = req.body;
+    const docName = (name || title || "").trim();
+
+    if (!docName || !process) {
       return res.status(400).json({
         success: false,
-        message: "Document name, type, and process are required"
+        message: "Document title/name and associated process are required"
       });
     }
 
-    const nextIdNumber = documentsData.length + 1;
-    const newId = `DOC-${String(nextIdNumber).padStart(3, "0")}`;
-    const authorName = req.user?.name || "Course Coordinator";
+    const authorName = req.user?.name || owner || "Course Coordinator";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric"
     });
 
-    const newDoc = {
-      id: newId,
-      name: name.trim(),
-      title: name.trim(),
-      type: type.trim(),
-      process: process.trim(),
+    const docId = `DOC-${Date.now().toString().slice(-6)}`;
+
+    const newDocData = {
+      id: docId,
+      name: docName,
+      title: docName,
+      type: type || "Procedures",
+      process,
       owner: authorName,
       version: "1.0",
       currentVersion: "1.0",
@@ -149,74 +138,143 @@ export const createDocument = async (req, res) => {
       updatedBy: authorName,
       status: "Under Review",
       submittedBy: authorName,
-      description: description || "Controlled QMS document",
+      description: description || "",
       content: content || "",
       versions: [
         {
           version: "1.0",
           date: dateStr,
           author: authorName,
+          uploadedBy: authorName,
           status: "Current",
-          notes: "Initial document upload and registration"
+          notes: "Initial controlled version uploaded"
         }
       ]
     };
 
-    // Save to MongoDB if connected
+    let savedDoc = newDocData;
     if (mongoose.connection.readyState === 1) {
-      try {
-        await Document.create(newDoc);
-      } catch (err) {
-        console.warn("MongoDB createDocument error:", err.message);
-      }
+      savedDoc = await Document.create(newDocData);
     }
 
-    documentsData.unshift(newDoc);
-
-    // Audit log
     await logActivity({
-      id: `ACT-${Date.now()}`,
-      title: "Document Uploaded",
-      detail: `${newDoc.name} (v1.0)`,
-      text: `Document uploaded and submitted: ${newDoc.name} (v1.0)`,
+      text: `New document '${docName}' (${docId}) submitted for review by ${authorName}`,
       actor: authorName,
-      time: "Just now",
-      tone: "blue",
-      timestamp: new Date().toISOString()
+      tone: "blue"
     });
 
-    // Notification
     await logNotification({
-      id: Date.now(),
-      title: "New document registered",
-      text: `${newDoc.name} (${newDoc.id}) uploaded and submitted for QM review.`,
-      time: "Just now",
-      targetRole: "qm",
-      read: false,
-      createdAt: new Date().toISOString()
+      title: `Document Submitted: ${docName}`,
+      text: `Version 1.0 submitted for review in process '${process}'`,
+      targetRole: "qm"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "CREATED", document: newDoc });
+    broadcastRealtimeEvent("DOCUMENT_CREATED", { action: "CREATED", document: savedDoc });
 
     res.status(201).json({
       success: true,
       message: "Document created successfully",
-      document: newDoc
+      document: savedDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/documents/:id/versions
-export const createNewVersion = async (req, res) => {
+// POST /api/documents/upload (Upload actual file using Multer)
+export const uploadDocument = async (req, res) => {
   try {
-    const docIndex = documentsData.findIndex((d) => d.id === req.params.id);
-    if (docIndex === -1) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    const file = req.file;
+    const { name, title, type, process, description, owner } = req.body;
+    const docName = (name || title || (file ? file.originalname.replace(/\.[^/.]+$/, "") : "")).trim();
+
+    if (!docName || !process) {
+      return res.status(400).json({
+        success: false,
+        message: "Document name and process are required."
+      });
     }
 
-    const doc = documentsData[docIndex];
+    const authorName = req.user?.name || owner || "Course Coordinator";
+    const dateStr = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+
+    const docId = `DOC-${Date.now().toString().slice(-6)}`;
+    const fileUrl = file ? `/uploads/${file.filename}` : "";
+    const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : "0 KB";
+
+    const newDocData = {
+      id: docId,
+      name: docName,
+      title: docName,
+      type: type || "Procedures",
+      process,
+      owner: authorName,
+      version: "1.0",
+      currentVersion: "1.0",
+      updated: dateStr,
+      updatedBy: authorName,
+      status: "Under Review",
+      submittedBy: authorName,
+      description: description || "",
+      fileUrl,
+      fileName: file ? file.filename : "",
+      originalName: file ? file.originalname : "",
+      fileSize: fileSizeStr,
+      mimeType: file ? file.mimetype : "",
+      storagePath: file ? file.path : "",
+      versions: [
+        {
+          version: "1.0",
+          date: dateStr,
+          author: authorName,
+          uploadedBy: authorName,
+          status: "Current",
+          notes: file ? `Uploaded file: ${file.originalname}` : "Initial controlled version",
+          fileUrl,
+          fileName: file ? file.filename : "",
+          fileSize: fileSizeStr
+        }
+      ]
+    };
+
+    let savedDoc = newDocData;
+    if (mongoose.connection.readyState === 1) {
+      savedDoc = await Document.create(newDocData);
+    }
+
+    await logActivity({
+      text: `File '${file ? file.originalname : docName}' uploaded for document '${docName}' (${docId}) by ${authorName}`,
+      actor: authorName,
+      tone: "blue"
+    });
+
+    await logNotification({
+      title: `Document Uploaded: ${docName}`,
+      text: `Uploaded file '${file ? file.originalname : docName}' by ${authorName}`,
+      targetRole: "all"
+    });
+
+    broadcastRealtimeEvent("DOCUMENT_CREATED", { action: "UPLOADED", document: savedDoc });
+
+    return res.status(201).json({
+      success: true,
+      message: "Document and file uploaded successfully",
+      document: savedDoc
+    });
+  } catch (error) {
+    console.error("uploadDocument error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/documents/:id/versions (Create new version)
+export const createNewVersion = async (req, res) => {
+  try {
+    const { notes } = req.body;
     const authorName = req.user?.name || "Course Coordinator";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -224,87 +282,145 @@ export const createNewVersion = async (req, res) => {
       year: "numeric"
     });
 
-    const currentVerNum = parseFloat(doc.version) || 1.0;
-    const nextVer = (currentVerNum + 1.0).toFixed(1);
-
-    const updatedDoc = {
-      ...doc,
-      version: nextVer,
-      currentVersion: nextVer,
-      updated: dateStr,
-      updatedBy: authorName,
-      status: "Draft",
-      versions: [
-        {
-          version: nextVer,
-          date: dateStr,
-          author: authorName,
-          status: "Current",
-          notes: req.body.notes || `Version ${nextVer} revisions`
-        },
-        ...(doc.versions || []).map((v) => ({ ...v, status: "Archived" }))
-      ]
-    };
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await Document.findOneAndUpdate({ id: req.params.id }, updatedDoc, { new: true, upsert: true });
-      } catch (err) {
-        console.warn("MongoDB createNewVersion error:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    documentsData[docIndex] = updatedDoc;
+    const doc = await Document.findOne({ id: req.params.id });
+    if (!doc) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
 
-    // Audit log
+    const currentVerNum = parseFloat(doc.version || "1.0");
+    const nextVer = (currentVerNum + 1.0).toFixed(1);
+
+    // Archive old versions
+    const updatedVersions = (doc.versions || []).map((v) => ({
+      ...v.toObject ? v.toObject() : v,
+      status: "Archived"
+    }));
+
+    // Prepend new current version
+    updatedVersions.unshift({
+      version: nextVer,
+      date: dateStr,
+      author: authorName,
+      uploadedBy: authorName,
+      status: "Current",
+      notes: notes || `Version ${nextVer} revision submitted`
+    });
+
+    doc.version = nextVer;
+    doc.currentVersion = nextVer;
+    doc.updated = dateStr;
+    doc.updatedBy = authorName;
+    doc.status = "Under Review";
+    doc.versions = updatedVersions;
+
+    await doc.save();
+
     await logActivity({
-      id: `ACT-${Date.now()}`,
-      title: "Version Created",
-      detail: `${doc.name} (v${nextVer})`,
-      text: `Version ${nextVer} created for ${doc.name}`,
+      text: `New version v${nextVer} created for document '${doc.name}' (${doc.id}) by ${authorName}`,
       actor: authorName,
-      time: "Just now",
-      tone: "blue",
-      timestamp: new Date().toISOString()
+      tone: "blue"
     });
 
-    // Notification
-    await logNotification({
-      id: Date.now(),
-      title: `${doc.name} updated to v${nextVer}`,
-      text: `New draft version ${nextVer} initiated by ${authorName}.`,
-      time: "Just now",
-      targetRole: "all",
-      read: false,
-      createdAt: new Date().toISOString()
-    });
-
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: updatedDoc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: doc });
 
     res.json({
       success: true,
-      message: `Version ${nextVer} created successfully`,
-      document: updatedDoc
+      message: `Version v${nextVer} created successfully`,
+      document: doc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// PATCH /api/documents/:id/status
-export const updateDocumentStatus = async (req, res) => {
+// POST /api/documents/:id/versions/upload (Upload new version file)
+export const uploadDocumentVersion = async (req, res) => {
   try {
-    const docIndex = documentsData.findIndex((d) => d.id === req.params.id);
-    if (docIndex === -1) {
+    const file = req.file;
+    const { notes } = req.body;
+    const authorName = req.user?.name || "Course Coordinator";
+    const dateStr = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+
+    if (mongoose.connection.readyState !== 1) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const { status, comments } = req.body;
-    if (!status) {
-      return res.status(400).json({ success: false, message: "Status is required" });
+    const doc = await Document.findOne({ id: req.params.id });
+    if (!doc) {
+      return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const doc = documentsData[docIndex];
+    const currentVerNum = parseFloat(doc.version || "1.0");
+    const nextVer = (currentVerNum + 1.0).toFixed(1);
+
+    const fileUrl = file ? `/uploads/${file.filename}` : doc.fileUrl;
+    const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : doc.fileSize;
+
+    // Archive previous versions
+    const updatedVersions = (doc.versions || []).map((v) => ({
+      ...v.toObject ? v.toObject() : v,
+      status: "Archived"
+    }));
+
+    updatedVersions.unshift({
+      version: nextVer,
+      date: dateStr,
+      author: authorName,
+      uploadedBy: authorName,
+      status: "Current",
+      notes: notes || (file ? `Uploaded ${file.originalname}` : `Version ${nextVer} revision`),
+      fileUrl,
+      fileName: file ? file.filename : "",
+      fileSize: fileSizeStr
+    });
+
+    doc.version = nextVer;
+    doc.currentVersion = nextVer;
+    doc.updated = dateStr;
+    doc.updatedBy = authorName;
+    doc.status = "Under Review";
+    if (file) {
+      doc.fileUrl = fileUrl;
+      doc.fileName = file.filename;
+      doc.originalName = file.originalname;
+      doc.fileSize = fileSizeStr;
+      doc.mimeType = file.mimetype;
+      doc.storagePath = file.path;
+    }
+    doc.versions = updatedVersions;
+
+    await doc.save();
+
+    await logActivity({
+      text: `New version file v${nextVer} uploaded for document '${doc.name}' (${doc.id}) by ${authorName}`,
+      actor: authorName,
+      tone: "blue"
+    });
+
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_UPLOADED", document: doc });
+
+    return res.json({
+      success: true,
+      message: `Version v${nextVer} uploaded successfully`,
+      document: doc
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// PATCH /api/documents/:id/status (Review approval, changes requested, rejection)
+export const updateDocumentStatus = async (req, res) => {
+  try {
+    const { status, comments } = req.body;
     const reviewerName = req.user?.name || "QM Group";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -312,75 +428,71 @@ export const updateDocumentStatus = async (req, res) => {
       year: "numeric"
     });
 
-    const updatedDoc = {
-      ...doc,
-      status,
-      reviewComments: comments !== undefined ? comments : doc.reviewComments,
-      updated: dateStr,
-      updatedBy: reviewerName
-    };
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await Document.findOneAndUpdate({ id: req.params.id }, updatedDoc, { new: true, upsert: true });
-      } catch (err) {
-        console.warn("MongoDB updateDocumentStatus error:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    documentsData[docIndex] = updatedDoc;
+    const doc = await Document.findOne({ id: req.params.id });
+    if (!doc) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
 
-    const tone = status === "Approved" ? "green" : status === "Changes Requested" ? "red" : "amber";
+    doc.status = status;
+    doc.updated = dateStr;
+    doc.updatedBy = reviewerName;
+    if (comments) doc.reviewComments = comments;
 
-    // Activity audit
+    await doc.save();
+
     await logActivity({
-      id: `ACT-${Date.now()}`,
-      title: status === "Approved" ? "Document Approved" : "Status Changed",
-      detail: `${doc.name} (v${doc.version})`,
-      text: `${status === "Approved" ? "Document approved" : status === "Changes Requested" ? "QM requested changes for" : "Status changed to " + status + " for"}: ${doc.name} (v${doc.version})`,
+      text: `Document '${doc.name}' (${doc.id}) marked as '${status}' by ${reviewerName}`,
       actor: reviewerName,
-      time: "Just now",
-      tone,
-      timestamp: new Date().toISOString()
+      tone: status === "Approved" ? "green" : status === "Changes Requested" ? "amber" : "blue"
     });
 
-    // Notification
     await logNotification({
-      id: Date.now(),
       title: `Document ${status}: ${doc.name}`,
       text: comments ? `${comments}` : `Document status updated to ${status} by ${reviewerName}.`,
-      time: "Just now",
-      targetRole: "all",
-      read: false,
-      createdAt: new Date().toISOString()
+      targetRole: "all"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: updatedDoc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: doc });
 
     res.json({
       success: true,
       message: `Document status updated to ${status}`,
-      document: updatedDoc
+      document: doc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// GET /api/documents/:id/download
-export const downloadDocument = (req, res) => {
+// GET /api/documents/:id/download (Download actual file from disk or certificate extract)
+export const downloadDocument = async (req, res) => {
   try {
-    const doc = documentsData.find((d) => d.id === req.params.id);
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
+
+    const doc = await Document.findOne({ id: req.params.id }).lean();
     if (!doc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
+    // If actual uploaded file exists on disk, serve it directly
+    if (doc.storagePath && fs.existsSync(doc.storagePath)) {
+      const downloadFilename = doc.originalName || doc.fileName || `${doc.id}_document${path.extname(doc.storagePath)}`;
+      return res.download(doc.storagePath, downloadFilename);
+    }
+
+    // Fallback: Generate official controlled document text extract
     const fileContent = `=====================================================
 C-DAC QUALITY MANAGEMENT SYSTEM (QMS)
 CONTROLLED DOCUMENT RECORD
 =====================================================
 Document ID:     ${doc.id}
-Title:           ${doc.name}
+Title:           ${doc.name || doc.title}
 Type:            ${doc.type}
 Process:         ${doc.process}
 Course Coord.:   ${doc.owner}
@@ -390,32 +502,27 @@ Last Updated:    ${doc.updated} by ${doc.updatedBy}
 
 SUMMARY & PURPOSE:
 ${doc.description || "Official QMS document specification."}
-${doc.content ? `\nTEMPLATE SPECIFICATION & CHECKLIST:\n${doc.content}\n` : ""}
+${doc.content ? `\nTEMPLATE SPECIFICATION & CONTENT:\n${doc.content}\n` : ""}
 VERSION HISTORY:
 ${(doc.versions || []).map((v) => ` - v${v.version} (${v.date}) by ${v.author} [${v.status}]: ${v.notes || "No notes"}`).join("\n")}
 
 =====================================================
 This is a computer-generated controlled document extract.
+Quality Assurance & Compliance Division - C-DAC
 =====================================================`;
 
     res.setHeader("Content-Type", "text/plain");
-    res.setHeader("Content-Disposition", `attachment; filename="${doc.id}_${doc.name.replace(/\\s+/g, "_")}.txt"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${doc.id}_${(doc.name || "document").replace(/\s+/g, "_")}.txt"`);
     res.send(fileContent);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// PUT or PATCH /api/documents/:id (Edit template / document)
+// PUT or PATCH /api/documents/:id (Edit document metadata)
 export const updateDocument = async (req, res) => {
   try {
-    const docIndex = documentsData.findIndex((d) => d.id === req.params.id);
-    if (docIndex === -1) {
-      return res.status(404).json({ success: false, message: "Document not found" });
-    }
-
     const { name, process, type, description, content, status } = req.body;
-    const doc = documentsData[docIndex];
     const editorName = req.user?.name || "QM Group";
     const dateStr = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -423,56 +530,41 @@ export const updateDocument = async (req, res) => {
       year: "numeric"
     });
 
-    const updatedDoc = {
-      ...doc,
-      name: name !== undefined ? name.trim() : doc.name,
-      title: name !== undefined ? name.trim() : doc.name,
-      process: process !== undefined ? process.trim() : doc.process,
-      type: type !== undefined ? type.trim() : doc.type,
-      description: description !== undefined ? description.trim() : doc.description,
-      content: content !== undefined ? content : doc.content,
-      status: status !== undefined ? status : doc.status,
-      updated: dateStr,
-      updatedBy: editorName
-    };
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await Document.findOneAndUpdate({ id: req.params.id }, updatedDoc, { new: true, upsert: true });
-      } catch (err) {
-        console.warn("MongoDB updateDocument error:", err.message);
-      }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    documentsData[docIndex] = updatedDoc;
+    const doc = await Document.findOne({ id: req.params.id });
+    if (!doc) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
 
-    // Audit log entry
+    if (name !== undefined) {
+      doc.name = name.trim();
+      doc.title = name.trim();
+    }
+    if (process !== undefined) doc.process = process.trim();
+    if (type !== undefined) doc.type = type.trim();
+    if (description !== undefined) doc.description = description.trim();
+    if (content !== undefined) doc.content = content;
+    if (status !== undefined) doc.status = status;
+    doc.updated = dateStr;
+    doc.updatedBy = editorName;
+
+    await doc.save();
+
     await logActivity({
-      id: `ACT-${Date.now()}`,
-      title: "Document Updated",
-      detail: `${updatedDoc.name} (${updatedDoc.id})`,
-      text: `${updatedDoc.type === "Templates" ? "Template" : "Document"} updated: ${updatedDoc.name} (${updatedDoc.id})`,
+      text: `Document '${doc.name}' (${doc.id}) updated by ${editorName}`,
       actor: editorName,
-      time: "Just now",
-      tone: "blue",
-      timestamp: new Date().toISOString()
+      tone: "blue"
     });
 
-    // Notification
-    await logNotification({
-      id: Date.now(),
-      title: `${updatedDoc.type === "Templates" ? "Template" : "Document"} updated: ${updatedDoc.name}`,
-      text: `${editorName} updated the specification for ${updatedDoc.name}.`,
-      time: "Just now",
-      targetRole: "all",
-      read: false,
-      createdAt: new Date().toISOString()
-    });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "UPDATED", document: doc });
 
     res.json({
       success: true,
-      message: `${updatedDoc.type === "Templates" ? "Template" : "Document"} updated successfully`,
-      document: updatedDoc
+      message: "Document updated successfully",
+      document: doc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -482,42 +574,55 @@ export const updateDocument = async (req, res) => {
 // DELETE /api/documents/:id
 export const deleteDocument = async (req, res) => {
   try {
-    const docIndex = documentsData.findIndex((d) => d.id === req.params.id);
-    if (docIndex === -1) {
+    const userName = req.user?.name || "Admin";
+
+    if (mongoose.connection.readyState !== 1) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const [deleted] = documentsData.splice(docIndex, 1);
-    const actorName = req.user?.name || "QM Group";
+    const doc = await Document.findOne({ id: req.params.id });
+    if (!doc) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
 
-    if (mongoose.connection.readyState === 1) {
+    // If storage file exists on disk, clean it up
+    if (doc.storagePath && fs.existsSync(doc.storagePath)) {
       try {
-        await Document.findOneAndDelete({ id: req.params.id });
-      } catch (err) {
-        console.warn("MongoDB deleteDocument error:", err.message);
+        fs.unlinkSync(doc.storagePath);
+      } catch (e) {
+        console.warn("Failed to unlink deleted file:", e.message);
       }
     }
 
-    // Audit log
+    await Document.deleteOne({ id: req.params.id });
+
     await logActivity({
-      id: `ACT-${Date.now()}`,
-      title: "Document Removed",
-      detail: `${deleted.name} (${deleted.id})`,
-      text: `Document removed: ${deleted.name} (${deleted.id})`,
-      actor: actorName,
-      time: "Just now",
-      tone: "red",
-      timestamp: new Date().toISOString()
+      text: `Document '${doc.name}' (${doc.id}) deleted by ${userName}`,
+      actor: userName,
+      tone: "red"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "DELETED", id: req.params.id });
+    broadcastRealtimeEvent("DOCUMENT_DELETED", { action: "DELETED", id: req.params.id });
 
     res.json({
       success: true,
       message: "Document deleted successfully",
-      document: deleted
+      document: doc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+};
+
+export default {
+  getAllDocuments,
+  getDocumentById,
+  createDocument,
+  uploadDocument,
+  createNewVersion,
+  uploadDocumentVersion,
+  updateDocumentStatus,
+  downloadDocument,
+  updateDocument,
+  deleteDocument
 };

@@ -24,7 +24,7 @@ export const documentService = {
   },
 
   /**
-   * Create / upload a new controlled document
+   * Create / upload a new controlled document (JSON metadata)
    */
   async createDocument(docData, token) {
     const res = await fetch(API_BASE, {
@@ -37,6 +37,38 @@ export const documentService = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to create document");
+    return data.document;
+  },
+
+  /**
+   * Upload controlled document with actual file attachment via Multer
+   */
+  async uploadDocumentWithFile(formData, token) {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to upload document file");
+    return data.document;
+  },
+
+  /**
+   * Upload new document version with file attachment via Multer
+   */
+  async uploadVersionWithFile(id, formData, token) {
+    const res = await fetch(`${API_BASE}/${id}/versions/upload`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to upload new version file");
     return data.document;
   },
 

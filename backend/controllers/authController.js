@@ -1,92 +1,116 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { User } from "../models/User.js";
-import { dummyUsers, normalizeRole } from "../data/users.js";
-import { activitiesData } from "../data/activities.js";
+import { Otp } from "../models/Otp.js";
+import { Activity } from "../models/Activity.js";
+import { sendOtpEmail } from "../utils/emailService.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
-// In-memory reset codes map: identifier -> { code, expiresAt, userId }
-const resetCodes = new Map();
+// Standardize role strings
+export const normalizeRole = (role) => {
+  if (!role) return "owner";
+  const r = role.trim().toLowerCase();
+  if (r === "head" || r === "trust head") return "Head";
+  if (r === "qm" || r === "qms coordinator") return "qm";
+  if (r === "owner" || r === "course coordinator") return "owner";
+  if (r === "auditor" || r === "internal auditor") return "auditor";
+  return role;
+};
 
-// Helper to find user in MongoDB or synchronized data
-const findUserInDatabase = async (identifier) => {
-  const cleanId = (identifier || "").trim().toLowerCase();
-  if (!cleanId) return null;
-
-  // 1. Try querying MongoDB User collection if connected
+// Log activity strictly to MongoDB
+const logAuthActivity = async (text, actor, tone = "blue") => {
   if (mongoose.connection.readyState === 1) {
     try {
-      const user = await User.findOne({
-        $or: [
-          { username: cleanId },
-          { email: cleanId },
-          { employeeId: cleanId.toUpperCase() },
-          { aliases: cleanId }
-        ]
-      }).lean();
-
-      if (user) return user;
+      await Activity.create({
+        id: `ACT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        text,
+        actor: actor || "System",
+        time: "Just now",
+        tone,
+        timestamp: new Date().toISOString()
+      });
     } catch (err) {
-      console.warn("MongoDB query error in authController:", err.message);
+      console.warn("Failed to log auth activity to MongoDB:", err.message);
     }
   }
+};
 
-  // 2. Query synchronized controlled users database
-  const fallbackUser = dummyUsers.find(
-    (u) =>
-      u.username.toLowerCase() === cleanId ||
-      u.email.toLowerCase() === cleanId ||
-      (u.employeeId && u.employeeId.toUpperCase() === cleanId.toUpperCase()) ||
-      (Array.isArray(u.aliases) && u.aliases.some((a) => a.toLowerCase() === cleanId))
-  );
-
-  return fallbackUser || null;
+// Helper: Query user strictly from MongoDB
+const findUserByQuery = async (query) => {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      return await User.findOne(query).lean();
+    } catch (err) {
+      console.warn("findUserByQuery error:", err.message);
+    }
+  }
+  return null;
 };
 
 // POST /api/auth/login
 export const login = async (req, res) => {
   try {
     const { email, username, identifier, password, role } = req.body;
-
     const loginIdentifier = (identifier || email || username || "").trim().toLowerCase();
     const cleanPassword = (password || "").trim();
 
     if (!loginIdentifier || !cleanPassword) {
       return res.status(400).json({
         success: false,
-        message: "Email/username and password are required"
+        message: "Username or email and password are required"
       });
     }
 
-    // STRICT DATABASE QUERY: User must exist in the database
-    const user = await findUserInDatabase(loginIdentifier);
+    // STRICT QUERY: User must exist in MongoDB
+    const user = await findUserByQuery({
+      $or: [
+        { username: loginIdentifier },
+        { email: loginIdentifier },
+        { employeeId: loginIdentifier.toUpperCase() }
+      ]
+    });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: `User '${loginIdentifier}' is not registered in the system database. Please enter a valid username or Employee ID.`
+        message: `Account '${loginIdentifier}' not found in database. Please enter a valid username or email.`
       });
     }
 
-    // Check account status
     if (user.status && user.status.toLowerCase() === "inactive") {
       return res.status(403).json({
         success: false,
-        message: "Your account has been deactivated. Please contact the QMS Administrator."
+        message: "Your account is currently inactive. Please contact the QMS Administrator."
       });
     }
 
-    // Check password
-    if (user.password && user.password !== cleanPassword) {
+    // Verify Password (supports bcrypt hash and backward-compatible default accounts)
+    let isPasswordValid = false;
+    if (user.password) {
+      if (user.password.startsWith("$2a$") || user.password.startsWith("$2b$") || user.password.startsWith("$2y$")) {
+        isPasswordValid = await bcrypt.compare(cleanPassword, user.password);
+      } else {
+        // Plain text fallback (for initial seed accounts like '1234')
+        isPasswordValid = user.password === cleanPassword;
+        // Seamlessly upgrade to bcrypt hash in database
+        if (isPasswordValid && mongoose.connection.readyState === 1) {
+          const newHashed = await bcrypt.hash(cleanPassword, 10);
+          await User.updateOne({ _id: user._id }, { password: newHashed });
+        }
+      }
+    }
+
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: "Incorrect password. Please verify your credentials."
       });
     }
 
-    // Check role match if requested role is specified
+    // Verify selected role matches user's institutional role
     if (role) {
       const normalizedReqRole = normalizeRole(role);
       if (user.role !== normalizedReqRole) {
@@ -100,7 +124,7 @@ export const login = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       {
-        id: user.id,
+        id: user.id || user._id,
         username: user.username,
         role: user.role,
         email: user.email,
@@ -112,6 +136,8 @@ export const login = async (req, res) => {
 
     const { password: _, ...userWithoutPassword } = user;
 
+    await logAuthActivity(`User '${user.name}' logged in successfully`, user.name, "green");
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -122,7 +148,7 @@ export const login = async (req, res) => {
     console.error("Login error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error during login",
+      message: "An error occurred during authentication",
       error: error.message
     });
   }
@@ -131,56 +157,217 @@ export const login = async (req, res) => {
 // POST /api/auth/forgot-password
 export const forgotPassword = async (req, res) => {
   try {
-    const { identifier } = req.body;
-    const cleanId = (identifier || "").trim().toLowerCase();
+    const { identifier, email } = req.body;
+    const cleanId = (identifier || email || "").trim().toLowerCase();
 
     if (!cleanId) {
       return res.status(400).json({
         success: false,
-        message: "Please enter your username or registered email address"
+        message: "Please enter your registered email address"
       });
     }
 
-    const user = await findUserInDatabase(cleanId);
+    // Query user in MongoDB
+    const user = await findUserByQuery({
+      $or: [
+        { email: cleanId },
+        { username: cleanId },
+        { employeeId: cleanId.toUpperCase() }
+      ]
+    });
 
-    if (!user) {
+    if (!user || !user.email) {
       return res.status(404).json({
         success: false,
-        message: "No registered account found matching this identifier. Please verify and try again."
+        message: "No registered account matches that email address. Please check and try again."
       });
     }
 
-    // Generate a 6-digit OTP code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 mins
+    // Generate secure 6-digit random OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // Strict 5-minute expiry
 
-    resetCodes.set(user.username.toLowerCase(), { code, expiresAt, userId: user.id });
-    resetCodes.set(user.email.toLowerCase(), { code, expiresAt, userId: user.id });
+    // Save hashed OTP in MongoDB
+    if (mongoose.connection.readyState === 1) {
+      await Otp.deleteMany({ email: user.email.toLowerCase() });
+      await Otp.create({
+        email: user.email.toLowerCase(),
+        otpHash,
+        attempts: 0,
+        maxAttempts: 5,
+        expiresAt
+      });
+    }
 
-    // Add to activities audit log
-    activitiesData.unshift({
-      id: `ACT-${Date.now()}`,
-      text: `Password reset code requested for ${user.name} (${user.username})`,
-      actor: user.name,
-      time: "Just now",
-      tone: "amber",
-      timestamp: new Date().toISOString()
+    // Send email via Nodemailer
+    await sendOtpEmail({
+      to: user.email,
+      otp,
+      userName: user.name || user.username
     });
+
+    await logAuthActivity(`Password reset OTP requested for ${user.name} (${user.email})`, user.name, "amber");
+
+    const maskedEmail = user.email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
 
     return res.status(200).json({
       success: true,
-      message: `Verification code generated for ${user.name}`,
+      message: `Verification code sent to registered email address (${maskedEmail})`,
       email: user.email,
-      username: user.username,
-      role: user.role,
-      name: user.name,
-      demoCode: code
+      expiresInMinutes: 5
     });
   } catch (error) {
     console.error("forgotPassword error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to process forgot password request",
+      message: "Failed to dispatch verification code",
+      error: error.message
+    });
+  }
+};
+
+// POST /api/auth/verify-otp
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, code, otp } = req.body;
+    const cleanEmail = (email || "").trim().toLowerCase();
+    const enteredOtp = (code || otp || "").trim();
+
+    if (!cleanEmail || !enteredOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "Registered email and 6-digit verification code are required"
+      });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: "Database service unavailable" });
+    }
+
+    const otpRecord = await Otp.findOne({ email: cleanEmail });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: "No active verification code found for this email. Please request a new code."
+      });
+    }
+
+    // Check expiration
+    if (new Date() > new Date(otpRecord.expiresAt)) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({
+        success: false,
+        message: "Verification code has expired (5-minute limit). Please request a new code."
+      });
+    }
+
+    // Check max attempts (brute force protection)
+    if (otpRecord.attempts >= otpRecord.maxAttempts) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(429).json({
+        success: false,
+        message: "Too many incorrect attempts. Verification code invalidated. Please request a new code."
+      });
+    }
+
+    // Verify OTP hash with bcrypt
+    const isMatch = await bcrypt.compare(enteredOtp, otpRecord.otpHash);
+    if (!isMatch) {
+      otpRecord.attempts += 1;
+      await otpRecord.save();
+      const remaining = otpRecord.maxAttempts - otpRecord.attempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid verification code. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`
+      });
+    }
+
+    // Generate single-use reset token
+    const verificationToken = jwt.sign(
+      { email: cleanEmail, purpose: "password_reset" },
+      JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
+    otpRecord.isVerified = true;
+    otpRecord.verificationToken = verificationToken;
+    await otpRecord.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Verification code confirmed successfully",
+      verificationToken
+    });
+  } catch (error) {
+    console.error("verifyOtp error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify code",
+      error: error.message
+    });
+  }
+};
+
+// POST /api/auth/resend-otp
+export const resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = (email || "").trim().toLowerCase();
+
+    if (!cleanEmail) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const user = await findUserByQuery({ email: cleanEmail });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (mongoose.connection.readyState === 1) {
+      // Check 60-second cooldown
+      const existing = await Otp.findOne({ email: cleanEmail });
+      if (existing) {
+        const elapsedSeconds = (Date.now() - new Date(existing.createdAt).getTime()) / 1000;
+        if (elapsedSeconds < 60) {
+          const waitTime = Math.ceil(60 - elapsedSeconds);
+          return res.status(429).json({
+            success: false,
+            message: `Please wait ${waitTime} seconds before requesting a new code.`
+          });
+        }
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = await bcrypt.hash(otp, 10);
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      await Otp.deleteMany({ email: cleanEmail });
+      await Otp.create({
+        email: cleanEmail,
+        otpHash,
+        attempts: 0,
+        maxAttempts: 5,
+        expiresAt
+      });
+
+      await sendOtpEmail({
+        to: user.email,
+        otp,
+        userName: user.name || user.username
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "A new verification code has been dispatched to your email."
+    });
+  } catch (error) {
+    console.error("resendOtp error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to resend code",
       error: error.message
     });
   }
@@ -189,81 +376,88 @@ export const forgotPassword = async (req, res) => {
 // POST /api/auth/reset-password
 export const resetPassword = async (req, res) => {
   try {
-    const { identifier, code, newPassword } = req.body;
-    const cleanId = (identifier || "").trim().toLowerCase();
+    const { email, identifier, code, verificationToken, newPassword, confirmPassword } = req.body;
+    const cleanEmail = (email || identifier || "").trim().toLowerCase();
+    const cleanPass = (newPassword || "").trim();
 
-    if (!cleanId || !code || !newPassword) {
+    if (!cleanEmail || !cleanPass) {
       return res.status(400).json({
         success: false,
-        message: "Username/email, verification code, and new password are required"
+        message: "Email and new password are required"
       });
     }
 
-    if (newPassword.length < 3) {
+    if (cleanPass.length < 4) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 3 characters long"
+        message: "Password must be at least 4 characters long"
       });
     }
 
-    const user = await findUserInDatabase(cleanId);
+    if (confirmPassword && confirmPassword !== cleanPass) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirmation password do not match"
+      });
+    }
 
-    if (!user) {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: "Database service unavailable" });
+    }
+
+    // Verify token or code
+    let verified = false;
+    if (verificationToken) {
+      try {
+        const decoded = jwt.verify(verificationToken, JWT_SECRET);
+        if (decoded.email === cleanEmail && decoded.purpose === "password_reset") {
+          verified = true;
+        }
+      } catch {
+        // Token invalid or expired
+      }
+    }
+
+    if (!verified && code) {
+      const otpRecord = await Otp.findOne({ email: cleanEmail });
+      if (otpRecord && (await bcrypt.compare(code.trim(), otpRecord.otpHash))) {
+        if (new Date() <= new Date(otpRecord.expiresAt)) {
+          verified = true;
+        }
+      }
+    }
+
+    if (!verified) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification expired or invalid. Please verify the 6-digit code again."
+      });
+    }
+
+    // Hash the new password with bcrypt
+    const hashedPassword = await bcrypt.hash(cleanPass, 10);
+
+    // Update user password in MongoDB
+    const updateResult = await User.updateOne(
+      { $or: [{ email: cleanEmail }, { username: cleanEmail }] },
+      { password: hashedPassword }
+    );
+
+    if (updateResult.matchedCount === 0) {
       return res.status(404).json({
         success: false,
         message: "User account not found in database"
       });
     }
 
-    const stored = resetCodes.get(user.username.toLowerCase()) || resetCodes.get(user.email.toLowerCase());
+    // Invalidate/delete OTP records
+    await Otp.deleteMany({ email: cleanEmail });
 
-    // Validate code (allow stored code or demo code 123456)
-    if (!stored || stored.code !== code.trim()) {
-      if (code.trim() !== "123456") {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid verification code. Please check the code and try again."
-        });
-      }
-    }
-
-    if (stored && Date.now() > stored.expiresAt) {
-      return res.status(400).json({
-        success: false,
-        message: "Verification code has expired. Please request a new one."
-      });
-    }
-
-    // Update password in MongoDB if connected
-    if (mongoose.connection.readyState === 1) {
-      await User.updateOne({ id: user.id }, { password: newPassword });
-    }
-
-    // Also update in memory
-    const memUser = dummyUsers.find((u) => u.id === user.id);
-    if (memUser) {
-      memUser.password = newPassword;
-    }
-
-    // Clean up used code
-    resetCodes.delete(user.username.toLowerCase());
-    resetCodes.delete(user.email.toLowerCase());
-
-    // Add to activities audit log
-    activitiesData.unshift({
-      id: `ACT-${Date.now()}`,
-      text: `Password successfully updated for ${user.name} (${user.username})`,
-      actor: user.name,
-      time: "Just now",
-      tone: "green",
-      timestamp: new Date().toISOString()
-    });
+    await logAuthActivity(`Password successfully reset for account ${cleanEmail}`, cleanEmail, "green");
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successful! You can now log in with your new password.",
-      username: user.username,
-      role: user.role
+      message: "Password updated successfully! You can now log in with your new password."
     });
   } catch (error) {
     console.error("resetPassword error:", error);
@@ -275,7 +469,7 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-// GET /api/auth/me (Protected)
+// GET /api/auth/me
 export const getMe = (req, res) => {
   return res.status(200).json({
     success: true,
@@ -283,29 +477,20 @@ export const getMe = (req, res) => {
   });
 };
 
-// GET /api/auth/demo-users (Public list of available database accounts for convenience)
+// GET /api/auth/demo-users
 export const getDemoUsers = async (req, res) => {
-  let userList = dummyUsers;
-  if (mongoose.connection.readyState === 1) {
-    try {
-      const dbUsers = await User.find({}).lean();
-      if (dbUsers.length > 0) {
-        userList = dbUsers;
-      }
-    } catch {
-      // use dummyUsers fallback
+  try {
+    let users = [];
+    if (mongoose.connection.readyState === 1) {
+      users = await User.find({}, { password: 0 }).lean();
     }
+    return res.status(200).json({
+      success: true,
+      users
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
-
-  const users = userList.map(({ password, ...u }) => ({
-    ...u,
-    dummyPassword: password
-  }));
-
-  return res.status(200).json({
-    success: true,
-    users
-  });
 };
 
 // POST /api/auth/logout
@@ -314,4 +499,15 @@ export const logout = (req, res) => {
     success: true,
     message: "Logged out successfully"
   });
+};
+
+export default {
+  login,
+  forgotPassword,
+  verifyOtp,
+  resendOtp,
+  resetPassword,
+  getMe,
+  getDemoUsers,
+  logout
 };

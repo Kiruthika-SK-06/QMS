@@ -8,3 +8,4 @@ export { ExternalAudit } from "./ExternalAudit.js";
 export { Notification } from "./Notification.js";
 export { Employee } from "./Employee.js";
 export { Activity } from "./Activity.js";
+export { Otp } from "./Otp.js";

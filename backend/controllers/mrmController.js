@@ -4,11 +4,14 @@ import os from "os";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { MRM } from "../models/MRM.js";
-import { mrmData } from "../data/mrm.js";
-import { notificationsData } from "../data/notifications.js";
-import { activitiesData } from "../data/activities.js";
-import { dummyUsers } from "../data/users.js";
+import { Notification } from "../models/Notification.js";
+import { Activity } from "../models/Activity.js";
+import { User } from "../models/User.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+
+const mrmData = [];
+const notificationsData = [];
+const activitiesData = [];
 
 const TMP_MRM_STORE = path.join(os.tmpdir(), "qms_mrm_store.json");
 
@@ -16,15 +19,11 @@ const loadMRMFromDisk = async () => {
   if (mongoose.connection.readyState === 1) {
     try {
       const dbMrms = await MRM.find({}).lean();
+      mrmData.length = 0;
       if (dbMrms && dbMrms.length > 0) {
-        const map = new Map();
-        dbMrms.forEach((m) => m && m.id && map.set(m.id, m));
-        mrmData.forEach((m) => m && m.id && !map.has(m.id) && map.set(m.id, m));
-        const merged = Array.from(map.values());
-        mrmData.length = 0;
-        mrmData.push(...merged);
-        return;
+        mrmData.push(...dbMrms);
       }
+      return;
     } catch {}
   }
 
@@ -860,17 +859,21 @@ export const uploadMoMFile = (req, res) => {
 
     const uploaderName = req.user?.name || "QMS Coordinator";
     const uploaderRole = req.user?.roleTitle || "QMS Coordinator";
-    const chosenFileName = fileName || `MRM_${mrm.id}_Minutes_Of_Meeting.pdf`;
+    const uploadedFile = req.file;
+    const chosenFileName = uploadedFile ? uploadedFile.originalname : (fileName || `MRM_${mrm.id}_Minutes_Of_Meeting.pdf`);
+    const fileUrl = uploadedFile ? `/uploads/${uploadedFile.filename}` : "";
+    const fileSizeStr = uploadedFile ? `${(uploadedFile.size / 1024).toFixed(1)} KB` : (fileSize || "2.1 MB");
 
     const momRecord = {
       fileName: chosenFileName,
-      fileSize: fileSize || "2.1 MB",
-      fileType: fileType || "application/pdf",
+      fileSize: fileSizeStr,
+      fileType: uploadedFile ? uploadedFile.mimetype : (fileType || "application/pdf"),
+      fileUrl,
       fileData: fileData || null,
       uploadedBy: uploaderName,
       uploadedByRole: uploaderRole,
       uploadedAt: formatNow(),
-      downloadUrl: `/api/mrm/${mrm.id}/mom-download`,
+      downloadUrl: fileUrl || `/api/mrm/${mrm.id}/mom-download`,
       summary: summary || "Official Minutes of Meeting recorded and signed by the Quality Office.",
       discussionPoints: Array.isArray(discussionPoints) && discussionPoints.length ? discussionPoints : [
         "Course delivery milestones and syllabi progress reviewed across all departments.",

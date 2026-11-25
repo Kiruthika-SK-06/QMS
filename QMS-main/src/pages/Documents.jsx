@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Filter, Search, Upload, Plus } from "lucide-react";
+import { Filter, Search, Upload, Plus, FileText } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 import DocumentTable from "../components/tables/DocumentTable";
@@ -8,12 +8,13 @@ import Modal from "../components/tasks/Modal";
 import TemplateEditModal from "../components/common/TemplateEditModal";
 
 export default function Documents() {
-  const { documents, currentUser, createDocument, processes } = useApp();
+  const { documents = [], currentUser, createDocument, uploadDocumentWithFile, processes = [] } = useApp();
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("search") || "");
   const [type, setType] = useState("All");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     const urlQuery = searchParams.get("search");
@@ -52,11 +53,22 @@ export default function Documents() {
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
-    if (!uploadForm.name.trim()) return;
+    if (!uploadForm.name.trim() && !selectedFile) return;
     setIsSubmitting(true);
     try {
-      await createDocument(uploadForm);
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("name", uploadForm.name || selectedFile.name.replace(/\.[^/.]+$/, ""));
+        formData.append("type", uploadForm.type);
+        formData.append("process", uploadForm.process);
+        formData.append("description", uploadForm.description);
+        await uploadDocumentWithFile(formData);
+      } else {
+        await createDocument(uploadForm);
+      }
       setShowUploadModal(false);
+      setSelectedFile(null);
       setUploadForm({
         name: "",
         type: "Forms",
@@ -109,10 +121,22 @@ export default function Documents() {
       </div>
 
       <section className="panel">
-        <DocumentTable
-          items={filtered}
-          onEdit={currentUser ? (doc) => setEditingDoc(doc) : undefined}
-        />
+        {filtered.length > 0 ? (
+          <DocumentTable
+            items={filtered}
+            onEdit={currentUser ? (doc) => setEditingDoc(doc) : undefined}
+          />
+        ) : (
+          <div style={{ padding: "48px 24px", textAlign: "center", color: "#64748b" }}>
+            <FileText size={48} style={{ margin: "0 auto 12px", opacity: 0.35, color: "#384FB8" }} />
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#1e293b", marginBottom: "6px" }}>
+              No Controlled Documents Found
+            </h3>
+            <p style={{ fontSize: "13px", maxWidth: "440px", margin: "0 auto" }}>
+              No documents match your filter criteria. Authorized coordinators can upload and register new controlled documents using the button above.
+            </p>
+          </div>
+        )}
       </section>
 
       {editingDoc && (
@@ -162,6 +186,22 @@ export default function Documents() {
                     </option>
                   ))}
                 </select>
+              </label>
+
+              <label>
+                Attach Document File (PDF, Word, Excel)
+                <input
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files[0] || null;
+                    setSelectedFile(file);
+                    if (file && !uploadForm.name) {
+                      setUploadForm({ ...uploadForm, name: file.name.replace(/\.[^/.]+$/, "") });
+                    }
+                  }}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg"
+                  style={{ padding: "8px 0" }}
+                />
               </label>
 
               <label>

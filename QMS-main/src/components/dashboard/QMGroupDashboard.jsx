@@ -47,6 +47,19 @@ export default function QMGroupDashboard() {
   const readyToShareAudits = (auditList || []).filter((a) => a.stage === 2.5);
   const readyToCloseAudits = (auditList || []).filter((a) => a.stage === 6);
 
+  // Dynamic compliance calculations from actual database state
+  const mrmProgress = mrmList.length > 0
+    ? Math.round((mrmList.filter((m) => m.status === "Approved" || m.status === "Approved by Trust Head" || (m.stage && m.stage >= 4)).length / mrmList.length) * 100)
+    : 0;
+
+  const processProgress = processes.length > 0
+    ? Math.round(processes.reduce((acc, p) => acc + (p.progress || 0), 0) / processes.length)
+    : 0;
+
+  const docCompliance = documents.length > 0
+    ? Math.round((documents.filter((d) => d.status === "Approved" || d.status === "Current").length / documents.length) * 100)
+    : 0;
+
   // Flatten version audit records
   const auditTrailRecords = (documents || []).flatMap((doc) =>
     (doc.versions || []).map((v) => ({
@@ -72,7 +85,7 @@ export default function QMGroupDashboard() {
         <StatCard
           label="MRM & Quality Governance"
           value={`${mrmList.length} Sessions`}
-          progress={88}
+          progress={mrmProgress}
           tone="blue"
           direction="up"
           hint="Active & Scheduled MRMs"
@@ -82,7 +95,7 @@ export default function QMGroupDashboard() {
         <StatCard
           label="Process Register"
           value={`${processes.length} Processes`}
-          progress={95}
+          progress={processProgress}
           tone="teal"
           direction="up"
           hint="Institutional Processes"
@@ -92,7 +105,7 @@ export default function QMGroupDashboard() {
         <StatCard
           label="Controlled Docs & Audits"
           value={`${documents.length} Docs · ${auditList.length} Audits`}
-          progress={80}
+          progress={docCompliance}
           tone="dark"
           direction="up"
           hint="Library & Audit Schedules"

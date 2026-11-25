@@ -1,5 +1,4 @@
 // Frontend service for Internal Quality Audit (IQA) API with cross-tab real-time sync and localStorage persistence
-import { initialAuditList } from "../data/mockData";
 
 const API_BASE = "/api/audit";
 
@@ -78,7 +77,7 @@ export function getStoredAudits() {
   } catch (e) {
     console.warn("Error reading qms_audits from localStorage", e);
   }
-  return sortAudits(initialAuditList);
+  return [];
 }
 
 // Helper to save audits and broadcast to other open tabs

@@ -9,8 +9,6 @@
 //    Once QMS Coordinator gets approval, QMS Coordinator closes the entire process (ISO 9001 Certified).
 // Constraint: Each step can only be performed after the previous step is completed. External Auditor has NO system login or dashboard.
 
-import { initialExternalAuditList } from "../data/mockData.js";
-
 const API_BASE = "/api/external-audit";
 
 const formatNow = () => {
@@ -69,7 +67,7 @@ export function getStoredExternalAudits() {
   } catch (e) {
     console.warn("Error reading qms_external_audits from localStorage", e);
   }
-  return sortExternalAudits(initialExternalAuditList);
+  return [];
 }
 
 export function saveStoredExternalAudits(audits) {
