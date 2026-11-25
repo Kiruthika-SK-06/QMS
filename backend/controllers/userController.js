@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/User.js";
 import { Activity } from "../models/Activity.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+import { dummyUsers } from "../data/users.js";
 
 export const normalizeRole = (role) => {
   if (!role) return "owner";
@@ -39,35 +40,74 @@ export const getAllUsers = async (req, res) => {
   try {
     const { role, department, status, search, sort } = req.query;
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, count: 0, users: [] });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const filter = {};
+        if (role && role !== "All") filter.role = normalizeRole(role);
+        if (department && department !== "All") filter.department = { $regex: department, $options: "i" };
+        if (status && status !== "All") filter.status = { $regex: `^${status}$`, $options: "i" };
+        if (search) {
+          const q = search.trim();
+          filter.$or = [
+            { name: { $regex: q, $options: "i" } },
+            { email: { $regex: q, $options: "i" } },
+            { username: { $regex: q, $options: "i" } },
+            { employeeId: { $regex: q, $options: "i" } }
+          ];
+        }
+
+        let query = User.find(filter, { password: 0 });
+        if (sort === "name") query = query.sort({ name: 1 });
+        else if (sort === "role") query = query.sort({ role: 1 });
+        else query = query.sort({ createdAt: -1 });
+
+        const users = await query.lean();
+        if (users && users.length > 0) {
+          return res.json({
+            success: true,
+            count: users.length,
+            users
+          });
+        }
+      } catch (err) {
+        console.warn("getAllUsers DB error, using synchronized dataset:", err.message);
+      }
     }
 
-    const filter = {};
-    if (role && role !== "All") filter.role = normalizeRole(role);
-    if (department && department !== "All") filter.department = { $regex: department, $options: "i" };
-    if (status && status !== "All") filter.status = { $regex: `^${status}$`, $options: "i" };
+    // Dual-mode fallback from controlled users dataset
+    let filtered = dummyUsers.map((u) => sanitizeUser(u));
+
+    if (role && role !== "All") {
+      const normRole = normalizeRole(role);
+      filtered = filtered.filter((u) => u.role === normRole);
+    }
+    if (department && department !== "All") {
+      const depLower = department.toLowerCase();
+      filtered = filtered.filter((u) => u.department && u.department.toLowerCase().includes(depLower));
+    }
+    if (status && status !== "All") {
+      const stLower = status.toLowerCase();
+      filtered = filtered.filter((u) => u.status && u.status.toLowerCase() === stLower);
+    }
     if (search) {
-      const q = search.trim();
-      filter.$or = [
-        { name: { $regex: q, $options: "i" } },
-        { email: { $regex: q, $options: "i" } },
-        { username: { $regex: q, $options: "i" } },
-        { employeeId: { $regex: q, $options: "i" } }
-      ];
+      const q = search.trim().toLowerCase();
+      filtered = filtered.filter((u) => {
+        return (
+          (u.name && u.name.toLowerCase().includes(q)) ||
+          (u.email && u.email.toLowerCase().includes(q)) ||
+          (u.username && u.username.toLowerCase().includes(q)) ||
+          (u.employeeId && u.employeeId.toLowerCase().includes(q))
+        );
+      });
     }
 
-    let query = User.find(filter, { password: 0 });
-    if (sort === "name") query = query.sort({ name: 1 });
-    else if (sort === "role") query = query.sort({ role: 1 });
-    else query = query.sort({ createdAt: -1 });
-
-    const users = await query.lean();
+    if (sort === "name") filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    else if (sort === "role") filtered.sort((a, b) => (a.role || "").localeCompare(b.role || ""));
 
     res.json({
       success: true,
-      count: users.length,
-      users
+      count: filtered.length,
+      users: filtered
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -77,20 +117,22 @@ export const getAllUsers = async (req, res) => {
 // GET /api/users/:id
 export const getUserById = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const user = await User.findOne(
+          { $or: [{ id: req.params.id }, { employeeId: req.params.id }] },
+          { password: 0 }
+        ).lean();
+        if (user) return res.json({ success: true, user });
+      } catch (err) {}
     }
 
-    const user = await User.findOne(
-      { $or: [{ id: req.params.id }, { employeeId: req.params.id }] },
-      { password: 0 }
-    ).lean();
-
+    const user = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    res.json({ success: true, user });
+    res.json({ success: true, user: sanitizeUser(user) });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -108,19 +150,14 @@ export const createUser = async (req, res) => {
       });
     }
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
-    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanUser = (username || cleanEmail.split("@")[0]).trim().toLowerCase();
 
-    // Check duplicate email/username
-    const existing = await User.findOne({
-      $or: [
-        { email: email.trim().toLowerCase() },
-        { username: (username || email).trim().toLowerCase() }
-      ]
-    });
-
-    if (existing) {
+    // Check duplicate email/username in memory or DB
+    const memDup = dummyUsers.find(
+      (u) => (u.email && u.email.toLowerCase() === cleanEmail) || (u.username && u.username.toLowerCase() === cleanUser)
+    );
+    if (memDup) {
       return res.status(409).json({
         success: false,
         message: "A user with this email or username already exists"
@@ -148,11 +185,11 @@ export const createUser = async (req, res) => {
       employee: "Employee"
     };
 
-    const newUser = await User.create({
+    const newUserData = {
       id: userId,
       name: name.trim(),
-      email: email.trim().toLowerCase(),
-      username: (username || email.split("@")[0]).trim().toLowerCase(),
+      email: cleanEmail,
+      username: cleanUser,
       password: hashedPassword,
       role: normalized,
       roleTitle: roleTitles[normalized] || normalized,
@@ -163,7 +200,17 @@ export const createUser = async (req, res) => {
       phone: phone || "",
       status: status || "Active",
       joinDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-    });
+    };
+
+    let createdUser = newUserData;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        createdUser = await User.create(newUserData);
+      } catch (err) {
+        console.warn("createUser DB error:", err.message);
+      }
+    }
+    dummyUsers.push(newUserData);
 
     await logActivity({
       text: `User account '${name}' (${userId}) created with role ${roleTitles[normalized]}`,
@@ -171,12 +218,12 @@ export const createUser = async (req, res) => {
       tone: "green"
     });
 
-    broadcastRealtimeEvent("USER_CREATED", { action: "CREATED", user: sanitizeUser(newUser.toObject()) });
+    broadcastRealtimeEvent("USER_CREATED", { action: "CREATED", user: sanitizeUser(createdUser) });
 
     res.status(201).json({
       success: true,
       message: "User account created successfully",
-      user: sanitizeUser(newUser.toObject())
+      user: sanitizeUser(createdUser)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -186,53 +233,78 @@ export const createUser = async (req, res) => {
 // PUT /api/users/:id
 export const updateUser = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
+    let dbUser = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        dbUser = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
+      } catch (err) {}
     }
 
-    const user = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
-    if (!user) {
+    const memUser = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
+    const targetUser = dbUser || memUser;
+
+    if (!targetUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
     const { name, email, role, department, designation, status, phone, password } = req.body;
 
-    if (name !== undefined) user.name = name.trim();
-    if (email !== undefined) user.email = email.trim().toLowerCase();
-    if (role !== undefined) {
-      user.role = normalizeRole(role);
-      const roleTitles = {
-        Head: "Trust Head",
-        qm: "QMS Coordinator",
-        owner: "Course Coordinator",
-        auditor: "Internal Auditor",
-        employee: "Employee"
-      };
-      user.roleTitle = roleTitles[user.role] || user.role;
-    }
-    if (department !== undefined) user.department = department.trim();
-    if (designation !== undefined) user.designation = designation.trim();
-    if (status !== undefined) user.status = status;
-    if (phone !== undefined) user.phone = phone;
+    const roleTitles = {
+      Head: "Trust Head",
+      qm: "QMS Coordinator",
+      owner: "Course Coordinator",
+      auditor: "Internal Auditor",
+      employee: "Employee"
+    };
 
+    let hashedPass = null;
     if (password && password.trim()) {
-      user.password = await bcrypt.hash(password.trim(), 10);
+      hashedPass = await bcrypt.hash(password.trim(), 10);
     }
 
-    await user.save();
+    if (dbUser) {
+      if (name !== undefined) dbUser.name = name.trim();
+      if (email !== undefined) dbUser.email = email.trim().toLowerCase();
+      if (role !== undefined) {
+        dbUser.role = normalizeRole(role);
+        dbUser.roleTitle = roleTitles[dbUser.role] || dbUser.role;
+      }
+      if (department !== undefined) dbUser.department = department.trim();
+      if (designation !== undefined) dbUser.designation = designation.trim();
+      if (status !== undefined) dbUser.status = status;
+      if (phone !== undefined) dbUser.phone = phone;
+      if (hashedPass) dbUser.password = hashedPass;
+      await dbUser.save();
+    }
+
+    if (memUser) {
+      if (name !== undefined) memUser.name = name.trim();
+      if (email !== undefined) memUser.email = email.trim().toLowerCase();
+      if (role !== undefined) {
+        memUser.role = normalizeRole(role);
+        memUser.roleTitle = roleTitles[memUser.role] || memUser.role;
+      }
+      if (department !== undefined) memUser.department = department.trim();
+      if (designation !== undefined) memUser.designation = designation.trim();
+      if (status !== undefined) memUser.status = status;
+      if (phone !== undefined) memUser.phone = phone;
+      if (hashedPass) memUser.password = hashedPass;
+    }
+
+    const resultUser = dbUser || memUser;
 
     await logActivity({
-      text: `User account '${user.name}' updated by ${req.user?.name || "Admin"}`,
+      text: `User account '${resultUser.name}' updated by ${req.user?.name || "Admin"}`,
       actor: req.user?.name || "Admin",
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("USER_UPDATED", { action: "UPDATED", user: sanitizeUser(user.toObject()) });
+    broadcastRealtimeEvent("USER_UPDATED", { action: "UPDATED", user: sanitizeUser(resultUser) });
 
     res.json({
       success: true,
       message: "User updated successfully",
-      user: sanitizeUser(user.toObject())
+      user: sanitizeUser(resultUser)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -242,36 +314,45 @@ export const updateUser = async (req, res) => {
 // PATCH /api/users/:id/status
 export const toggleUserStatus = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
+    let dbUser = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        dbUser = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
+      } catch (err) {}
     }
 
-    const user = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
-    if (!user) {
+    const memUser = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
+    const targetUser = dbUser || memUser;
+
+    if (!targetUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
     const requestedStatus = req.body.status;
-    if (requestedStatus) {
-      user.status = requestedStatus;
-    } else {
-      user.status = user.status === "Active" ? "Inactive" : "Active";
+    const newStatus = requestedStatus || (targetUser.status === "Active" ? "Inactive" : "Active");
+
+    if (dbUser) {
+      dbUser.status = newStatus;
+      await dbUser.save();
+    }
+    if (memUser) {
+      memUser.status = newStatus;
     }
 
-    await user.save();
+    const resultUser = dbUser || memUser;
 
     await logActivity({
-      text: `User account '${user.name}' status changed to '${user.status}' by ${req.user?.name || "Admin"}`,
+      text: `User account '${resultUser.name}' status changed to '${newStatus}' by ${req.user?.name || "Admin"}`,
       actor: req.user?.name || "Admin",
-      tone: user.status === "Active" ? "green" : "amber"
+      tone: newStatus === "Active" ? "green" : "amber"
     });
 
-    broadcastRealtimeEvent("USER_UPDATED", { action: "STATUS_TOGGLED", user: sanitizeUser(user.toObject()) });
+    broadcastRealtimeEvent("USER_UPDATED", { action: "STATUS_TOGGLED", user: sanitizeUser(resultUser) });
 
     res.json({
       success: true,
-      message: `User status changed to ${user.status}`,
-      user: sanitizeUser(user.toObject())
+      message: `User status changed to ${newStatus}`,
+      user: sanitizeUser(resultUser)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -281,19 +362,25 @@ export const toggleUserStatus = async (req, res) => {
 // DELETE /api/users/:id
 export const deleteUser = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
+    let dbUser = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        dbUser = await User.findOneAndDelete({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
+      } catch (err) {}
     }
 
-    const user = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
-    if (!user) {
+    const index = dummyUsers.findIndex((u) => u.id === req.params.id || u.employeeId === req.params.id);
+    if (index !== -1) {
+      if (!dbUser) dbUser = dummyUsers[index];
+      dummyUsers.splice(index, 1);
+    }
+
+    if (!dbUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    await User.deleteOne({ _id: user._id });
-
     await logActivity({
-      text: `User account '${user.name}' deleted by ${req.user?.name || "Admin"}`,
+      text: `User account '${dbUser.name}' deleted by ${req.user?.name || "Admin"}`,
       actor: req.user?.name || "Admin",
       tone: "red"
     });

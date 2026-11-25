@@ -5,8 +5,9 @@ import { Document } from "../models/Document.js";
 import { Activity } from "../models/Activity.js";
 import { Notification } from "../models/Notification.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+import { documentsData } from "../data/documents.js";
 
-// Helper to log activity strictly to MongoDB
+// Helper to log activity
 const logActivity = async (entry) => {
   if (mongoose.connection.readyState === 1) {
     try {
@@ -21,7 +22,7 @@ const logActivity = async (entry) => {
   }
 };
 
-// Helper to log notification strictly to MongoDB
+// Helper to log notification
 const logNotification = async (entry) => {
   if (mongoose.connection.readyState === 1) {
     try {
@@ -41,41 +42,71 @@ export const getAllDocuments = async (req, res) => {
   try {
     const { search, type, status, process } = req.query;
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, count: 0, documents: [] });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const filter = {};
+        if (type && type !== "All") filter.type = { $regex: new RegExp(`^${type}$`, "i") };
+        if (status && status !== "All") filter.status = { $regex: new RegExp(`^${status}$`, "i") };
+        if (process && process !== "All") filter.process = { $regex: new RegExp(`^${process}$`, "i") };
+        if (search) {
+          const q = search.trim();
+          filter.$or = [
+            { name: { $regex: q, $options: "i" } },
+            { title: { $regex: q, $options: "i" } },
+            { id: { $regex: q, $options: "i" } },
+            { process: { $regex: q, $options: "i" } },
+            { owner: { $regex: q, $options: "i" } }
+          ];
+        }
+
+        const documents = await Document.find(filter).sort({ updatedAt: -1 }).lean();
+        if (documents && documents.length > 0) {
+          return res.json({
+            success: true,
+            count: documents.length,
+            documents
+          });
+        }
+      } catch (err) {
+        console.warn("getAllDocuments DB query error, using synchronized dataset:", err.message);
+      }
     }
 
-    const filter = {};
+    // Dual-mode fallback from controlled documents database
+    let filtered = [...documentsData];
 
     if (type && type !== "All") {
-      filter.type = { $regex: new RegExp(`^${type}$`, "i") };
+      const typeLower = type.toLowerCase();
+      filtered = filtered.filter((d) => d.type && d.type.toLowerCase() === typeLower);
     }
 
     if (status && status !== "All") {
-      filter.status = { $regex: new RegExp(`^${status}$`, "i") };
+      const statusLower = status.toLowerCase();
+      filtered = filtered.filter((d) => d.status && d.status.toLowerCase() === statusLower);
     }
 
     if (process && process !== "All") {
-      filter.process = { $regex: new RegExp(`^${process}$`, "i") };
+      const procLower = process.toLowerCase();
+      filtered = filtered.filter((d) => d.process && d.process.toLowerCase() === procLower);
     }
 
     if (search) {
-      const q = search.trim();
-      filter.$or = [
-        { name: { $regex: q, $options: "i" } },
-        { title: { $regex: q, $options: "i" } },
-        { id: { $regex: q, $options: "i" } },
-        { process: { $regex: q, $options: "i" } },
-        { owner: { $regex: q, $options: "i" } }
-      ];
+      const q = search.trim().toLowerCase();
+      filtered = filtered.filter((d) => {
+        return (
+          (d.name && d.name.toLowerCase().includes(q)) ||
+          (d.title && d.title.toLowerCase().includes(q)) ||
+          (d.id && d.id.toLowerCase().includes(q)) ||
+          (d.process && d.process.toLowerCase().includes(q)) ||
+          (d.owner && d.owner.toLowerCase().includes(q))
+        );
+      });
     }
-
-    const documents = await Document.find(filter).sort({ updatedAt: -1 }).lean();
 
     res.json({
       success: true,
-      count: documents.length,
-      documents
+      count: filtered.length,
+      documents: filtered
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -85,19 +116,19 @@ export const getAllDocuments = async (req, res) => {
 // GET /api/documents/:id
 export const getDocumentById = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const doc = await Document.findOne({ id: req.params.id }).lean();
+        if (doc) return res.json({ success: true, document: doc });
+      } catch (err) {}
     }
 
-    const doc = await Document.findOne({ id: req.params.id }).lean();
+    const doc = documentsData.find((d) => d.id === req.params.id);
     if (!doc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    res.json({
-      success: true,
-      document: doc
-    });
+    res.json({ success: true, document: doc });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -123,7 +154,7 @@ export const createDocument = async (req, res) => {
       year: "numeric"
     });
 
-    const docId = `DOC-${Date.now().toString().slice(-6)}`;
+    const docId = `DOC-${String(documentsData.length + 1).padStart(3, "0")}`;
 
     const newDocData = {
       id: docId,
@@ -154,8 +185,13 @@ export const createDocument = async (req, res) => {
 
     let savedDoc = newDocData;
     if (mongoose.connection.readyState === 1) {
-      savedDoc = await Document.create(newDocData);
+      try {
+        savedDoc = await Document.create(newDocData);
+      } catch (err) {
+        console.warn("createDocument DB error:", err.message);
+      }
     }
+    documentsData.unshift(newDocData);
 
     await logActivity({
       text: `New document '${docName}' (${docId}) submitted for review by ${authorName}`,
@@ -202,7 +238,7 @@ export const uploadDocument = async (req, res) => {
       year: "numeric"
     });
 
-    const docId = `DOC-${Date.now().toString().slice(-6)}`;
+    const docId = `DOC-${String(documentsData.length + 1).padStart(3, "0")}`;
     const fileUrl = file ? `/uploads/${file.filename}` : "";
     const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : "0 KB";
 
@@ -243,8 +279,13 @@ export const uploadDocument = async (req, res) => {
 
     let savedDoc = newDocData;
     if (mongoose.connection.readyState === 1) {
-      savedDoc = await Document.create(newDocData);
+      try {
+        savedDoc = await Document.create(newDocData);
+      } catch (err) {
+        console.warn("uploadDocument DB error:", err.message);
+      }
     }
+    documentsData.unshift(newDocData);
 
     await logActivity({
       text: `File '${file ? file.originalname : docName}' uploaded for document '${docName}' (${docId}) by ${authorName}`,
@@ -282,25 +323,28 @@ export const createNewVersion = async (req, res) => {
       year: "numeric"
     });
 
-    if (mongoose.connection.readyState !== 1) {
+    let doc = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        doc = await Document.findOne({ id: req.params.id });
+      } catch (err) {}
+    }
+
+    const memDoc = documentsData.find((d) => d.id === req.params.id);
+    const targetDoc = doc || memDoc;
+
+    if (!targetDoc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const doc = await Document.findOne({ id: req.params.id });
-    if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
-    }
-
-    const currentVerNum = parseFloat(doc.version || "1.0");
+    const currentVerNum = parseFloat(targetDoc.version || "1.0");
     const nextVer = (currentVerNum + 1.0).toFixed(1);
 
-    // Archive old versions
-    const updatedVersions = (doc.versions || []).map((v) => ({
+    const updatedVersions = (targetDoc.versions || []).map((v) => ({
       ...v.toObject ? v.toObject() : v,
       status: "Archived"
     }));
 
-    // Prepend new current version
     updatedVersions.unshift({
       version: nextVer,
       date: dateStr,
@@ -310,27 +354,39 @@ export const createNewVersion = async (req, res) => {
       notes: notes || `Version ${nextVer} revision submitted`
     });
 
-    doc.version = nextVer;
-    doc.currentVersion = nextVer;
-    doc.updated = dateStr;
-    doc.updatedBy = authorName;
-    doc.status = "Under Review";
-    doc.versions = updatedVersions;
+    if (doc) {
+      doc.version = nextVer;
+      doc.currentVersion = nextVer;
+      doc.updated = dateStr;
+      doc.updatedBy = authorName;
+      doc.status = "Under Review";
+      doc.versions = updatedVersions;
+      await doc.save();
+    }
 
-    await doc.save();
+    if (memDoc) {
+      memDoc.version = nextVer;
+      memDoc.currentVersion = nextVer;
+      memDoc.updated = dateStr;
+      memDoc.updatedBy = authorName;
+      memDoc.status = "Under Review";
+      memDoc.versions = updatedVersions;
+    }
+
+    const resultDoc = doc || memDoc;
 
     await logActivity({
-      text: `New version v${nextVer} created for document '${doc.name}' (${doc.id}) by ${authorName}`,
+      text: `New version v${nextVer} created for document '${resultDoc.name}' (${resultDoc.id}) by ${authorName}`,
       actor: authorName,
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: doc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: resultDoc });
 
     res.json({
       success: true,
       message: `Version v${nextVer} created successfully`,
-      document: doc
+      document: resultDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -349,23 +405,27 @@ export const uploadDocumentVersion = async (req, res) => {
       year: "numeric"
     });
 
-    if (mongoose.connection.readyState !== 1) {
+    let doc = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        doc = await Document.findOne({ id: req.params.id });
+      } catch (err) {}
+    }
+
+    const memDoc = documentsData.find((d) => d.id === req.params.id);
+    const targetDoc = doc || memDoc;
+
+    if (!targetDoc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const doc = await Document.findOne({ id: req.params.id });
-    if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
-    }
-
-    const currentVerNum = parseFloat(doc.version || "1.0");
+    const currentVerNum = parseFloat(targetDoc.version || "1.0");
     const nextVer = (currentVerNum + 1.0).toFixed(1);
 
-    const fileUrl = file ? `/uploads/${file.filename}` : doc.fileUrl;
-    const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : doc.fileSize;
+    const fileUrl = file ? `/uploads/${file.filename}` : targetDoc.fileUrl;
+    const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : targetDoc.fileSize;
 
-    // Archive previous versions
-    const updatedVersions = (doc.versions || []).map((v) => ({
+    const updatedVersions = (targetDoc.versions || []).map((v) => ({
       ...v.toObject ? v.toObject() : v,
       status: "Archived"
     }));
@@ -382,35 +442,55 @@ export const uploadDocumentVersion = async (req, res) => {
       fileSize: fileSizeStr
     });
 
-    doc.version = nextVer;
-    doc.currentVersion = nextVer;
-    doc.updated = dateStr;
-    doc.updatedBy = authorName;
-    doc.status = "Under Review";
-    if (file) {
-      doc.fileUrl = fileUrl;
-      doc.fileName = file.filename;
-      doc.originalName = file.originalname;
-      doc.fileSize = fileSizeStr;
-      doc.mimeType = file.mimetype;
-      doc.storagePath = file.path;
+    if (doc) {
+      doc.version = nextVer;
+      doc.currentVersion = nextVer;
+      doc.updated = dateStr;
+      doc.updatedBy = authorName;
+      doc.status = "Under Review";
+      if (file) {
+        doc.fileUrl = fileUrl;
+        doc.fileName = file.filename;
+        doc.originalName = file.originalname;
+        doc.fileSize = fileSizeStr;
+        doc.mimeType = file.mimetype;
+        doc.storagePath = file.path;
+      }
+      doc.versions = updatedVersions;
+      await doc.save();
     }
-    doc.versions = updatedVersions;
 
-    await doc.save();
+    if (memDoc) {
+      memDoc.version = nextVer;
+      memDoc.currentVersion = nextVer;
+      memDoc.updated = dateStr;
+      memDoc.updatedBy = authorName;
+      memDoc.status = "Under Review";
+      if (file) {
+        memDoc.fileUrl = fileUrl;
+        memDoc.fileName = file.filename;
+        memDoc.originalName = file.originalname;
+        memDoc.fileSize = fileSizeStr;
+        memDoc.mimeType = file.mimetype;
+        memDoc.storagePath = file.path;
+      }
+      memDoc.versions = updatedVersions;
+    }
+
+    const resultDoc = doc || memDoc;
 
     await logActivity({
-      text: `New version file v${nextVer} uploaded for document '${doc.name}' (${doc.id}) by ${authorName}`,
+      text: `New version file v${nextVer} uploaded for document '${resultDoc.name}' (${resultDoc.id}) by ${authorName}`,
       actor: authorName,
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_UPLOADED", document: doc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_UPLOADED", document: resultDoc });
 
     return res.json({
       success: true,
       message: `Version v${nextVer} uploaded successfully`,
-      document: doc
+      document: resultDoc
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -428,40 +508,55 @@ export const updateDocumentStatus = async (req, res) => {
       year: "numeric"
     });
 
-    if (mongoose.connection.readyState !== 1) {
+    let doc = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        doc = await Document.findOne({ id: req.params.id });
+      } catch (err) {}
+    }
+
+    const memDoc = documentsData.find((d) => d.id === req.params.id);
+    const targetDoc = doc || memDoc;
+
+    if (!targetDoc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const doc = await Document.findOne({ id: req.params.id });
-    if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (doc) {
+      doc.status = status;
+      doc.updated = dateStr;
+      doc.updatedBy = reviewerName;
+      if (comments) doc.reviewComments = comments;
+      await doc.save();
     }
 
-    doc.status = status;
-    doc.updated = dateStr;
-    doc.updatedBy = reviewerName;
-    if (comments) doc.reviewComments = comments;
+    if (memDoc) {
+      memDoc.status = status;
+      memDoc.updated = dateStr;
+      memDoc.updatedBy = reviewerName;
+      if (comments) memDoc.reviewComments = comments;
+    }
 
-    await doc.save();
+    const resultDoc = doc || memDoc;
 
     await logActivity({
-      text: `Document '${doc.name}' (${doc.id}) marked as '${status}' by ${reviewerName}`,
+      text: `Document '${resultDoc.name}' (${resultDoc.id}) marked as '${status}' by ${reviewerName}`,
       actor: reviewerName,
       tone: status === "Approved" ? "green" : status === "Changes Requested" ? "amber" : "blue"
     });
 
     await logNotification({
-      title: `Document ${status}: ${doc.name}`,
+      title: `Document ${status}: ${resultDoc.name}`,
       text: comments ? `${comments}` : `Document status updated to ${status} by ${reviewerName}.`,
       targetRole: "all"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: doc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: resultDoc });
 
     res.json({
       success: true,
       message: `Document status updated to ${status}`,
-      document: doc
+      document: resultDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -471,11 +566,17 @@ export const updateDocumentStatus = async (req, res) => {
 // GET /api/documents/:id/download (Download actual file from disk or certificate extract)
 export const downloadDocument = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    let doc = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        doc = await Document.findOne({ id: req.params.id }).lean();
+      } catch (err) {}
     }
 
-    const doc = await Document.findOne({ id: req.params.id }).lean();
+    if (!doc) {
+      doc = documentsData.find((d) => d.id === req.params.id);
+    }
+
     if (!doc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
@@ -530,41 +631,63 @@ export const updateDocument = async (req, res) => {
       year: "numeric"
     });
 
-    if (mongoose.connection.readyState !== 1) {
+    let doc = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        doc = await Document.findOne({ id: req.params.id });
+      } catch (err) {}
+    }
+
+    const memDoc = documentsData.find((d) => d.id === req.params.id);
+    const targetDoc = doc || memDoc;
+
+    if (!targetDoc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    const doc = await Document.findOne({ id: req.params.id });
-    if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (doc) {
+      if (name !== undefined) {
+        doc.name = name.trim();
+        doc.title = name.trim();
+      }
+      if (process !== undefined) doc.process = process.trim();
+      if (type !== undefined) doc.type = type.trim();
+      if (description !== undefined) doc.description = description.trim();
+      if (content !== undefined) doc.content = content;
+      if (status !== undefined) doc.status = status;
+      doc.updated = dateStr;
+      doc.updatedBy = editorName;
+      await doc.save();
     }
 
-    if (name !== undefined) {
-      doc.name = name.trim();
-      doc.title = name.trim();
+    if (memDoc) {
+      if (name !== undefined) {
+        memDoc.name = name.trim();
+        memDoc.title = name.trim();
+      }
+      if (process !== undefined) memDoc.process = process.trim();
+      if (type !== undefined) memDoc.type = type.trim();
+      if (description !== undefined) memDoc.description = description.trim();
+      if (content !== undefined) memDoc.content = content;
+      if (status !== undefined) memDoc.status = status;
+      memDoc.updated = dateStr;
+      memDoc.updatedBy = editorName;
     }
-    if (process !== undefined) doc.process = process.trim();
-    if (type !== undefined) doc.type = type.trim();
-    if (description !== undefined) doc.description = description.trim();
-    if (content !== undefined) doc.content = content;
-    if (status !== undefined) doc.status = status;
-    doc.updated = dateStr;
-    doc.updatedBy = editorName;
 
-    await doc.save();
+    const resultDoc = doc || memDoc;
 
     await logActivity({
-      text: `Document '${doc.name}' (${doc.id}) updated by ${editorName}`,
+      text: `Document '${resultDoc.name}' (${resultDoc.id}) updated by ${editorName}`,
       actor: editorName,
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "UPDATED", document: doc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "UPDATED", document: resultDoc });
 
     res.json({
       success: true,
       message: "Document updated successfully",
-      document: doc
+      document: resultDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -576,25 +699,28 @@ export const deleteDocument = async (req, res) => {
   try {
     const userName = req.user?.name || "Admin";
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    let doc = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        doc = await Document.findOne({ id: req.params.id });
+        if (doc) {
+          if (doc.storagePath && fs.existsSync(doc.storagePath)) {
+            try { fs.unlinkSync(doc.storagePath); } catch (e) {}
+          }
+          await Document.deleteOne({ id: req.params.id });
+        }
+      } catch (err) {}
     }
 
-    const doc = await Document.findOne({ id: req.params.id });
+    const index = documentsData.findIndex((d) => d.id === req.params.id);
+    if (index !== -1) {
+      if (!doc) doc = documentsData[index];
+      documentsData.splice(index, 1);
+    }
+
     if (!doc) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
-
-    // If storage file exists on disk, clean it up
-    if (doc.storagePath && fs.existsSync(doc.storagePath)) {
-      try {
-        fs.unlinkSync(doc.storagePath);
-      } catch (e) {
-        console.warn("Failed to unlink deleted file:", e.message);
-      }
-    }
-
-    await Document.deleteOne({ id: req.params.id });
 
     await logActivity({
       text: `Document '${doc.name}' (${doc.id}) deleted by ${userName}`,

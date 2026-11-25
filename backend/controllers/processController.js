@@ -3,40 +3,64 @@ import { Process } from "../models/Process.js";
 import { Document } from "../models/Document.js";
 import { Task } from "../models/Task.js";
 import { Employee } from "../models/Employee.js";
+import { processesData } from "../data/processes.js";
+import { tasksData } from "../data/tasks.js";
+import { documentsData } from "../data/documents.js";
+import { employeesData } from "../data/employees.js";
 
-// Dynamic recalculation of process document, employee and task counts from MongoDB
+// Dynamic recalculation of process document, employee and task counts
 export const getEnrichedProcesses = async () => {
-  if (mongoose.connection.readyState !== 1) {
-    return [];
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const processes = await Process.find({}).lean();
+      if (processes && processes.length > 0) {
+        const enriched = await Promise.all(
+          processes.map(async (proc) => {
+            const [docCount, empCount, activeTasks, completedTasks] = await Promise.all([
+              Document.countDocuments({ process: proc.name }),
+              Employee.countDocuments({ process: proc.name }),
+              Task.countDocuments({ process: proc.name, status: { $ne: "Completed" } }),
+              Task.countDocuments({ process: proc.name, status: "Completed" })
+            ]);
+
+            const totalTasks = activeTasks + completedTasks;
+            const calculatedProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (proc.progress || 0);
+
+            return {
+              ...proc,
+              documents: docCount,
+              employees: empCount,
+              active: activeTasks,
+              completed: completedTasks,
+              progress: calculatedProgress
+            };
+          })
+        );
+        return enriched;
+      }
+    } catch (err) {
+      console.warn("getEnrichedProcesses DB error, using synchronized dataset:", err.message);
+    }
   }
 
-  const processes = await Process.find({}).lean();
-  if (!processes || processes.length === 0) return [];
+  // Dual-mode fallback from controlled processes database
+  return processesData.map((proc) => {
+    const activeTasks = tasksData.filter((t) => t.process === proc.name && t.status !== "Completed").length;
+    const completedTasks = tasksData.filter((t) => t.process === proc.name && t.status === "Completed").length;
+    const totalTasks = activeTasks + completedTasks;
+    const calculatedProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (proc.progress || 0);
+    const docCount = documentsData.filter((d) => d.process === proc.name).length;
+    const empCount = employeesData.filter((e) => e.process === proc.name).length;
 
-  const enriched = await Promise.all(
-    processes.map(async (proc) => {
-      const [docCount, empCount, activeTasks, completedTasks] = await Promise.all([
-        Document.countDocuments({ process: proc.name }),
-        Employee.countDocuments({ process: proc.name }),
-        Task.countDocuments({ process: proc.name, status: { $ne: "Completed" } }),
-        Task.countDocuments({ process: proc.name, status: "Completed" })
-      ]);
-
-      const totalTasks = activeTasks + completedTasks;
-      const calculatedProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (proc.progress || 0);
-
-      return {
-        ...proc,
-        documents: docCount,
-        employees: empCount,
-        active: activeTasks,
-        completed: completedTasks,
-        progress: calculatedProgress
-      };
-    })
-  );
-
-  return enriched;
+    return {
+      ...proc,
+      documents: docCount || proc.documents || 0,
+      employees: empCount || proc.employees || 0,
+      active: activeTasks || proc.active || 0,
+      completed: completedTasks || proc.completed || 0,
+      progress: calculatedProgress
+    };
+  });
 };
 
 // GET /api/processes
@@ -61,11 +85,7 @@ export const createProcess = async (req, res) => {
       return res.status(400).json({ success: false, message: "Process name and owner are required" });
     }
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
-    }
-
-    const count = await Process.countDocuments();
+    const count = mongoose.connection.readyState === 1 ? await Process.countDocuments() : processesData.length;
     const newProcessData = {
       id: `PROC-${String(count + 1).padStart(3, "0")}`,
       name: name.trim(),
@@ -81,7 +101,13 @@ export const createProcess = async (req, res) => {
       description: description || "Controlled QMS business process"
     };
 
-    const created = await Process.create(newProcessData);
+    let created = newProcessData;
+    if (mongoose.connection.readyState === 1) {
+      created = await Process.create(newProcessData);
+    } else {
+      processesData.push(newProcessData);
+    }
+
     res.status(201).json({ success: true, process: created });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -101,16 +127,20 @@ export const getHeadOverview = async (req, res) => {
       ? Math.round(enriched.reduce((total, p) => total + (p.progress || 0), 0) / totalProcesses)
       : 0;
 
-    let totalDocuments = 0;
-    let totalTasks = 0;
-    let totalEmployees = 0;
+    let totalDocuments = documentsData.length;
+    let totalTasks = tasksData.length;
+    let totalEmployees = employeesData.length;
 
     if (mongoose.connection.readyState === 1) {
-      [totalDocuments, totalTasks, totalEmployees] = await Promise.all([
-        Document.countDocuments(),
-        Task.countDocuments(),
-        Employee.countDocuments()
-      ]);
+      try {
+        [totalDocuments, totalTasks, totalEmployees] = await Promise.all([
+          Document.countDocuments(),
+          Task.countDocuments(),
+          Employee.countDocuments()
+        ]);
+      } catch (err) {
+        console.warn("getHeadOverview count error:", err.message);
+      }
     }
 
     const stats = {

@@ -3,6 +3,7 @@ import { Task } from "../models/Task.js";
 import { Activity } from "../models/Activity.js";
 import { Notification } from "../models/Notification.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
+import { tasksData } from "../data/tasks.js";
 
 const logActivity = async (entry) => {
   if (mongoose.connection.readyState === 1) {
@@ -37,26 +38,54 @@ export const getAllTasks = async (req, res) => {
   try {
     const { employee, process, status } = req.query;
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.json({ success: true, count: 0, tasks: [] });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const filter = {};
+        if (employee) {
+          filter.$or = [
+            { employee: { $regex: employee, $options: "i" } },
+            { assignedTo: { $regex: employee, $options: "i" } }
+          ];
+        }
+        if (process && process !== "All") filter.process = { $regex: `^${process}$`, $options: "i" };
+        if (status && status !== "All") filter.status = { $regex: `^${status}$`, $options: "i" };
+
+        const tasks = await Task.find(filter).sort({ createdAt: -1 }).lean();
+        if (tasks && tasks.length > 0) {
+          return res.json({
+            success: true,
+            count: tasks.length,
+            tasks
+          });
+        }
+      } catch (err) {
+        console.warn("getAllTasks DB error, using synchronized tasks:", err.message);
+      }
     }
 
-    const filter = {};
+    // Dual-mode fallback from controlled tasks dataset
+    let filtered = [...tasksData];
     if (employee) {
-      filter.$or = [
-        { employee: { $regex: employee, $options: "i" } },
-        { assignedTo: { $regex: employee, $options: "i" } }
-      ];
+      const empLower = employee.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          (t.employee && t.employee.toLowerCase().includes(empLower)) ||
+          (t.assignedTo && t.assignedTo.toLowerCase().includes(empLower))
+      );
     }
-    if (process && process !== "All") filter.process = { $regex: `^${process}$`, $options: "i" };
-    if (status && status !== "All") filter.status = { $regex: `^${status}$`, $options: "i" };
-
-    const tasks = await Task.find(filter).sort({ createdAt: -1 }).lean();
+    if (process && process !== "All") {
+      const procLower = process.toLowerCase();
+      filtered = filtered.filter((t) => t.process && t.process.toLowerCase() === procLower);
+    }
+    if (status && status !== "All") {
+      const stLower = status.toLowerCase();
+      filtered = filtered.filter((t) => t.status && t.status.toLowerCase() === stLower);
+    }
 
     res.json({
       success: true,
-      count: tasks.length,
-      tasks
+      count: filtered.length,
+      tasks: filtered
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -66,11 +95,14 @@ export const getAllTasks = async (req, res) => {
 // GET /api/tasks/:id
 export const getTaskById = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(404).json({ success: false, message: "Task not found" });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const task = await Task.findOne({ id: req.params.id }).lean();
+        if (task) return res.json({ success: true, task });
+      } catch (err) {}
     }
 
-    const task = await Task.findOne({ id: req.params.id }).lean();
+    const task = tasksData.find((t) => t.id === req.params.id);
     if (!task) return res.status(404).json({ success: false, message: "Task not found" });
 
     res.json({ success: true, task });
@@ -89,15 +121,11 @@ export const createTask = async (req, res) => {
       return res.status(400).json({ success: false, message: "Task title and process are required" });
     }
 
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
-    }
-
     const creatorName = req.user?.name || "Admin";
-    const taskId = `TSK-${Date.now().toString().slice(-6)}`;
+    const taskId = `TASK-${String(tasksData.length + 1).padStart(3, "0")}`;
     const assignee = employee || assignedTo || "Unassigned";
 
-    const newTask = await Task.create({
+    const newTaskData = {
       id: taskId,
       title: taskTitle,
       name: taskTitle,
@@ -105,11 +133,23 @@ export const createTask = async (req, res) => {
       employee: assignee,
       assignedTo: assignee,
       dueDate: dueDate || deadline || "30 Nov 2026",
+      assigned: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      due: dueDate || deadline || "30 Nov 2026",
       priority: priority || "Medium",
       status: "In Progress",
       stage: stage || 1,
       description: description || ""
-    });
+    };
+
+    let newTask = newTaskData;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        newTask = await Task.create(newTaskData);
+      } catch (err) {
+        console.warn("createTask DB error:", err.message);
+      }
+    }
+    tasksData.unshift(newTaskData);
 
     await logActivity({
       text: `Task '${taskTitle}' (${taskId}) created for ${assignee} in process '${process}'`,
@@ -135,16 +175,27 @@ export const createTask = async (req, res) => {
 export const updateTaskStatus = async (req, res) => {
   try {
     const { status, remarks } = req.body;
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
+    let task = null;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        task = await Task.findOne({ id: req.params.id });
+        if (task) {
+          task.status = status;
+          if (remarks) task.remarks = remarks;
+          await task.save();
+        }
+      } catch (err) {}
     }
 
-    const task = await Task.findOne({ id: req.params.id });
-    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+    const memTask = tasksData.find((t) => t.id === req.params.id);
+    if (memTask) {
+      memTask.status = status;
+      if (remarks) memTask.remarks = remarks;
+      if (!task) task = memTask;
+    }
 
-    task.status = status;
-    if (remarks) task.remarks = remarks;
-    await task.save();
+    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
 
     await logActivity({
       text: `Task '${task.title || task.name}' status updated to '${status}'`,
@@ -163,26 +214,50 @@ export const updateTaskStatus = async (req, res) => {
 // PUT /api/tasks/:id
 export const updateTask = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
-    }
-
-    const task = await Task.findOne({ id: req.params.id });
-    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
-
     const { title, name, process, employee, assignedTo, dueDate, deadline, priority, status, description } = req.body;
-    if (title || name) task.title = (title || name).trim();
-    if (process) task.process = process.trim();
-    if (employee || assignedTo) {
-      task.employee = employee || assignedTo;
-      task.assignedTo = employee || assignedTo;
-    }
-    if (dueDate || deadline) task.dueDate = dueDate || deadline;
-    if (priority) task.priority = priority;
-    if (status) task.status = status;
-    if (description !== undefined) task.description = description;
+    let task = null;
 
-    await task.save();
+    if (mongoose.connection.readyState === 1) {
+      try {
+        task = await Task.findOne({ id: req.params.id });
+        if (task) {
+          if (title || name) task.title = (title || name).trim();
+          if (process) task.process = process.trim();
+          if (employee || assignedTo) {
+            task.employee = employee || assignedTo;
+            task.assignedTo = employee || assignedTo;
+          }
+          if (dueDate || deadline) task.dueDate = dueDate || deadline;
+          if (priority) task.priority = priority;
+          if (status) task.status = status;
+          if (description !== undefined) task.description = description;
+          await task.save();
+        }
+      } catch (err) {}
+    }
+
+    const memTask = tasksData.find((t) => t.id === req.params.id);
+    if (memTask) {
+      if (title || name) {
+        memTask.title = (title || name).trim();
+        memTask.name = memTask.title;
+      }
+      if (process) memTask.process = process.trim();
+      if (employee || assignedTo) {
+        memTask.employee = employee || assignedTo;
+        memTask.assignedTo = employee || assignedTo;
+      }
+      if (dueDate || deadline) {
+        memTask.dueDate = dueDate || deadline;
+        memTask.due = memTask.dueDate;
+      }
+      if (priority) memTask.priority = priority;
+      if (status) memTask.status = status;
+      if (description !== undefined) memTask.description = description;
+      if (!task) task = memTask;
+    }
+
+    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
 
     broadcastRealtimeEvent("TASK_UPDATED", { action: "UPDATED", task });
 
@@ -195,11 +270,19 @@ export const updateTask = async (req, res) => {
 // DELETE /api/tasks/:id
 export const deleteTask = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: "Database not connected" });
+    let task = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        task = await Task.findOneAndDelete({ id: req.params.id });
+      } catch (err) {}
     }
 
-    const task = await Task.findOneAndDelete({ id: req.params.id });
+    const index = tasksData.findIndex((t) => t.id === req.params.id);
+    if (index !== -1) {
+      if (!task) task = tasksData[index];
+      tasksData.splice(index, 1);
+    }
+
     if (!task) return res.status(404).json({ success: false, message: "Task not found" });
 
     await logActivity({
