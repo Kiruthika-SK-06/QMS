@@ -16,7 +16,7 @@ import { useApp } from "../context/AppContext";
 import PageIntro from "../components/common/PageIntro";
 
 export default function VersionHistoryPage() {
-  const { auditList = [], externalAuditList = [], currentUser } = useApp();
+  const { auditList = [], externalAuditList = [], activities = [], currentUser } = useApp();
 
   // Trust Head has Audit Trail removed completely
   if (currentUser?.role === "Head") {
@@ -277,6 +277,23 @@ export default function VersionHistoryPage() {
     return events;
   }, [externalAuditList]);
 
+  // Extract all System Activity & User Function events
+  const activityEvents = useMemo(() => {
+    return (activities || []).map((act, idx) => ({
+      id: act.id || `act-${idx}`,
+      auditType: "activity",
+      auditId: act.id || `ACT-${String(idx + 1).padStart(3, "0")}`,
+      auditTitle: act.title || "User Function",
+      stage: 1,
+      stageLabel: act.title || "Database Logged",
+      action: act.text || act.action || "System Function Executed",
+      actor: act.actor || "User",
+      timestamp: act.timestamp ? (act.timestamp.includes("T") ? new Date(act.timestamp).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : act.timestamp) : act.time || "Recently",
+      details: act.detail || act.text || "Database record updated successfully.",
+      link: null
+    }));
+  }, [activities]);
+
   // Combine and sort all events chronologically (newest first)
   const allEvents = useMemo(() => {
     let combined = [];
@@ -285,6 +302,9 @@ export default function VersionHistoryPage() {
     }
     if (filterType === "all" || filterType === "external") {
       combined = combined.concat(externalAuditEvents);
+    }
+    if (filterType === "all" || filterType === "activities") {
+      combined = combined.concat(activityEvents);
     }
 
     if (searchQuery.trim()) {
@@ -302,7 +322,7 @@ export default function VersionHistoryPage() {
 
     // Sort descending by timestamp string
     return combined.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
-  }, [internalAuditEvents, externalAuditEvents, filterType, searchQuery]);
+  }, [internalAuditEvents, externalAuditEvents, activityEvents, filterType, searchQuery]);
 
   // Summary counts
   const totalInternal = (auditList || []).length;
@@ -401,7 +421,7 @@ export default function VersionHistoryPage() {
             className={filterType === "all" ? "tab active" : "tab"}
             onClick={() => setFilterType("all")}
           >
-            All Audit Trails ({internalAuditEvents.length + externalAuditEvents.length})
+            All Audit Trails ({allEvents.length})
           </button>
           <button
             className={filterType === "internal" ? "tab active" : "tab"}
@@ -414,6 +434,12 @@ export default function VersionHistoryPage() {
             onClick={() => setFilterType("external")}
           >
             External Quality Audits ({externalAuditEvents.length})
+          </button>
+          <button
+            className={filterType === "activities" ? "tab active" : "tab"}
+            onClick={() => setFilterType("activities")}
+          >
+            User Actions & Functions ({activityEvents.length})
           </button>
         </div>
       </div>
@@ -442,6 +468,7 @@ export default function VersionHistoryPage() {
               ) : (
                 allEvents.map((event) => {
                   const isInternal = event.auditType === "internal";
+                  const isExternal = event.auditType === "external";
                   return (
                     <tr key={event.id}>
                       <td style={{ minWidth: "160px" }}>
@@ -454,12 +481,12 @@ export default function VersionHistoryPage() {
                               fontWeight: "700",
                               padding: "2px 8px",
                               borderRadius: "4px",
-                              background: isInternal ? "#f0fdf4" : "#eff6ff",
-                              color: isInternal ? "#166534" : "#1e40af",
-                              border: `1px solid ${isInternal ? "#bbf7d0" : "#bfdbfe"}`
+                              background: isInternal ? "#f0fdf4" : isExternal ? "#eff6ff" : "#fdf4ff",
+                              color: isInternal ? "#166534" : isExternal ? "#1e40af" : "#86198f",
+                              border: `1px solid ${isInternal ? "#bbf7d0" : isExternal ? "#bfdbfe" : "#f5d0fe"}`
                             }}
                           >
-                            {isInternal ? "Internal Audit" : "External Audit"}
+                            {isInternal ? "Internal Audit" : isExternal ? "External Audit" : "System Function"}
                           </span>
                           <strong style={{ fontSize: "13px", color: "var(--ink)" }}>{event.auditId}</strong>
                           <span style={{ fontSize: "11.5px", color: "var(--muted)" }}>{event.auditTitle}</span>
@@ -471,11 +498,11 @@ export default function VersionHistoryPage() {
                           style={{
                             fontSize: "12px",
                             fontWeight: "600",
-                            color: isInternal ? "#15803d" : "#0369a1",
-                            background: isInternal ? "#f0fdf4" : "#f0f9ff",
+                            color: isInternal ? "#15803d" : isExternal ? "#0369a1" : "#7e22ce",
+                            background: isInternal ? "#f0fdf4" : isExternal ? "#f0f9ff" : "#faf5ff",
                             padding: "3px 8px",
                             borderRadius: "6px",
-                            border: `1px solid ${isInternal ? "#dcfce7" : "#e0f2fe"}`,
+                            border: `1px solid ${isInternal ? "#dcfce7" : isExternal ? "#e0f2fe" : "#f3e8ff"}`,
                             display: "inline-block"
                           }}
                         >
@@ -509,23 +536,29 @@ export default function VersionHistoryPage() {
                       </td>
 
                       <td>
-                        <NavLink
-                          to={event.link}
-                          className="row-action"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            textDecoration: "none",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                            color: isInternal ? "#166534" : "#1e40af"
-                          }}
-                          title="Open full audit record"
-                        >
-                          <span>Open</span>
-                          <ExternalLink size={12} />
-                        </NavLink>
+                        {event.link ? (
+                          <NavLink
+                            to={event.link}
+                            className="row-action"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              textDecoration: "none",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              color: isInternal ? "#166534" : "#1e40af"
+                            }}
+                            title="Open full audit record"
+                          >
+                            <span>Open</span>
+                            <ExternalLink size={12} />
+                          </NavLink>
+                        ) : (
+                          <span style={{ fontSize: "11.5px", color: "#6b7280", fontWeight: "500", background: "#f3f4f6", padding: "2px 6px", borderRadius: "4px" }}>
+                            Stored in DB
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

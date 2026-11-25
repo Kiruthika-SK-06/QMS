@@ -2,25 +2,10 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import { Document } from "../models/Document.js";
-import { Activity } from "../models/Activity.js";
 import { Notification } from "../models/Notification.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 import { documentsData } from "../data/documents.js";
-
-// Helper to log activity
-const logActivity = async (entry) => {
-  if (mongoose.connection.readyState === 1) {
-    try {
-      await Activity.create({
-        ...entry,
-        id: entry.id || `ACT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        timestamp: entry.timestamp || new Date().toISOString()
-      });
-    } catch (err) {
-      console.warn("Activity DB log error:", err.message);
-    }
-  }
-};
+import { saveItem, updateItem, deleteItem, recordActivity } from "../config/storageEngine.js";
 
 // Helper to log notification
 const logNotification = async (entry) => {
@@ -72,7 +57,7 @@ export const getAllDocuments = async (req, res) => {
       }
     }
 
-    // Dual-mode fallback from controlled documents database
+    // Dual-mode fallback from persistent documents database
     let filtered = [...documentsData];
 
     if (type && type !== "All") {
@@ -125,7 +110,7 @@ export const getDocumentById = async (req, res) => {
 
     const doc = documentsData.find((d) => d.id === req.params.id);
     if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
     res.json({ success: true, document: doc });
@@ -134,7 +119,7 @@ export const getDocumentById = async (req, res) => {
   }
 };
 
-// POST /api/documents (Create controlled document metadata)
+// POST /api/documents (Create controlled document in database & log activity)
 export const createDocument = async (req, res) => {
   try {
     const { name, title, type, process, description, content, owner } = req.body;
@@ -183,19 +168,16 @@ export const createDocument = async (req, res) => {
       ]
     };
 
-    let savedDoc = newDocData;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        savedDoc = await Document.create(newDocData);
-      } catch (err) {
-        console.warn("createDocument DB error:", err.message);
-      }
-    }
-    documentsData.unshift(newDocData);
+    // Stored in database & persistent file store
+    await saveItem("documents", newDocData, Document);
 
-    await logActivity({
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
       text: `New document '${docName}' (${docId}) submitted for review by ${authorName}`,
+      detail: `Type: ${type || "Procedures"} | Process: ${process} | Initial version: v1.0`,
       actor: authorName,
+      role: req.user?.role || "owner",
       tone: "blue"
     });
 
@@ -205,19 +187,19 @@ export const createDocument = async (req, res) => {
       targetRole: "qm"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_CREATED", { action: "CREATED", document: savedDoc });
+    broadcastRealtimeEvent("DOCUMENT_CREATED", { action: "CREATED", document: newDocData });
 
     res.status(201).json({
       success: true,
-      message: "Document created successfully",
-      document: savedDoc
+      message: "Document created and stored in database successfully",
+      document: newDocData
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/documents/upload (Upload actual file using Multer)
+// POST /api/documents/upload (Upload actual file using Multer, store in database & log activity)
 export const uploadDocument = async (req, res) => {
   try {
     const file = req.file;
@@ -277,19 +259,16 @@ export const uploadDocument = async (req, res) => {
       ]
     };
 
-    let savedDoc = newDocData;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        savedDoc = await Document.create(newDocData);
-      } catch (err) {
-        console.warn("uploadDocument DB error:", err.message);
-      }
-    }
-    documentsData.unshift(newDocData);
+    // Stored in database & persistent file store
+    await saveItem("documents", newDocData, Document);
 
-    await logActivity({
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
       text: `File '${file ? file.originalname : docName}' uploaded for document '${docName}' (${docId}) by ${authorName}`,
+      detail: `File size: ${fileSizeStr} | Process: ${process} | Stored at: ${fileUrl || "Database"}`,
       actor: authorName,
+      role: req.user?.role || "owner",
       tone: "blue"
     });
 
@@ -299,12 +278,12 @@ export const uploadDocument = async (req, res) => {
       targetRole: "all"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_CREATED", { action: "UPLOADED", document: savedDoc });
+    broadcastRealtimeEvent("DOCUMENT_CREATED", { action: "UPLOADED", document: newDocData });
 
     return res.status(201).json({
       success: true,
-      message: "Document and file uploaded successfully",
-      document: savedDoc
+      message: "Document and file uploaded and stored in database successfully",
+      document: newDocData
     });
   } catch (error) {
     console.error("uploadDocument error:", error);
@@ -312,7 +291,7 @@ export const uploadDocument = async (req, res) => {
   }
 };
 
-// POST /api/documents/:id/versions (Create new version)
+// POST /api/documents/:id/versions (Create new version in database)
 export const createNewVersion = async (req, res) => {
   try {
     const { notes } = req.body;
@@ -323,25 +302,16 @@ export const createNewVersion = async (req, res) => {
       year: "numeric"
     });
 
-    let doc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        doc = await Document.findOne({ id: req.params.id });
-      } catch (err) {}
-    }
-
     const memDoc = documentsData.find((d) => d.id === req.params.id);
-    const targetDoc = doc || memDoc;
-
-    if (!targetDoc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (!memDoc) {
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
-    const currentVerNum = parseFloat(targetDoc.version || "1.0");
+    const currentVerNum = parseFloat(memDoc.version || "1.0");
     const nextVer = (currentVerNum + 1.0).toFixed(1);
 
-    const updatedVersions = (targetDoc.versions || []).map((v) => ({
-      ...v.toObject ? v.toObject() : v,
+    const updatedVersions = (memDoc.versions || []).map((v) => ({
+      ...v,
       status: "Archived"
     }));
 
@@ -354,39 +324,32 @@ export const createNewVersion = async (req, res) => {
       notes: notes || `Version ${nextVer} revision submitted`
     });
 
-    if (doc) {
-      doc.version = nextVer;
-      doc.currentVersion = nextVer;
-      doc.updated = dateStr;
-      doc.updatedBy = authorName;
-      doc.status = "Under Review";
-      doc.versions = updatedVersions;
-      await doc.save();
-    }
+    const updates = {
+      version: nextVer,
+      currentVersion: nextVer,
+      updated: dateStr,
+      updatedBy: authorName,
+      status: "Under Review",
+      versions: updatedVersions
+    };
 
-    if (memDoc) {
-      memDoc.version = nextVer;
-      memDoc.currentVersion = nextVer;
-      memDoc.updated = dateStr;
-      memDoc.updatedBy = authorName;
-      memDoc.status = "Under Review";
-      memDoc.versions = updatedVersions;
-    }
+    await updateItem("documents", "id", memDoc.id, updates, Document);
 
-    const resultDoc = doc || memDoc;
-
-    await logActivity({
-      text: `New version v${nextVer} created for document '${resultDoc.name}' (${resultDoc.id}) by ${authorName}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
+      text: `New version v${nextVer} created for document '${memDoc.name}' (${memDoc.id}) by ${authorName}`,
+      detail: `Revision notes: ${notes || "New controlled version"}`,
       actor: authorName,
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: resultDoc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_CREATED", document: memDoc });
 
     res.json({
       success: true,
-      message: `Version v${nextVer} created successfully`,
-      document: resultDoc
+      message: `Version v${nextVer} created and stored in database successfully`,
+      document: memDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -405,28 +368,19 @@ export const uploadDocumentVersion = async (req, res) => {
       year: "numeric"
     });
 
-    let doc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        doc = await Document.findOne({ id: req.params.id });
-      } catch (err) {}
-    }
-
     const memDoc = documentsData.find((d) => d.id === req.params.id);
-    const targetDoc = doc || memDoc;
-
-    if (!targetDoc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (!memDoc) {
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
-    const currentVerNum = parseFloat(targetDoc.version || "1.0");
+    const currentVerNum = parseFloat(memDoc.version || "1.0");
     const nextVer = (currentVerNum + 1.0).toFixed(1);
 
-    const fileUrl = file ? `/uploads/${file.filename}` : targetDoc.fileUrl;
-    const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : targetDoc.fileSize;
+    const fileUrl = file ? `/uploads/${file.filename}` : memDoc.fileUrl;
+    const fileSizeStr = file ? `${(file.size / 1024).toFixed(1)} KB` : memDoc.fileSize;
 
-    const updatedVersions = (targetDoc.versions || []).map((v) => ({
-      ...v.toObject ? v.toObject() : v,
+    const updatedVersions = (memDoc.versions || []).map((v) => ({
+      ...v,
       status: "Archived"
     }));
 
@@ -442,55 +396,41 @@ export const uploadDocumentVersion = async (req, res) => {
       fileSize: fileSizeStr
     });
 
-    if (doc) {
-      doc.version = nextVer;
-      doc.currentVersion = nextVer;
-      doc.updated = dateStr;
-      doc.updatedBy = authorName;
-      doc.status = "Under Review";
-      if (file) {
-        doc.fileUrl = fileUrl;
-        doc.fileName = file.filename;
-        doc.originalName = file.originalname;
-        doc.fileSize = fileSizeStr;
-        doc.mimeType = file.mimetype;
-        doc.storagePath = file.path;
-      }
-      doc.versions = updatedVersions;
-      await doc.save();
+    const updates = {
+      version: nextVer,
+      currentVersion: nextVer,
+      updated: dateStr,
+      updatedBy: authorName,
+      status: "Under Review",
+      versions: updatedVersions
+    };
+
+    if (file) {
+      updates.fileUrl = fileUrl;
+      updates.fileName = file.filename;
+      updates.originalName = file.originalname;
+      updates.fileSize = fileSizeStr;
+      updates.mimeType = file.mimetype;
+      updates.storagePath = file.path;
     }
 
-    if (memDoc) {
-      memDoc.version = nextVer;
-      memDoc.currentVersion = nextVer;
-      memDoc.updated = dateStr;
-      memDoc.updatedBy = authorName;
-      memDoc.status = "Under Review";
-      if (file) {
-        memDoc.fileUrl = fileUrl;
-        memDoc.fileName = file.filename;
-        memDoc.originalName = file.originalname;
-        memDoc.fileSize = fileSizeStr;
-        memDoc.mimeType = file.mimetype;
-        memDoc.storagePath = file.path;
-      }
-      memDoc.versions = updatedVersions;
-    }
+    await updateItem("documents", "id", memDoc.id, updates, Document);
 
-    const resultDoc = doc || memDoc;
-
-    await logActivity({
-      text: `New version file v${nextVer} uploaded for document '${resultDoc.name}' (${resultDoc.id}) by ${authorName}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
+      text: `New version file v${nextVer} uploaded for document '${memDoc.name}' (${memDoc.id}) by ${authorName}`,
+      detail: `File: ${file ? file.originalname : "Digital version"} | File size: ${fileSizeStr}`,
       actor: authorName,
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_UPLOADED", document: resultDoc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "VERSION_UPLOADED", document: memDoc });
 
     return res.json({
       success: true,
-      message: `Version v${nextVer} uploaded successfully`,
-      document: resultDoc
+      message: `Version v${nextVer} uploaded and stored in database successfully`,
+      document: memDoc
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -508,55 +448,42 @@ export const updateDocumentStatus = async (req, res) => {
       year: "numeric"
     });
 
-    let doc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        doc = await Document.findOne({ id: req.params.id });
-      } catch (err) {}
-    }
-
     const memDoc = documentsData.find((d) => d.id === req.params.id);
-    const targetDoc = doc || memDoc;
-
-    if (!targetDoc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (!memDoc) {
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
-    if (doc) {
-      doc.status = status;
-      doc.updated = dateStr;
-      doc.updatedBy = reviewerName;
-      if (comments) doc.reviewComments = comments;
-      await doc.save();
-    }
+    const updates = {
+      status,
+      updated: dateStr,
+      updatedBy: reviewerName
+    };
+    if (comments) updates.reviewComments = comments;
 
-    if (memDoc) {
-      memDoc.status = status;
-      memDoc.updated = dateStr;
-      memDoc.updatedBy = reviewerName;
-      if (comments) memDoc.reviewComments = comments;
-    }
+    await updateItem("documents", "id", memDoc.id, updates, Document);
 
-    const resultDoc = doc || memDoc;
-
-    await logActivity({
-      text: `Document '${resultDoc.name}' (${resultDoc.id}) marked as '${status}' by ${reviewerName}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
+      text: `Document '${memDoc.name}' (${memDoc.id}) marked as '${status}' by ${reviewerName}`,
+      detail: comments ? `Reviewer Comments: ${comments}` : `Document status moved to ${status}`,
       actor: reviewerName,
+      role: req.user?.role || "qm",
       tone: status === "Approved" ? "green" : status === "Changes Requested" ? "amber" : "blue"
     });
 
     await logNotification({
-      title: `Document ${status}: ${resultDoc.name}`,
+      title: `Document ${status}: ${memDoc.name}`,
       text: comments ? `${comments}` : `Document status updated to ${status} by ${reviewerName}.`,
       targetRole: "all"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: resultDoc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "STATUS_UPDATED", document: memDoc });
 
     res.json({
       success: true,
-      message: `Document status updated to ${status}`,
-      document: resultDoc
+      message: `Document status updated to ${status} in database successfully`,
+      document: memDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -578,7 +505,7 @@ export const downloadDocument = async (req, res) => {
     }
 
     if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
     // If actual uploaded file exists on disk, serve it directly
@@ -620,7 +547,7 @@ Quality Assurance & Compliance Division - C-DAC
   }
 };
 
-// PUT or PATCH /api/documents/:id (Edit document metadata)
+// PUT or PATCH /api/documents/:id (Edit document metadata in database)
 export const updateDocument = async (req, res) => {
   try {
     const { name, process, type, description, content, status } = req.body;
@@ -631,63 +558,42 @@ export const updateDocument = async (req, res) => {
       year: "numeric"
     });
 
-    let doc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        doc = await Document.findOne({ id: req.params.id });
-      } catch (err) {}
-    }
-
     const memDoc = documentsData.find((d) => d.id === req.params.id);
-    const targetDoc = doc || memDoc;
-
-    if (!targetDoc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
+    if (!memDoc) {
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
-    if (doc) {
-      if (name !== undefined) {
-        doc.name = name.trim();
-        doc.title = name.trim();
-      }
-      if (process !== undefined) doc.process = process.trim();
-      if (type !== undefined) doc.type = type.trim();
-      if (description !== undefined) doc.description = description.trim();
-      if (content !== undefined) doc.content = content;
-      if (status !== undefined) doc.status = status;
-      doc.updated = dateStr;
-      doc.updatedBy = editorName;
-      await doc.save();
+    const updates = {
+      updated: dateStr,
+      updatedBy: editorName
+    };
+    if (name !== undefined) {
+      updates.name = name.trim();
+      updates.title = name.trim();
     }
+    if (process !== undefined) updates.process = process.trim();
+    if (type !== undefined) updates.type = type.trim();
+    if (description !== undefined) updates.description = description.trim();
+    if (content !== undefined) updates.content = content;
+    if (status !== undefined) updates.status = status;
 
-    if (memDoc) {
-      if (name !== undefined) {
-        memDoc.name = name.trim();
-        memDoc.title = name.trim();
-      }
-      if (process !== undefined) memDoc.process = process.trim();
-      if (type !== undefined) memDoc.type = type.trim();
-      if (description !== undefined) memDoc.description = description.trim();
-      if (content !== undefined) memDoc.content = content;
-      if (status !== undefined) memDoc.status = status;
-      memDoc.updated = dateStr;
-      memDoc.updatedBy = editorName;
-    }
+    await updateItem("documents", "id", memDoc.id, updates, Document);
 
-    const resultDoc = doc || memDoc;
-
-    await logActivity({
-      text: `Document '${resultDoc.name}' (${resultDoc.id}) updated by ${editorName}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
+      text: `Document '${memDoc.name}' (${memDoc.id}) updated by ${editorName}`,
+      detail: `Modified fields: ${Object.keys(updates).join(", ")}`,
       actor: editorName,
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "UPDATED", document: resultDoc });
+    broadcastRealtimeEvent("DOCUMENT_UPDATED", { action: "UPDATED", document: memDoc });
 
     res.json({
       success: true,
-      message: "Document updated successfully",
-      document: resultDoc
+      message: "Document updated in database successfully",
+      document: memDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -698,32 +604,21 @@ export const updateDocument = async (req, res) => {
 export const deleteDocument = async (req, res) => {
   try {
     const userName = req.user?.name || "Admin";
-
-    let doc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        doc = await Document.findOne({ id: req.params.id });
-        if (doc) {
-          if (doc.storagePath && fs.existsSync(doc.storagePath)) {
-            try { fs.unlinkSync(doc.storagePath); } catch (e) {}
-          }
-          await Document.deleteOne({ id: req.params.id });
-        }
-      } catch (err) {}
+    const memDoc = documentsData.find((d) => d.id === req.params.id);
+    if (!memDoc) {
+      return res.status(404).json({ success: false, message: "Document not found in database" });
     }
 
-    const index = documentsData.findIndex((d) => d.id === req.params.id);
-    if (index !== -1) {
-      if (!doc) doc = documentsData[index];
-      documentsData.splice(index, 1);
+    if (memDoc.storagePath && fs.existsSync(memDoc.storagePath)) {
+      try { fs.unlinkSync(memDoc.storagePath); } catch (e) {}
     }
 
-    if (!doc) {
-      return res.status(404).json({ success: false, message: "Document not found" });
-    }
+    await deleteItem("documents", "id", memDoc.id, Document);
 
-    await logActivity({
-      text: `Document '${doc.name}' (${doc.id}) deleted by ${userName}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Document Control",
+      text: `Document '${memDoc.name}' (${memDoc.id}) deleted by ${userName}`,
       actor: userName,
       tone: "red"
     });
@@ -732,8 +627,8 @@ export const deleteDocument = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Document deleted successfully",
-      document: doc
+      message: "Document deleted from database successfully",
+      document: memDoc
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

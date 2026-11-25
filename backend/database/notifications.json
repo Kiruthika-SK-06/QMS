@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "title": "New MRM ready for distribution",
+    "text": "Q3 Academic Review Meeting was approved by Trust Head. QMS Coordinator can now distribute to Course Coordinators.",
+    "time": "15 minutes ago",
+    "targetRole": "qm",
+    "read": false,
+    "createdAt": "2026-11-25T08:35:53.299Z"
+  },
+  {
+    "id": 2,
+    "title": "Course Management Procedure updated to Version 3.0",
+    "text": "The latest approved version is available in the controlled library.",
+    "time": "2 hours ago",
+    "targetRole": "all",
+    "read": false,
+    "createdAt": "2026-11-25T06:50:53.300Z"
+  },
+  {
+    "id": 3,
+    "title": "Document submitted for QMS review",
+    "text": "Course Delivery Template (DOC-003) is awaiting QMS Coordinator review.",
+    "time": "Yesterday",
+    "targetRole": "qm",
+    "read": true,
+    "createdAt": "2026-11-24T08:50:53.300Z"
+  },
+  {
+    "id": 4,
+    "title": "Feedback on Course Syllabus Form",
+    "text": "Please review notes regarding industry project requirements.",
+    "time": "Yesterday",
+    "targetRole": "owner",
+    "read": true,
+    "createdAt": "2026-11-24T04:50:53.300Z"
+  },
+  {
+    "id": 5,
+    "title": "Document approved",
+    "text": "Course Curriculum Procedure (DOC-004) was approved by QMS Coordinator.",
+    "time": "2 days ago",
+    "targetRole": "all",
+    "read": true,
+    "createdAt": "2026-11-23T08:50:53.300Z"
+  },
+  {
+    "id": 6,
+    "title": "Internal Audit Checklist published",
+    "text": "Version 3.1 is now active for internal quality audit preparations.",
+    "time": "3 days ago",
+    "targetRole": "all",
+    "read": true,
+    "createdAt": "2026-11-22T08:50:53.300Z"
+  }
+]

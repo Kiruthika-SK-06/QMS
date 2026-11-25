@@ -19,6 +19,9 @@ import externalAuditRoutes from "./routes/externalAuditRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import { connectDB, getDBStatus } from "./config/db.js";
 import { seedDatabase } from "./config/seed.js";
+import { initPersistentStore, syncAllToMongoDB } from "./config/storageEngine.js";
+import { auditActivityLogger } from "./middleware/auditMiddleware.js";
+import * as models from "./models/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,10 +35,15 @@ if (!fs.existsSync(uploadsDir)) {
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB & Seed Database
+// Initialize persistent disk storage
+initPersistentStore();
+
+// Connect to MongoDB & Seed / Synchronize Database
 connectDB().then((connected) => {
   if (connected) {
-    seedDatabase();
+    seedDatabase().then(() => {
+      syncAllToMongoDB(models);
+    });
   }
 });
 
@@ -53,6 +61,9 @@ app.use(morgan("dev"));
 
 // Static files (Multer document uploads)
 app.use("/uploads", express.static(uploadsDir));
+
+// Automated Audit Trail & Activity Logger Middleware for all user functions
+app.use(auditActivityLogger);
 
 // Root status route
 app.get("/", (req, res) => {

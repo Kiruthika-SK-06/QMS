@@ -1,0 +1,173 @@
+[
+  {
+    "id": "CC-208",
+    "username": "coursecoordinator",
+    "email": "coordinator@cdac.in",
+    "aliases": [
+      "coursecoordinator",
+      "processowner",
+      "coordinator@cdac.in",
+      "owner@cdac.in",
+      "coordinator@cdac.in",
+      "coordinator@cdac.in",
+      "owner"
+    ],
+    "password": "1234",
+    "name": "Course Coordinator",
+    "role": "owner",
+    "roleTitle": "Course Coordinator",
+    "initials": "CC",
+    "employeeId": "CC001",
+    "department": "Advanced Computing Division",
+    "process": "Course Management",
+    "designation": "Principal Course Coordinator",
+    "status": "Active",
+    "joinDate": "15 Jan 2024",
+    "privileges": [
+      "Manage Documents",
+      "Draft Minutes of Meeting (MoM)",
+      "Assign & Supervise Tasks"
+    ]
+  },
+  {
+    "id": "QC-001",
+    "username": "qmcoordinator",
+    "email": "qm@cdac.in",
+    "aliases": [
+      "qmcoordinator",
+      "qmgroup",
+      "qm@cdac.in",
+      "qms@cdac.in",
+      "qm@cdac.in",
+      "qm"
+    ],
+    "password": "1234",
+    "name": "QMS Coordinator",
+    "role": "qm",
+    "roleTitle": "QMS Coordinator",
+    "initials": "QC",
+    "employeeId": "QC001",
+    "department": "Quality Assurance & Compliance",
+    "process": "All Quality Processes",
+    "designation": "Lead QMS Coordinator",
+    "status": "Active",
+    "joinDate": "01 Mar 2023",
+    "privileges": [
+      "Manage Documents",
+      "Review Documents",
+      "Plan & Schedule MRM",
+      "Share MRM with Coordinators",
+      "User Management",
+      "Assign & Supervise Tasks",
+      "View Audit Logs & Reports"
+    ]
+  },
+  {
+    "id": "TH-001",
+    "username": "trusthead",
+    "email": "head@cdac.in",
+    "aliases": [
+      "trusthead",
+      "qmhead",
+      "head@cdac.in",
+      "head@cdac.in",
+      "head"
+    ],
+    "password": "1234",
+    "name": "Trust Head",
+    "role": "Head",
+    "roleTitle": "Trust Head",
+    "initials": "TH",
+    "employeeId": "TH001",
+    "department": "Trust Governance & Executive Board",
+    "process": "Trust Governance",
+    "designation": "Executive Director / Trust Head",
+    "status": "Active",
+    "joinDate": "10 Aug 2021",
+    "privileges": [
+      "Approve MRM",
+      "Review Documents",
+      "View Audit Logs & Reports"
+    ]
+  },
+  {
+    "id": "CC-210",
+    "username": "coordinator.ai",
+    "email": "coordinator.ai@cdac.in",
+    "aliases": [
+      "coordinator.ai",
+      "coordinator.ai@cdac.in"
+    ],
+    "password": "1234",
+    "name": "Course Coordinator (AI)",
+    "role": "owner",
+    "roleTitle": "Course Coordinator",
+    "initials": "RV",
+    "employeeId": "CC002",
+    "department": "Artificial Intelligence Division",
+    "process": "AI & Data Science Course",
+    "designation": "Senior Course Coordinator",
+    "status": "Active",
+    "joinDate": "05 Jun 2024",
+    "privileges": [
+      "Manage Documents",
+      "Plan & Schedule MRM",
+      "Draft Minutes of Meeting (MoM)",
+      "Assign & Supervise Tasks"
+    ]
+  },
+  {
+    "id": "CC-215",
+    "username": "coordinator.cyber",
+    "email": "coordinator.cyber@cdac.in",
+    "aliases": [
+      "coordinator.cyber",
+      "coordinator.cyber@cdac.in"
+    ],
+    "password": "1234",
+    "name": "Course Coordinator (Cyber Security)",
+    "role": "owner",
+    "roleTitle": "Course Coordinator",
+    "initials": "SP",
+    "employeeId": "CC003",
+    "department": "Cyber Security Division",
+    "process": "Cyber Defense Course",
+    "designation": "Associate Course Coordinator",
+    "status": "Active",
+    "joinDate": "18 Sep 2024",
+    "privileges": [
+      "Manage Documents",
+      "Plan & Schedule MRM",
+      "Draft Minutes of Meeting (MoM)"
+    ]
+  },
+  {
+    "id": "IA-001",
+    "username": "internalauditor",
+    "email": "auditor@cdac.in",
+    "aliases": [
+      "internalauditor",
+      "auditor",
+      "auditor@cdac.in",
+      "auditor@cdac.in",
+      "auditor"
+    ],
+    "password": "1234",
+    "name": "Internal Auditor",
+    "role": "auditor",
+    "roleTitle": "Internal Auditor",
+    "initials": "IA",
+    "employeeId": "IA001",
+    "department": "Internal Quality Audit Division",
+    "process": "Quality System & ISO Audit",
+    "designation": "Lead Internal Auditor",
+    "status": "Active",
+    "joinDate": "12 Feb 2023",
+    "privileges": [
+      "Review & Approve MRM Plans",
+      "Verify Audit Compliance",
+      "View All MoM Records",
+      "Audit Trail & Logs"
+    ]
+  }
+]

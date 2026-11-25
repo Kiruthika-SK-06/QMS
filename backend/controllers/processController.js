@@ -7,6 +7,7 @@ import { processesData } from "../data/processes.js";
 import { tasksData } from "../data/tasks.js";
 import { documentsData } from "../data/documents.js";
 import { employeesData } from "../data/employees.js";
+import { saveItem, recordActivity } from "../config/storageEngine.js";
 
 // Dynamic recalculation of process document, employee and task counts
 export const getEnrichedProcesses = async () => {
@@ -77,7 +78,7 @@ export const getAllProcesses = async (req, res) => {
   }
 };
 
-// POST /api/processes
+// POST /api/processes (Create process in database & log activity)
 export const createProcess = async (req, res) => {
   try {
     const { name, owner, description, target } = req.body;
@@ -85,7 +86,7 @@ export const createProcess = async (req, res) => {
       return res.status(400).json({ success: false, message: "Process name and owner are required" });
     }
 
-    const count = mongoose.connection.readyState === 1 ? await Process.countDocuments() : processesData.length;
+    const count = processesData.length;
     const newProcessData = {
       id: `PROC-${String(count + 1).padStart(3, "0")}`,
       name: name.trim(),
@@ -101,14 +102,19 @@ export const createProcess = async (req, res) => {
       description: description || "Controlled QMS business process"
     };
 
-    let created = newProcessData;
-    if (mongoose.connection.readyState === 1) {
-      created = await Process.create(newProcessData);
-    } else {
-      processesData.push(newProcessData);
-    }
+    // Stored in database & persistent file store
+    await saveItem("processes", newProcessData, Process);
 
-    res.status(201).json({ success: true, process: created });
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Process Governance",
+      text: `Process '${name}' (${newProcessData.id}) created under owner ${owner}`,
+      detail: `Target completion: ${newProcessData.target} | Description: ${description || "QMS process"}`,
+      actor: req.user?.name || "Admin",
+      tone: "green"
+    });
+
+    res.status(201).json({ success: true, message: "Process created and stored in database successfully", process: newProcessData });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

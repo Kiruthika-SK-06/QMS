@@ -1,23 +1,9 @@
 import mongoose from "mongoose";
 import { Task } from "../models/Task.js";
-import { Activity } from "../models/Activity.js";
 import { Notification } from "../models/Notification.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 import { tasksData } from "../data/tasks.js";
-
-const logActivity = async (entry) => {
-  if (mongoose.connection.readyState === 1) {
-    try {
-      await Activity.create({
-        ...entry,
-        id: entry.id || `ACT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        timestamp: entry.timestamp || new Date().toISOString()
-      });
-    } catch (err) {
-      console.warn("Activity DB log error:", err.message);
-    }
-  }
-};
+import { saveItem, updateItem, deleteItem, recordActivity } from "../config/storageEngine.js";
 
 const logNotification = async (entry) => {
   if (mongoose.connection.readyState === 1) {
@@ -63,7 +49,7 @@ export const getAllTasks = async (req, res) => {
       }
     }
 
-    // Dual-mode fallback from controlled tasks dataset
+    // Dual-mode fallback from persistent tasks dataset
     let filtered = [...tasksData];
     if (employee) {
       const empLower = employee.toLowerCase();
@@ -103,7 +89,7 @@ export const getTaskById = async (req, res) => {
     }
 
     const task = tasksData.find((t) => t.id === req.params.id);
-    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+    if (!task) return res.status(404).json({ success: false, message: "Task not found in database" });
 
     res.json({ success: true, task });
   } catch (error) {
@@ -111,7 +97,7 @@ export const getTaskById = async (req, res) => {
   }
 };
 
-// POST /api/tasks
+// POST /api/tasks (Create task in database & log activity)
 export const createTask = async (req, res) => {
   try {
     const { title, name, process, employee, assignedTo, dueDate, deadline, priority, description, stage } = req.body;
@@ -141,19 +127,16 @@ export const createTask = async (req, res) => {
       description: description || ""
     };
 
-    let newTask = newTaskData;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        newTask = await Task.create(newTaskData);
-      } catch (err) {
-        console.warn("createTask DB error:", err.message);
-      }
-    }
-    tasksData.unshift(newTaskData);
+    // Stored in database & persistent file store
+    await saveItem("tasks", newTaskData, Task);
 
-    await logActivity({
-      text: `Task '${taskTitle}' (${taskId}) created for ${assignee} in process '${process}'`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Task Management",
+      text: `Task '${taskTitle}' (${taskId}) created and assigned to ${assignee} in process '${process}'`,
+      detail: `Priority: ${priority || "Medium"} | Due: ${newTaskData.due}`,
       actor: creatorName,
+      role: req.user?.role || "user",
       tone: "blue"
     });
 
@@ -163,49 +146,42 @@ export const createTask = async (req, res) => {
       targetRole: "all"
     });
 
-    broadcastRealtimeEvent("TASK_CREATED", { action: "CREATED", task: newTask });
+    broadcastRealtimeEvent("TASK_CREATED", { action: "CREATED", task: newTaskData });
 
-    res.status(201).json({ success: true, message: "Task created successfully", task: newTask });
+    res.status(201).json({ success: true, message: "Task created and stored in database successfully", task: newTaskData });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// PATCH /api/tasks/:id/status
+// PATCH /api/tasks/:id/status (Update task status in database & log activity)
 export const updateTaskStatus = async (req, res) => {
   try {
     const { status, remarks } = req.body;
-    let task = null;
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        task = await Task.findOne({ id: req.params.id });
-        if (task) {
-          task.status = status;
-          if (remarks) task.remarks = remarks;
-          await task.save();
-        }
-      } catch (err) {}
-    }
-
     const memTask = tasksData.find((t) => t.id === req.params.id);
-    if (memTask) {
-      memTask.status = status;
-      if (remarks) memTask.remarks = remarks;
-      if (!task) task = memTask;
+    if (!memTask) {
+      return res.status(404).json({ success: false, message: "Task not found in database" });
     }
 
-    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+    const updates = { status };
+    if (remarks) updates.remarks = remarks;
 
-    await logActivity({
-      text: `Task '${task.title || task.name}' status updated to '${status}'`,
+    // Stored in database & persistent file store
+    await updateItem("tasks", "id", memTask.id, updates, Task);
+
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Task Management",
+      text: `Task '${memTask.title || memTask.name}' status updated to '${status}'`,
+      detail: remarks ? `Remarks: ${remarks}` : `Status transition to ${status}`,
       actor: req.user?.name || "User",
+      role: req.user?.role || "user",
       tone: status === "Completed" ? "green" : "blue"
     });
 
-    broadcastRealtimeEvent("TASK_UPDATED", { action: "STATUS_UPDATED", task });
+    broadcastRealtimeEvent("TASK_UPDATED", { action: "STATUS_UPDATED", task: memTask });
 
-    res.json({ success: true, message: "Task status updated", task });
+    res.json({ success: true, message: "Task status updated in database successfully", task: memTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -215,53 +191,44 @@ export const updateTaskStatus = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const { title, name, process, employee, assignedTo, dueDate, deadline, priority, status, description } = req.body;
-    let task = null;
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        task = await Task.findOne({ id: req.params.id });
-        if (task) {
-          if (title || name) task.title = (title || name).trim();
-          if (process) task.process = process.trim();
-          if (employee || assignedTo) {
-            task.employee = employee || assignedTo;
-            task.assignedTo = employee || assignedTo;
-          }
-          if (dueDate || deadline) task.dueDate = dueDate || deadline;
-          if (priority) task.priority = priority;
-          if (status) task.status = status;
-          if (description !== undefined) task.description = description;
-          await task.save();
-        }
-      } catch (err) {}
-    }
-
     const memTask = tasksData.find((t) => t.id === req.params.id);
-    if (memTask) {
-      if (title || name) {
-        memTask.title = (title || name).trim();
-        memTask.name = memTask.title;
-      }
-      if (process) memTask.process = process.trim();
-      if (employee || assignedTo) {
-        memTask.employee = employee || assignedTo;
-        memTask.assignedTo = employee || assignedTo;
-      }
-      if (dueDate || deadline) {
-        memTask.dueDate = dueDate || deadline;
-        memTask.due = memTask.dueDate;
-      }
-      if (priority) memTask.priority = priority;
-      if (status) memTask.status = status;
-      if (description !== undefined) memTask.description = description;
-      if (!task) task = memTask;
+    if (!memTask) {
+      return res.status(404).json({ success: false, message: "Task not found in database" });
     }
 
-    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+    const updates = {};
+    if (title || name) {
+      updates.title = (title || name).trim();
+      updates.name = updates.title;
+    }
+    if (process) updates.process = process.trim();
+    if (employee || assignedTo) {
+      updates.employee = employee || assignedTo;
+      updates.assignedTo = employee || assignedTo;
+    }
+    if (dueDate || deadline) {
+      updates.dueDate = dueDate || deadline;
+      updates.due = updates.dueDate;
+    }
+    if (priority) updates.priority = priority;
+    if (status) updates.status = status;
+    if (description !== undefined) updates.description = description;
 
-    broadcastRealtimeEvent("TASK_UPDATED", { action: "UPDATED", task });
+    // Update in database & persistent file store
+    await updateItem("tasks", "id", memTask.id, updates, Task);
 
-    res.json({ success: true, message: "Task updated successfully", task });
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Task Management",
+      text: `Task '${memTask.title || memTask.name}' updated by ${req.user?.name || "User"}`,
+      detail: `Updated attributes: ${Object.keys(updates).join(", ")}`,
+      actor: req.user?.name || "User",
+      tone: "blue"
+    });
+
+    broadcastRealtimeEvent("TASK_UPDATED", { action: "UPDATED", task: memTask });
+
+    res.json({ success: true, message: "Task updated in database successfully", task: memTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -270,30 +237,24 @@ export const updateTask = async (req, res) => {
 // DELETE /api/tasks/:id
 export const deleteTask = async (req, res) => {
   try {
-    let task = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        task = await Task.findOneAndDelete({ id: req.params.id });
-      } catch (err) {}
+    const memTask = tasksData.find((t) => t.id === req.params.id);
+    if (!memTask) {
+      return res.status(404).json({ success: false, message: "Task not found in database" });
     }
 
-    const index = tasksData.findIndex((t) => t.id === req.params.id);
-    if (index !== -1) {
-      if (!task) task = tasksData[index];
-      tasksData.splice(index, 1);
-    }
+    await deleteItem("tasks", "id", memTask.id, Task);
 
-    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
-
-    await logActivity({
-      text: `Task '${task.title || task.name}' (${task.id}) was deleted`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "Task Management",
+      text: `Task '${memTask.title || memTask.name}' (${memTask.id}) was deleted from database`,
       actor: req.user?.name || "Admin",
       tone: "red"
     });
 
     broadcastRealtimeEvent("TASK_DELETED", { action: "DELETED", id: req.params.id });
 
-    res.json({ success: true, message: "Task deleted successfully" });
+    res.json({ success: true, message: "Task deleted from database successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

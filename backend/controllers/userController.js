@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { User } from "../models/User.js";
-import { Activity } from "../models/Activity.js";
 import { broadcastRealtimeEvent } from "../utils/realtime.js";
 import { dummyUsers } from "../data/users.js";
+import { saveItem, updateItem, deleteItem, recordActivity } from "../config/storageEngine.js";
 
 export const normalizeRole = (role) => {
   if (!role) return "owner";
@@ -19,20 +19,6 @@ const sanitizeUser = (user) => {
   if (!user) return null;
   const { password, ...safeUser } = user;
   return safeUser;
-};
-
-const logActivity = async (entry) => {
-  if (mongoose.connection.readyState === 1) {
-    try {
-      await Activity.create({
-        ...entry,
-        id: entry.id || `ACT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        timestamp: entry.timestamp || new Date().toISOString()
-      });
-    } catch (err) {
-      console.warn("Activity DB log error:", err.message);
-    }
-  }
 };
 
 // GET /api/users
@@ -74,7 +60,7 @@ export const getAllUsers = async (req, res) => {
       }
     }
 
-    // Dual-mode fallback from controlled users dataset
+    // Dual-mode fallback from persistent users dataset
     let filtered = dummyUsers.map((u) => sanitizeUser(u));
 
     if (role && role !== "All") {
@@ -138,7 +124,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// POST /api/users
+// POST /api/users (Create user in database & log activity)
 export const createUser = async (req, res) => {
   try {
     const { name, email, username, role, department, designation, employeeId, password, status, phone } = req.body;
@@ -153,14 +139,14 @@ export const createUser = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanUser = (username || cleanEmail.split("@")[0]).trim().toLowerCase();
 
-    // Check duplicate email/username in memory or DB
+    // Check duplicate email/username
     const memDup = dummyUsers.find(
       (u) => (u.email && u.email.toLowerCase() === cleanEmail) || (u.username && u.username.toLowerCase() === cleanUser)
     );
     if (memDup) {
       return res.status(409).json({
         success: false,
-        message: "A user with this email or username already exists"
+        message: "A user with this email or username already exists in database"
       });
     }
 
@@ -202,28 +188,25 @@ export const createUser = async (req, res) => {
       joinDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     };
 
-    let createdUser = newUserData;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        createdUser = await User.create(newUserData);
-      } catch (err) {
-        console.warn("createUser DB error:", err.message);
-      }
-    }
-    dummyUsers.push(newUserData);
+    // Stored in database & persistent file store
+    await saveItem("users", newUserData, User);
 
-    await logActivity({
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "User Management",
       text: `User account '${name}' (${userId}) created with role ${roleTitles[normalized]}`,
+      detail: `Email: ${cleanEmail} | Username: ${cleanUser} | Department: ${department || "Operations"}`,
       actor: req.user?.name || "Admin",
+      role: req.user?.role || "qm",
       tone: "green"
     });
 
-    broadcastRealtimeEvent("USER_CREATED", { action: "CREATED", user: sanitizeUser(createdUser) });
+    broadcastRealtimeEvent("USER_CREATED", { action: "CREATED", user: sanitizeUser(newUserData) });
 
     res.status(201).json({
       success: true,
-      message: "User account created successfully",
-      user: sanitizeUser(createdUser)
+      message: "User account created and stored in database successfully",
+      user: sanitizeUser(newUserData)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -233,18 +216,9 @@ export const createUser = async (req, res) => {
 // PUT /api/users/:id
 export const updateUser = async (req, res) => {
   try {
-    let dbUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        dbUser = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
-      } catch (err) {}
-    }
-
     const memUser = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
-    const targetUser = dbUser || memUser;
-
-    if (!targetUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    if (!memUser) {
+      return res.status(404).json({ success: false, message: "User not found in database" });
     }
 
     const { name, email, role, department, designation, status, phone, password } = req.body;
@@ -257,54 +231,39 @@ export const updateUser = async (req, res) => {
       employee: "Employee"
     };
 
-    let hashedPass = null;
+    const updates = {};
+    if (name !== undefined) updates.name = name.trim();
+    if (email !== undefined) updates.email = email.trim().toLowerCase();
+    if (role !== undefined) {
+      updates.role = normalizeRole(role);
+      updates.roleTitle = roleTitles[updates.role] || updates.role;
+    }
+    if (department !== undefined) updates.department = department.trim();
+    if (designation !== undefined) updates.designation = designation.trim();
+    if (status !== undefined) updates.status = status;
+    if (phone !== undefined) updates.phone = phone;
     if (password && password.trim()) {
-      hashedPass = await bcrypt.hash(password.trim(), 10);
+      updates.password = await bcrypt.hash(password.trim(), 10);
     }
 
-    if (dbUser) {
-      if (name !== undefined) dbUser.name = name.trim();
-      if (email !== undefined) dbUser.email = email.trim().toLowerCase();
-      if (role !== undefined) {
-        dbUser.role = normalizeRole(role);
-        dbUser.roleTitle = roleTitles[dbUser.role] || dbUser.role;
-      }
-      if (department !== undefined) dbUser.department = department.trim();
-      if (designation !== undefined) dbUser.designation = designation.trim();
-      if (status !== undefined) dbUser.status = status;
-      if (phone !== undefined) dbUser.phone = phone;
-      if (hashedPass) dbUser.password = hashedPass;
-      await dbUser.save();
-    }
+    // Update in database & persistent store
+    const updatedUser = await updateItem("users", "id", memUser.id, updates, User);
 
-    if (memUser) {
-      if (name !== undefined) memUser.name = name.trim();
-      if (email !== undefined) memUser.email = email.trim().toLowerCase();
-      if (role !== undefined) {
-        memUser.role = normalizeRole(role);
-        memUser.roleTitle = roleTitles[memUser.role] || memUser.role;
-      }
-      if (department !== undefined) memUser.department = department.trim();
-      if (designation !== undefined) memUser.designation = designation.trim();
-      if (status !== undefined) memUser.status = status;
-      if (phone !== undefined) memUser.phone = phone;
-      if (hashedPass) memUser.password = hashedPass;
-    }
-
-    const resultUser = dbUser || memUser;
-
-    await logActivity({
-      text: `User account '${resultUser.name}' updated by ${req.user?.name || "Admin"}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "User Management",
+      text: `User account '${updatedUser.name}' updated by ${req.user?.name || "Admin"}`,
+      detail: `Updated fields: ${Object.keys(updates).join(", ")}`,
       actor: req.user?.name || "Admin",
       tone: "blue"
     });
 
-    broadcastRealtimeEvent("USER_UPDATED", { action: "UPDATED", user: sanitizeUser(resultUser) });
+    broadcastRealtimeEvent("USER_UPDATED", { action: "UPDATED", user: sanitizeUser(updatedUser) });
 
     res.json({
       success: true,
-      message: "User updated successfully",
-      user: sanitizeUser(resultUser)
+      message: "User updated successfully in database",
+      user: sanitizeUser(updatedUser)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -314,45 +273,30 @@ export const updateUser = async (req, res) => {
 // PATCH /api/users/:id/status
 export const toggleUserStatus = async (req, res) => {
   try {
-    let dbUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        dbUser = await User.findOne({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
-      } catch (err) {}
-    }
-
     const memUser = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
-    const targetUser = dbUser || memUser;
-
-    if (!targetUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    if (!memUser) {
+      return res.status(404).json({ success: false, message: "User not found in database" });
     }
 
     const requestedStatus = req.body.status;
-    const newStatus = requestedStatus || (targetUser.status === "Active" ? "Inactive" : "Active");
+    const newStatus = requestedStatus || (memUser.status === "Active" ? "Inactive" : "Active");
 
-    if (dbUser) {
-      dbUser.status = newStatus;
-      await dbUser.save();
-    }
-    if (memUser) {
-      memUser.status = newStatus;
-    }
+    await updateItem("users", "id", memUser.id, { status: newStatus }, User);
 
-    const resultUser = dbUser || memUser;
-
-    await logActivity({
-      text: `User account '${resultUser.name}' status changed to '${newStatus}' by ${req.user?.name || "Admin"}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "User Management",
+      text: `User account '${memUser.name}' status changed to '${newStatus}' by ${req.user?.name || "Admin"}`,
       actor: req.user?.name || "Admin",
       tone: newStatus === "Active" ? "green" : "amber"
     });
 
-    broadcastRealtimeEvent("USER_UPDATED", { action: "STATUS_TOGGLED", user: sanitizeUser(resultUser) });
+    broadcastRealtimeEvent("USER_UPDATED", { action: "STATUS_TOGGLED", user: sanitizeUser(memUser) });
 
     res.json({
       success: true,
-      message: `User status changed to ${newStatus}`,
-      user: sanitizeUser(resultUser)
+      message: `User status changed to ${newStatus} in database`,
+      user: sanitizeUser(memUser)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -362,25 +306,17 @@ export const toggleUserStatus = async (req, res) => {
 // DELETE /api/users/:id
 export const deleteUser = async (req, res) => {
   try {
-    let dbUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        dbUser = await User.findOneAndDelete({ $or: [{ id: req.params.id }, { employeeId: req.params.id }] });
-      } catch (err) {}
+    const memUser = dummyUsers.find((u) => u.id === req.params.id || u.employeeId === req.params.id);
+    if (!memUser) {
+      return res.status(404).json({ success: false, message: "User not found in database" });
     }
 
-    const index = dummyUsers.findIndex((u) => u.id === req.params.id || u.employeeId === req.params.id);
-    if (index !== -1) {
-      if (!dbUser) dbUser = dummyUsers[index];
-      dummyUsers.splice(index, 1);
-    }
+    await deleteItem("users", "id", memUser.id, User);
 
-    if (!dbUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    await logActivity({
-      text: `User account '${dbUser.name}' deleted by ${req.user?.name || "Admin"}`,
+    // Stored in Activity / Audit Trail in database
+    await recordActivity({
+      title: "User Management",
+      text: `User account '${memUser.name}' (${memUser.id}) deleted by ${req.user?.name || "Admin"}`,
       actor: req.user?.name || "Admin",
       tone: "red"
     });
@@ -389,7 +325,7 @@ export const deleteUser = async (req, res) => {
 
     res.json({
       success: true,
-      message: "User account deleted successfully"
+      message: "User account deleted from database successfully"
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Activity } from "../models/Activity.js";
 import { activitiesData } from "../data/activities.js";
+import { recordActivity } from "../config/storageEngine.js";
 
 // GET /api/activities
 export const getAllActivities = async (req, res) => {
@@ -40,28 +41,16 @@ export const addActivity = async (req, res) => {
       return res.status(400).json({ success: false, message: "Activity text is required" });
     }
 
-    const newActivityData = {
-      id: `ACT-${Date.now()}`,
-      title: title || "System Activity",
+    const activity = await recordActivity({
+      title: title || "User Activity",
       text: text.trim(),
       detail: detail || "",
-      actor: actor || req.user?.name || "System",
-      time: "Just now",
-      tone: tone || "blue",
-      timestamp: new Date().toISOString()
-    };
+      actor: actor || req.user?.name || "User",
+      role: req.user?.role || "Staff",
+      tone: tone || "blue"
+    });
 
-    let newActivity = newActivityData;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        newActivity = await Activity.create(newActivityData);
-      } catch (err) {
-        console.warn("addActivity DB error:", err.message);
-      }
-    }
-    activitiesData.unshift(newActivityData);
-
-    res.status(201).json({ success: true, activity: newActivity });
+    res.status(201).json({ success: true, activity });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
