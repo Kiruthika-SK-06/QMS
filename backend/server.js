@@ -27,23 +27,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure uploads folder exists
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const uploadsDir = process.env.VERCEL ? path.join("/tmp", "uploads") : path.join(__dirname, "uploads");
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch {
+  // Ignore filesystem writes in read-only environments
 }
 
 // Load environment variables
 dotenv.config();
 
 // Initialize persistent disk storage
-initPersistentStore();
+try {
+  initPersistentStore();
+} catch {
+  // Ignore in read-only lambda environments
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Middleware - Allow all origins including Vercel domain
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+  origin: true,
   credentials: true
 }));
 app.use(express.json({ limit: "50mb" }));
@@ -81,8 +89,31 @@ app.get("/", (req, res) => {
 
 import { handleRealtimeStream } from "./utils/realtime.js";
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
+// Ensure DB connection is initialized on Vercel serverless requests
+let serverlessDbPromise = null;
+app.use(async (req, res, next) => {
+  if (process.env.VERCEL) {
+    if (!serverlessDbPromise && mongoose.connection.readyState !== 1) {
+      serverlessDbPromise = (async () => {
+        try {
+          const connected = await connectDB();
+          if (connected) {
+            await seedDatabase();
+          }
+        } catch (e) {
+          console.warn("Vercel DB initialization:", e.message);
+        }
+      })();
+    }
+    if (serverlessDbPromise) {
+      await serverlessDbPromise;
+    }
+  }
+  next();
+});
+
+// Health check endpoint (matches both /api/health and /health)
+app.get(["/api/health", "/health"], (req, res) => {
   res.json({
     status: "ok",
     message: "QMS Backend API is running smoothly",
@@ -91,27 +122,27 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.get("/api/db-status", (req, res) => {
+app.get(["/api/db-status", "/db-status"], (req, res) => {
   res.json(getDBStatus());
 });
 
 // Real-Time Event Stream (SSE)
-app.get("/api/realtime/stream", handleRealtimeStream);
+app.get(["/api/realtime/stream", "/realtime/stream"], handleRealtimeStream);
 
-// API Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/documents", documentRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/processes", processRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/activities", activityRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/mrm", mrmRoutes);
-app.use("/api/audit", auditRoutes);
-app.use("/api/internal-audit", auditRoutes);
-app.use("/api/external-audit", externalAuditRoutes);
-app.use("/api/employees", employeeRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+// API Routes (supports both /api/* and rewritten /* for Vercel)
+app.use(["/api/auth", "/auth"], authRoutes);
+app.use(["/api/documents", "/documents"], documentRoutes);
+app.use(["/api/tasks", "/tasks"], taskRoutes);
+app.use(["/api/processes", "/processes"], processRoutes);
+app.use(["/api/notifications", "/notifications"], notificationRoutes);
+app.use(["/api/activities", "/activities"], activityRoutes);
+app.use(["/api/users", "/users"], userRoutes);
+app.use(["/api/mrm", "/mrm"], mrmRoutes);
+app.use(["/api/audit", "/audit"], auditRoutes);
+app.use(["/api/internal-audit", "/internal-audit"], auditRoutes);
+app.use(["/api/external-audit", "/external-audit"], externalAuditRoutes);
+app.use(["/api/employees", "/employees"], employeeRoutes);
+app.use(["/api/dashboard", "/dashboard"], dashboardRoutes);
 
 // 404 Fallback
 app.use((req, res) => {
@@ -174,8 +205,10 @@ const startServer = async () => {
   }
 };
 
-startServer().catch((err) => {
-  console.error("Fatal startup error:", err);
-});
+if (!process.env.VERCEL) {
+  startServer().catch((err) => {
+    console.error("Fatal startup error:", err);
+  });
+}
 
 export default app;

@@ -20,8 +20,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DB_DIR = path.join(__dirname, "..", "database");
 
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  }
+} catch {
+  // Ignore in read-only lambda environments
 }
 
 const COLLECTIONS = {

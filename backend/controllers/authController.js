@@ -20,9 +20,12 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 // Helper: Ensure MongoDB connection is ready; fail safely without silent mock data
 const ensureDB = (res) => {
   if (mongoose.connection.readyState !== 1) {
+    const isVercel = !!process.env.VERCEL;
     res.status(503).json({
       success: false,
-      message: "Database service unavailable. Please ensure MongoDB is running."
+      message: isVercel
+        ? "MongoDB Atlas connection not established on Vercel. Please add MONGODB_URI to your Vercel Project Environment Variables."
+        : "Database service unavailable. Please ensure MongoDB is running."
     });
     return false;
   }

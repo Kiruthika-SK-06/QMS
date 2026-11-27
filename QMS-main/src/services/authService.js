@@ -27,16 +27,21 @@ const safeFetchAuth = async (endpoint, options = {}) => {
     // If proxy connection fails, try direct backend URL
   }
 
-  // 2. Direct fallback to backend server (CORS-enabled)
-  try {
-    const res = await fetch(`${DIRECT_API_BASE}${endpoint}`, options);
-    const contentType = res.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await res.json();
-      return { ok: res.ok, status: res.status, data };
+  // 2. Direct fallback to local backend server (only on localhost)
+  const isLocal = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+  if (isLocal) {
+    try {
+      const res = await fetch(`${DIRECT_API_BASE}${endpoint}`, options);
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        return { ok: res.ok, status: res.status, data };
+      }
+    } catch {
+      // Local fallback failed
     }
-  } catch {
-    // Both attempts failed
   }
 
   throw new Error("Unable to connect to QMS authentication server. Please ensure MongoDB and backend server are running.");

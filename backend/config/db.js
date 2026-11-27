@@ -35,7 +35,7 @@ export const connectDB = async (customUri = null) => {
   // 1. First attempt: connect to standalone host or cloud MongoDB
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 2500,
+      serverSelectionTimeoutMS: process.env.VERCEL ? 5000 : 2500,
       connectTimeoutMS: 5000
     });
 
@@ -44,9 +44,16 @@ export const connectDB = async (customUri = null) => {
     console.log(`\n🍃 MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
     return true;
   } catch (error) {
-    console.warn(`⚠️  Could not connect to standalone MongoDB at ${uri} (${error.message}).`);
+    console.warn(`⚠️  Could not connect to MongoDB at ${uri} (${error.message}).`);
 
-    // 2. Fallback: Automatically start an embedded MongoDB server instance
+    // In Vercel serverless environment, embedded memory server cannot run
+    if (process.env.VERCEL) {
+      console.warn("⚠️  Running on Vercel: Please configure MONGODB_URI in Vercel Project Settings > Environment Variables (e.g. MongoDB Atlas connection string).");
+      isConnected = false;
+      return false;
+    }
+
+    // 2. Fallback: Automatically start an embedded MongoDB server instance (Local dev only)
     try {
       console.log("🍃 Starting embedded MongoDB instance for seamless local operation...");
       const { MongoMemoryServer } = await import("mongodb-memory-server");
