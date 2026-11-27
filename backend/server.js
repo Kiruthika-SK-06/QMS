@@ -90,23 +90,14 @@ app.get("/", (req, res) => {
 import { handleRealtimeStream } from "./utils/realtime.js";
 
 // Ensure DB connection is initialized on Vercel serverless requests
-let serverlessDbPromise = null;
 app.use(async (req, res, next) => {
   if (process.env.VERCEL) {
-    if (!serverlessDbPromise && mongoose.connection.readyState !== 1) {
-      serverlessDbPromise = (async () => {
-        try {
-          const connected = await connectDB();
-          if (connected) {
-            await seedDatabase();
-          }
-        } catch (e) {
-          console.warn("Vercel DB initialization:", e.message);
-        }
-      })();
-    }
-    if (serverlessDbPromise) {
-      await serverlessDbPromise;
+    if (mongoose.connection.readyState !== 1) {
+      try {
+        await connectDB();
+      } catch (e) {
+        console.warn("Vercel DB connection notice:", e.message);
+      }
     }
   }
   next();

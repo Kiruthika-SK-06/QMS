@@ -3,11 +3,18 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/qms_database";
+const getMongoUri = (customUri) => {
+  return customUri || process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/qms_database";
+};
 
 let isConnected = false;
-let activeUri = MONGODB_URI;
+let activeUri = getMongoUri();
 let memoryServerInstance = null;
+
+// Ensure queries fail fast rather than hanging indefinitely when disconnected on Vercel
+if (process.env.VERCEL) {
+  mongoose.set("bufferCommands", false);
+}
 
 // Monitor connection events
 mongoose.connection.on("connected", () => {
@@ -26,16 +33,17 @@ mongoose.connection.on("error", (err) => {
 });
 
 export const connectDB = async (customUri = null) => {
-  const uri = customUri || MONGODB_URI;
+  const uri = getMongoUri(customUri);
 
-  if (isConnected && mongoose.connection.readyState === 1) {
+  if (mongoose.connection.readyState === 1) {
+    isConnected = true;
     return true;
   }
 
   // 1. First attempt: connect to standalone host or cloud MongoDB
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: process.env.VERCEL ? 5000 : 2500,
+      serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 5000
     });
 
@@ -48,7 +56,7 @@ export const connectDB = async (customUri = null) => {
 
     // In Vercel serverless environment, embedded memory server cannot run
     if (process.env.VERCEL) {
-      console.warn("⚠️  Running on Vercel: Please configure MONGODB_URI in Vercel Project Settings > Environment Variables (e.g. MongoDB Atlas connection string).");
+      console.warn("⚠️  Running on Vercel: Please verify MONGODB_URI and ensure MongoDB Atlas Network Access allows 0.0.0.0/0.");
       isConnected = false;
       return false;
     }
