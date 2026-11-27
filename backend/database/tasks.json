@@ -1,5 +1,20 @@
 [
   {
+    "id": "TASK-013",
+    "title": "Prepare Lab Manual QA Checklist-1795778231757",
+    "name": "Prepare Lab Manual QA Checklist-1795778231757",
+    "process": "Quality Management & MRM",
+    "employee": "Sarah Jenkins",
+    "assignedTo": "Sarah Jenkins",
+    "dueDate": "2026-12-15",
+    "assigned": "27 Nov 2026",
+    "due": "2026-12-15",
+    "priority": "High",
+    "status": "Completed",
+    "stage": 1,
+    "description": "Verify all lab manual safety and quality guidelines."
+  },
+  {
     "id": "TASK-012",
     "title": "Prepare Lab Manual QA Checklist-1795776983619",
     "name": "Prepare Lab Manual QA Checklist-1795776983619",

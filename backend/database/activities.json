@@ -1,5 +1,104 @@
 [
   {
+    "id": "ACT-1795778231953-281",
+    "title": "Document Control",
+    "text": "New document 'QMS-POL-Quality-Manual-1795778231963' (DOC-022) submitted for review by QMS Coordinator",
+    "detail": "Type: Procedures | Process: Quality Management & MRM | Initial version: v1.0",
+    "actor": "QMS Coordinator",
+    "role": "qm",
+    "tone": "blue",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.953Z"
+  },
+  {
+    "id": "ACT-1795778231760-34",
+    "title": "Task Management",
+    "text": "Task 'Prepare Lab Manual QA Checklist-1795778231757' status updated to 'Completed'",
+    "detail": "Status transition to Completed",
+    "actor": "Course Coordinator",
+    "role": "owner",
+    "tone": "green",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.760Z"
+  },
+  {
+    "id": "ACT-1795778231749-838",
+    "title": "Task Management",
+    "text": "Task 'Prepare Lab Manual QA Checklist-1795778231757' (TASK-013) created and assigned to Sarah Jenkins in process 'Quality Management & MRM'",
+    "detail": "Priority: High | Due: 2026-12-15",
+    "actor": "Course Coordinator",
+    "role": "owner",
+    "tone": "blue",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.749Z"
+  },
+  {
+    "id": "ACT-1795778231738-776",
+    "title": "Document Control",
+    "text": "Document 'QMS-SOP-Testing-1795778231698' (DOC-021) marked as 'Under Review' by Course Coordinator",
+    "detail": "Reviewer Comments: Section 4.2 revised as requested. Resubmitted for review.",
+    "actor": "Course Coordinator",
+    "role": "owner",
+    "tone": "blue",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.738Z"
+  },
+  {
+    "id": "ACT-1795778231731-189",
+    "title": "Document Control",
+    "text": "Document 'QMS-SOP-Testing-1795778231698' (DOC-021) marked as 'Changes Requested' by QMS Coordinator",
+    "detail": "Reviewer Comments: Please align section 4.2 with updated C-DAC syllabus standards.",
+    "actor": "QMS Coordinator",
+    "role": "qm",
+    "tone": "amber",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.731Z"
+  },
+  {
+    "id": "ACT-1795778231724-983",
+    "title": "Document Control",
+    "text": "Document 'QMS-SOP-Testing-1795778231698' (DOC-021) marked as 'Approved' by QMS Coordinator",
+    "detail": "Reviewer Comments: Document satisfies ISO 9001 quality criteria. Approved by QMS Coordinator.",
+    "actor": "QMS Coordinator",
+    "role": "qm",
+    "tone": "green",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.724Z"
+  },
+  {
+    "id": "ACT-1795778231715-52",
+    "title": "Document Control",
+    "text": "Document 'QMS-SOP-Testing-1795778231698' (DOC-021) marked as 'Under Review' by Course Coordinator",
+    "detail": "Reviewer Comments: Submitted for QMS review by Course Coordinator",
+    "actor": "Course Coordinator",
+    "role": "owner",
+    "tone": "blue",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.715Z"
+  },
+  {
+    "id": "ACT-1795778231704-890",
+    "title": "Document Control",
+    "text": "New version v2.0 created for document 'QMS-SOP-Testing-1795778231698' (DOC-021) by Course Coordinator",
+    "detail": "Revision notes: Revision 2.0 with updated testing standards",
+    "actor": "Course Coordinator",
+    "role": "user",
+    "tone": "blue",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.704Z"
+  },
+  {
+    "id": "ACT-1795778231693-437",
+    "title": "Document Control",
+    "text": "New document 'QMS-SOP-Testing-1795778231698' (DOC-021) submitted for review by Course Coordinator",
+    "detail": "Type: Procedures | Process: Quality Management & MRM | Initial version: v1.0",
+    "actor": "Course Coordinator",
+    "role": "owner",
+    "tone": "blue",
+    "time": "Just now",
+    "timestamp": "2026-11-27T11:17:11.693Z"
+  },
+  {
     "id": "ACT-1795776983821-776",
     "title": "Document Control",
     "text": "New document 'QMS-POL-Quality-Manual-1795776983815' (DOC-020) submitted for review by QMS Coordinator",

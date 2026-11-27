@@ -99,7 +99,8 @@ export const login = async (req, res) => {
       $or: [
         { email: loginIdentifier },
         { username: loginIdentifier },
-        { employeeId: loginIdentifier.toUpperCase() }
+        { employeeId: loginIdentifier.toUpperCase() },
+        { aliases: loginIdentifier }
       ]
     });
 
