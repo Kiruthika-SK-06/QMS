@@ -241,12 +241,21 @@ export const login = async (req, res) => {
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     // 9. Set HttpOnly cookie where compatible
-    res.cookie("qms_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
+    try {
+      if (typeof res.cookie === "function") {
+        res.cookie("qms_token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "Lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+      } else if (typeof res.setHeader === "function") {
+        res.setHeader(
+          "Set-Cookie",
+          `qms_token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`
+        );
+      }
+    } catch { }
 
     await logAuthAudit({
       action: "LOGIN_SUCCESS",
@@ -906,7 +915,13 @@ export const changePassword = async (req, res) => {
  * 10. POST /api/auth/logout
  */
 export const logout = async (req, res) => {
-  res.clearCookie("qms_token");
+  try {
+    if (typeof res.clearCookie === "function") {
+      res.clearCookie("qms_token");
+    } else if (typeof res.setHeader === "function") {
+      res.setHeader("Set-Cookie", "qms_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax");
+    }
+  } catch { }
 
   if (req.user) {
     await logAuthAudit({
