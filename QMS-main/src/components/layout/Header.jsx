@@ -59,8 +59,8 @@ export default function Header({ openMenu }) {
             {currentUser?.initials || (currentUser?.roleTitle ? currentUser.roleTitle.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "QM")}
           </span>
           <span className="user-summary">
-            <strong>{currentUser?.roleTitle || (currentUser?.role ? roles[currentUser.role] : null) || currentUser?.username || "User"}</strong>
-            <small>{currentUser?.loginIdentifier || currentUser?.email || currentUser?.username || (currentUser?.role ? roles[currentUser.role] : "Workspace User")}</small>
+            <strong>{currentUser?.name || currentUser?.roleTitle || currentUser?.username || "User"}</strong>
+            <small>{currentUser?.roleTitle || currentUser?.email || "Workspace User"}</small>
           </span>
           <ChevronDown size={16} />
         </button>

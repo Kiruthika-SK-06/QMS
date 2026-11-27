@@ -14,16 +14,29 @@ const activitiesData = [];
 
 const TMP_EXTERNAL_AUDIT_STORE = path.join(os.tmpdir(), "qms_external_audits_store.json");
 
+const reconcileAuditFields = (audit) => {
+  if (!audit) return;
+  if (audit.ncDocument && !audit.ncPackage) audit.ncPackage = audit.ncDocument;
+  if (audit.ncPackage && !audit.ncDocument) audit.ncDocument = audit.ncPackage;
+  if (audit.ncClosure && !audit.coordinatorResolution) audit.coordinatorResolution = audit.ncClosure;
+  if (audit.coordinatorResolution && !audit.ncClosure) audit.ncClosure = audit.coordinatorResolution;
+  if (audit.externalAuditorApproval && !audit.auditorDecision) audit.auditorDecision = audit.externalAuditorApproval;
+  if (audit.auditorDecision && !audit.externalAuditorApproval) audit.externalAuditorApproval = audit.auditorDecision;
+};
+
 const loadFromDisk = async () => {
   if (mongoose.connection.readyState === 1) {
     try {
       const dbAudits = await ExternalAudit.find({}).lean();
-      externalAuditData.length = 0;
       if (dbAudits && dbAudits.length > 0) {
+        externalAuditData.length = 0;
+        dbAudits.forEach(reconcileAuditFields);
         externalAuditData.push(...dbAudits);
+        return;
       }
-      return;
-    } catch {}
+    } catch (err) {
+      console.warn("ExternalAudit MongoDB read notice:", err.message);
+    }
   }
 
   try {
@@ -32,33 +45,48 @@ const loadFromDisk = async () => {
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const map = new Map();
-        parsed.forEach((a) => a && a.id && map.set(a.id, a));
+        parsed.forEach((a) => {
+          if (a && a.id) {
+            reconcileAuditFields(a);
+            map.set(a.id, a);
+          }
+        });
         externalAuditData.forEach((a) => a && a.id && !map.has(a.id) && map.set(a.id, a));
         const merged = Array.from(map.values());
         externalAuditData.length = 0;
         externalAuditData.push(...merged);
       }
     }
-  } catch {}
+  } catch { }
 };
 
-const saveToDisk = (targetAudit = null) => {
+const saveToDisk = async (targetAudit = null) => {
+  if (targetAudit) {
+    reconcileAuditFields(targetAudit);
+  } else {
+    externalAuditData.forEach(reconcileAuditFields);
+  }
+
   try {
     fs.writeFileSync(TMP_EXTERNAL_AUDIT_STORE, JSON.stringify(externalAuditData), "utf-8");
-  } catch {}
+  } catch { }
 
   if (mongoose.connection.readyState === 1) {
     try {
       if (targetAudit && targetAudit.id) {
-        ExternalAudit.findOneAndUpdate({ id: targetAudit.id }, targetAudit, { upsert: true }).catch(() => {});
+        const { _id, ...cleanAudit } = targetAudit;
+        await ExternalAudit.findOneAndUpdate({ id: targetAudit.id }, cleanAudit, { upsert: true, returnDocument: "after" });
       } else {
         for (const item of externalAuditData) {
           if (item && item.id) {
-            ExternalAudit.findOneAndUpdate({ id: item.id }, item, { upsert: true }).catch(() => {});
+            const { _id, ...cleanItem } = item;
+            await ExternalAudit.findOneAndUpdate({ id: item.id }, cleanItem, { upsert: true, returnDocument: "after" });
           }
         }
       }
-    } catch {}
+    } catch (err) {
+      console.warn("ExternalAudit MongoDB persistence error:", err.message);
+    }
   }
 };
 
@@ -81,6 +109,22 @@ const formatNow = () =>
     hour: "2-digit",
     minute: "2-digit"
   });
+
+// Reliable lookup: checks memory cache first, falls back directly to MongoDB
+export const findAudit = async (id) => {
+  let audit = externalAuditData.find((a) => a && a.id === id);
+  if (!audit && mongoose.connection.readyState === 1) {
+    try {
+      const doc = await ExternalAudit.findOne({ id }).lean();
+      if (doc) {
+        reconcileAuditFields(doc);
+        externalAuditData.push(doc);
+        audit = doc;
+      }
+    } catch { }
+  }
+  return audit;
+};
 
 // Deterministic sort: New external audits first, dummy ones below
 export const sortExternalAuditsList = (list) => {
@@ -106,9 +150,9 @@ export const sortExternalAuditsList = (list) => {
 };
 
 // GET /api/external-audit
-export const getAllExternalAudits = (req, res) => {
+export const getAllExternalAudits = async (req, res) => {
   try {
-    loadFromDisk();
+    await loadFromDisk();
     const { status, stage, role } = req.query;
     let userRole = role;
 
@@ -121,7 +165,7 @@ export const getAllExternalAudits = (req, res) => {
           const decoded = jwt.verify(token, process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026");
           if (decoded) userRole = decoded.role;
         }
-      } catch {}
+      } catch { }
     }
     userRole = (req.user?.role || req.headers?.["x-user-role"] || req.headers?.["x-demo-role"] || userRole || "").toLowerCase();
 
@@ -166,11 +210,11 @@ export const getAllExternalAudits = (req, res) => {
 };
 
 // POST /api/external-audit/sync
-export const syncExternalAudits = (req, res) => {
+export const syncExternalAudits = async (req, res) => {
   try {
     const { audits } = req.body;
     if (Array.isArray(audits) && audits.length > 0) {
-      loadFromDisk();
+      await loadFromDisk();
       const map = new Map();
       externalAuditData.forEach((a) => a && a.id && map.set(a.id, a));
       audits.forEach((clientAudit) => {
@@ -188,7 +232,7 @@ export const syncExternalAudits = (req, res) => {
       });
       externalAuditData.length = 0;
       externalAuditData.push(...Array.from(map.values()));
-      saveToDisk();
+      await saveToDisk();
     }
     res.json({ success: true, count: externalAuditData.length, data: externalAuditData });
   } catch (error) {
@@ -197,9 +241,9 @@ export const syncExternalAudits = (req, res) => {
 };
 
 // POST /api/external-audit - Step 1: QMS Coordinator logs incoming External Audit schedule email
-export const logIncomingExternalAuditSchedule = (req, res) => {
+export const logIncomingExternalAuditSchedule = async (req, res) => {
   try {
-    loadFromDisk();
+    await loadFromDisk();
     const {
       id,
       title,
@@ -288,7 +332,7 @@ export const logIncomingExternalAuditSchedule = (req, res) => {
       externalAuditData.unshift(newAudit);
     }
 
-    saveToDisk();
+    await saveToDisk(newAudit);
 
     // Push notification to QMS Coordinator confirming logging
     notificationsData.unshift({
@@ -325,10 +369,10 @@ export const logIncomingExternalAuditSchedule = (req, res) => {
 };
 
 // POST /api/external-audit/:id/share-schedule - Step 2: QMS Coordinator shares to Course Coordinators, Trust Head, and Internal Auditor
-export const shareExternalAuditSchedule = (req, res) => {
+export const shareExternalAuditSchedule = async (req, res) => {
   try {
-    loadFromDisk();
-    const audit = externalAuditData.find((a) => a.id === req.params.id);
+    await loadFromDisk();
+    const audit = await findAudit(req.params.id);
     if (!audit) {
       return res.status(404).json({ success: false, message: "External Audit not found" });
     }
@@ -367,7 +411,7 @@ export const shareExternalAuditSchedule = (req, res) => {
       details: `Dispatched received email & meeting schedule to all Course Coordinators, Trust Head Trust Head, and Internal Auditor Internal Auditor.`
     });
 
-    saveToDisk();
+    await saveToDisk(audit);
 
     // Broadcast notifications to all stakeholders
     const roles = ["Head", "owner", "auditor"];
@@ -407,10 +451,10 @@ export const shareExternalAuditSchedule = (req, res) => {
 };
 
 // POST /api/external-audit/:id/upload-nc - Step 3: QMS Coordinator uploads scanned copy of paper NC doc and shares to Course Coordinators ONLY
-export const uploadExternalAuditNCDocs = (req, res) => {
+export const uploadExternalAuditNCDocs = async (req, res) => {
   try {
-    loadFromDisk();
-    const audit = externalAuditData.find((a) => a.id === req.params.id);
+    await loadFromDisk();
+    const audit = await findAudit(req.params.id);
     if (!audit) {
       return res.status(404).json({ success: false, message: "External Audit not found" });
     }
@@ -467,7 +511,7 @@ export const uploadExternalAuditNCDocs = (req, res) => {
       details: `External Auditor audited system in person at office and handed paper NC doc. Scanned copy (${audit.ncDocument.fileName}) uploaded and shared exclusively to Course Coordinators for resolution.`
     });
 
-    saveToDisk();
+    await saveToDisk(audit);
 
     // Push notification to Course Coordinators ONLY (user requirement)
     notificationsData.unshift({
@@ -504,10 +548,10 @@ export const uploadExternalAuditNCDocs = (req, res) => {
 };
 
 // POST /api/external-audit/:id/close-nc - Step 4: Course Coordinator downloads NC docs and closes NC resolution
-export const closeCourseCoordinatorNC = (req, res) => {
+export const closeCourseCoordinatorNC = async (req, res) => {
   try {
-    loadFromDisk();
-    const audit = externalAuditData.find((a) => a.id === req.params.id);
+    await loadFromDisk();
+    const audit = await findAudit(req.params.id);
     if (!audit) {
       return res.status(404).json({ success: false, message: "External Audit not found" });
     }
@@ -555,7 +599,7 @@ export const closeCourseCoordinatorNC = (req, res) => {
       details: `Course Coordinator downloaded scanned NC report, completed corrective actions, and submitted resolution closure. Ready for External Auditor approval.`
     });
 
-    saveToDisk();
+    await saveToDisk(audit);
 
     // Push notification to QMS Coordinator
     notificationsData.unshift({
@@ -592,10 +636,10 @@ export const closeCourseCoordinatorNC = (req, res) => {
 };
 
 // POST /api/external-audit/:id/close - Step 5: External Auditor approves (via email or direct office visit) & QMS Coordinator closes entire process
-export const closeExternalAuditProcess = (req, res) => {
+export const closeExternalAuditProcess = async (req, res) => {
   try {
-    loadFromDisk();
-    const audit = externalAuditData.find((a) => a.id === req.params.id);
+    await loadFromDisk();
+    const audit = await findAudit(req.params.id);
     if (!audit) {
       return res.status(404).json({ success: false, message: "External Audit not found" });
     }
@@ -655,7 +699,7 @@ export const closeExternalAuditProcess = (req, res) => {
       details: `Full process closed by QMS Coordinator. All previous stages validated. ISO 9001:2015 certification ratified for all divisions.`
     });
 
-    saveToDisk();
+    await saveToDisk(audit);
 
     // Broadcast celebration notification to ALL stakeholders
     ["Head", "owner", "qm", "auditor"].forEach((r, idx) => {

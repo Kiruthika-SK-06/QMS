@@ -870,33 +870,6 @@ Certified Compliant with International Standards - Centre for Development of Adv
                   </div>
                 </div>
 
-                {/* Subtle Non-Conformance Notice for Course Coordinator if pending resolution */}
-                {audit.ncDocument && isCourseCoordinator && !audit.ncClosure?.closed && (
-                  <div
-                    style={{
-                      margin: "12px 0",
-                      padding: "8px 12px",
-                      background: "#fffbeb",
-                      border: "1px solid #fed7aa",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      color: "#92400e",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      gap: "6px"
-                    }}
-                  >
-                    <span style={{ fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <AlertCircle size={14} color="#d97706" />
-                      Scanned NC Document Shared: {audit.ncDocument.fileName || "Scanned Paper Copy"}
-                    </span>
-                    <span style={{ fontSize: "11px", color: "#78350f" }}>
-                      Target Closure: {audit.ncDocument.targetClosureDate}
-                    </span>
-                  </div>
-                )}
 
                 {/* Bottom Action Toolbar */}
                 <div

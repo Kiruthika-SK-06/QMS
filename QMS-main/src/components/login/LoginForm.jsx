@@ -1,15 +1,17 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { AlertCircle, CheckCircle2, Loader2, Mail, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { authService } from "../../services/authService";
 import Logo from "../common/Logo";
 import RolePicker from "./RolePicker";
 import ForgotPasswordModal from "./ForgotPasswordModal";
+import AccountActivationModal from "./AccountActivationModal";
 
 export default function LoginForm() {
   const app = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,14 +22,35 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showActivationModal, setShowActivationModal] = useState(false);
+  const [pendingActivationEmail, setPendingActivationEmail] = useState("");
+
+  // Check URL query parameters or direct paths (e.g. /activate, /verify-otp, ?mode=activate&email=user@cdac.in)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get("mode");
+    const paramEmail = params.get("email");
+
+    if (paramEmail) {
+      setEmail(paramEmail);
+    }
+
+    if (mode === "activate" || location.pathname === "/activate" || location.pathname === "/verify-otp") {
+      setPendingActivationEmail(paramEmail || "");
+      setShowActivationModal(true);
+    } else if (mode === "forgot" || location.pathname === "/forgot-password") {
+      setShowForgotPassword(true);
+    }
+  }, [location.search, location.pathname]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setSuccessMessage("");
+    setPendingActivationEmail("");
 
     if (!email.trim()) {
-      setError("Please enter your email ID or username.");
+      setError("Please enter your official email ID or username.");
       return;
     }
 
@@ -36,30 +59,22 @@ export default function LoginForm() {
       return;
     }
 
-    if (!role) {
-      setError("Please select a role from the dropdown to continue.");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Authenticate with the backend API or resilient fallback
+      // Authenticate with the backend API against MongoDB single source of truth
       const res = await authService.login({
         identifier: email.trim(),
         password,
-        role
+        role: role || undefined
       });
 
       if (res && res.success && res.user) {
-        // Build clean user containing strictly the entered details (no emp id)
         const sessionUser = {
           ...res.user,
           loginIdentifier: email.trim(),
           email: res.user.email || email.trim()
         };
-        delete sessionUser.employeeId;
-        delete sessionUser.empId;
 
         // Guarantee immediate synchronous persistence to localStorage
         if (res.token) localStorage.setItem("qms_token", res.token);
@@ -72,7 +87,7 @@ export default function LoginForm() {
           app.login(sessionUser.role || role);
         }
 
-        // Determine destination dashboard based on verified user role
+        // Determine destination dashboard based on verified MongoDB user role
         const userRole = sessionUser.role;
         const path =
           userRole === "owner"
@@ -87,7 +102,12 @@ export default function LoginForm() {
       }
     } catch (err) {
       console.error("Login failed:", err);
-      setError(err.message || "Failed to sign in. Please verify your credentials and selected role.");
+      if (err.code === "PENDING_VERIFICATION") {
+        setPendingActivationEmail(err.email || email.trim());
+        setError("Your account is pending verification. Please verify your OTP to set your password and activate your account.");
+      } else {
+        setError(err.message || "Failed to sign in. Please verify your credentials and selected role.");
+      }
     } finally {
       setLoading(false);
     }
@@ -110,7 +130,35 @@ export default function LoginForm() {
         {error && (
           <div className="login-error-alert" role="alert">
             <AlertCircle size={18} className="alert-icon" />
-            <span>{error}</span>
+            <div style={{ flex: 1 }}>
+              <div>{error}</div>
+              {pendingActivationEmail && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError("");
+                    setShowActivationModal(true);
+                  }}
+                  style={{
+                    marginTop: "8px",
+                    background: "#050B3B",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "6px 12px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px"
+                  }}
+                >
+                  <ShieldCheck size={14} />
+                  <span>Activate Account Now</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -131,6 +179,7 @@ export default function LoginForm() {
                   setEmail(event.target.value);
                   setError("");
                   setSuccessMessage("");
+                  setPendingActivationEmail("");
                 }}
                 placeholder="e.g. coordinator@cdac.in"
                 autoComplete="username"
@@ -140,7 +189,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-          {/* Role Picker (Clean role dropdown, no descriptions, smart flip) */}
+          {/* Role Picker (Dropdown matching C-DAC design) */}
           <RolePicker role={role} onChange={(newRole) => {
             setRole(newRole);
             setError("");
@@ -216,6 +265,29 @@ export default function LoginForm() {
             {loading && <Loader2 size={16} className="animate-spin" />}
             <span>{loading ? "Authenticating..." : "Sign in to Workspace"}</span>
           </button>
+
+          {/* Account Activation Link for newly invited users */}
+          <div style={{ textAlign: "center", marginTop: "16px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setSuccessMessage("");
+                setShowActivationModal(true);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#384FB8",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                padding: "4px 8px"
+              }}
+            >
+              Invited to QMS? Activate your account
+            </button>
+          </div>
         </form>
 
         <small className="login-footnote">
@@ -231,20 +303,21 @@ export default function LoginForm() {
           onSuccess={(result) => {
             setShowForgotPassword(false);
             setError("");
-            if (result && typeof result === "object" && result.newPassword) {
-              if (result.identifier) setEmail(result.identifier);
-              setPassword(result.newPassword);
-              if (result.role) {
-                setRole(result.role);
-              }
-              setSuccessMessage(
-                `Password reset successfully for "${result.identifier}". You can now sign in.`
-              );
-            } else if (typeof result === "string" && result.trim()) {
-              setSuccessMessage(
-                `Password reset instructions have been sent to ${result}. Please check your email.`
-              );
-            }
+            setSuccessMessage("Password reset successfully! You can now sign in with your new password.");
+          }}
+        />
+      )}
+
+      {/* Account Activation Modal */}
+      {showActivationModal && (
+        <AccountActivationModal
+          initialEmail={pendingActivationEmail || email}
+          onClose={() => setShowActivationModal(false)}
+          onSuccess={(activatedEmail) => {
+            setShowActivationModal(false);
+            setError("");
+            setEmail(activatedEmail);
+            setSuccessMessage(`Account activated successfully for "${activatedEmail}". You may now log in.`);
           }}
         />
       )}

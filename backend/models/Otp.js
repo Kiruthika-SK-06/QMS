@@ -13,6 +13,12 @@ const otpSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    purpose: {
+      type: String,
+      required: true,
+      enum: ["ACCOUNT_ACTIVATION", "PASSWORD_RESET"],
+      index: true
+    },
     attempts: {
       type: Number,
       default: 0
@@ -29,6 +35,10 @@ const otpSchema = new mongoose.Schema(
       type: String,
       default: null
     },
+    lastResentAt: {
+      type: Date,
+      default: Date.now
+    },
     expiresAt: {
       type: Date,
       required: true,
@@ -39,6 +49,9 @@ const otpSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+// Compound index to quickly find an active OTP for an email and purpose
+otpSchema.index({ email: 1, purpose: 1 });
 
 export const Otp = mongoose.models.Otp || mongoose.model("Otp", otpSchema);
 export default Otp;

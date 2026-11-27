@@ -36,6 +36,7 @@ import PageIntro from "../components/common/PageIntro";
 import StatCard from "../components/common/StatCard";
 import StatusBadge from "../components/common/StatusBadge";
 import Modal from "../components/tasks/Modal";
+import CustomSelect from "../components/common/CustomSelect";
 
 // 4-Step MRM Workflow Progress Helper
 // Step 1: Plan & Schedule Meeting (QMS Coordinator)
@@ -524,10 +525,10 @@ Controlled Document - Published for all Course Staff and Auditors
     const wf = getWorkflowDetails(mrm);
     const matchesFilter =
       filterStep === "All" ||
-      (filterStep === "Step 1" && wf.step === 1) ||
+      (filterStep === "Step 1" && (wf.step === 1 || wf.step === 1.5 || wf.step === 2)) ||
       (filterStep === "Step 2" && (wf.step === 2 || wf.step === 1.5)) ||
       (filterStep === "Step 3" && (wf.step === 2.5 || wf.step === 3)) ||
-      (filterStep === "Scheduled" && (wf.step === 3 || (isInternalAuditor && wf.step === 2.5))) ||
+      (filterStep === "Scheduled" && (wf.step <= 3 || !mrm.momFile)) ||
       (filterStep === "Step 4" && wf.step === 4) ||
       (filterStep === "MoM" && wf.step === 4) ||
       (filterStep === "Approved" && (wf.step >= 2.5 || mrm.status === "Approved" || mrm.status === "Approved by Trust Head" || mrm.momFile));
@@ -548,7 +549,7 @@ Controlled Document - Published for all Course Staff and Auditors
   const pendingApprovalCount = (mrmList || []).filter((m) => getWorkflowDetails(m).step === 2).length;
   const readyToEmailCount = (mrmList || []).filter((m) => getWorkflowDetails(m).step === 2.5).length;
   const momPublishedCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step === 4).length;
-  const scheduledCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step === 3).length;
+  const scheduledCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step <= 3 || !m.momFile).length;
   const auditorApprovedCount = visibleMRMs.filter((m) => getWorkflowDetails(m).step >= 2.5).length;
   const headApprovedCount = visibleMRMs.filter((m) => {
     const s = getWorkflowDetails(m).step;
@@ -697,11 +698,12 @@ Controlled Document - Published for all Course Staff and Auditors
                 { id: "Step 4", label: `Completed / MoM (${momPublishedCount})` }
               ]
             : [
-                { id: "All", label: "All Meetings" },
+                { id: "All", label: `All Meetings (${visibleMRMs.length})` },
+                { id: "Scheduled", label: `Scheduled (${scheduledCount})` },
                 { id: "Step 1", label: "1. Planned" },
-                { id: "Step 2", label: "2. Pending Approval" },
-                { id: "Step 3", label: "3. Notification Sent" },
-                { id: "Step 4", label: "4. Completed / MoM Published" }
+                { id: "Step 2", label: `2. Pending Approval (${pendingApprovalCount})` },
+                { id: "Step 3", label: `3. Notification Sent (${readyToEmailCount})` },
+                { id: "Step 4", label: `4. Completed / MoM (${momPublishedCount})` }
               ]
           ).map((tab) => (
             <button
@@ -1094,21 +1096,18 @@ Controlled Document - Published for all Course Staff and Auditors
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
                   Associated Quality Process <span style={{ color: "#ef4444" }}>*</span>
                 </span>
-                <select
+                <CustomSelect
                   value={planForm.process || "All Processes (Comprehensive Academic Quality Review)"}
                   onChange={(e) => setPlanForm({ ...planForm, process: e.target.value })}
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff", fontSize: "13px" }}
-                >
-                  <option value="All Processes (Comprehensive Academic Quality Review)">
-                    All Processes (Comprehensive Academic Quality Review)
-                  </option>
-                  <option value="Quality Review & MRM">Quality Review & MRM</option>
-                  {(processes || []).map((p) => (
-                    <option key={p.id} value={p.name}>
-                      {p.name} ({p.id})
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "All Processes (Comprehensive Academic Quality Review)", label: "All Processes (Comprehensive Academic Quality Review)" },
+                    { value: "Quality Review & MRM", label: "Quality Review & MRM" },
+                    ...(processes || []).map((p) => ({
+                      value: p.name,
+                      label: `${p.name} (${p.id})`
+                    }))
+                  ]}
+                />
               </label>
 
               <label>
@@ -1509,37 +1508,6 @@ Controlled Document - Published for all Course Staff and Auditors
                 style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
               />
             </label>
-
-            {/* Action Items */}
-            <div style={{ marginBottom: "16px" }}>
-              <span style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "13px" }}>
-                Action Items Assigned ({momUploadForm.actionItems.length})
-              </span>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {momUploadForm.actionItems.map((act, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "8px 12px",
-                      background: "#f8fafc",
-                      borderRadius: "6px",
-                      border: "1px solid #e2e8f0",
-                      fontSize: "12px",
-                      display: "flex",
-                      justifyContent: "space-between"
-                    }}
-                  >
-                    <div>
-                      <strong>{act.task}</strong>
-                      <div style={{ color: "#64748b", marginTop: "2px" }}>
-                        Assignee: <strong>{act.assignee}</strong> • Deadline: {act.deadline}
-                      </div>
-                    </div>
-                    <span style={{ color: "#d97706", fontWeight: "600" }}>{act.status}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
               <button

@@ -18,6 +18,8 @@
     "start:frontend": "npm --prefix QMS-main run dev",
     "stop": "node scripts/kill-ports.js",
     "restart": "node scripts/kill-ports.js && npm run dev",
+    "bootstrap": "npm --prefix backend run bootstrap",
+    "test:auth": "npm --prefix backend run test:auth",
     "install:all": "npm --prefix backend install && npm --prefix QMS-main install"
   },
   "dependencies": {

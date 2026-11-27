@@ -38,15 +38,6 @@ dotenv.config();
 // Initialize persistent disk storage
 initPersistentStore();
 
-// Connect to MongoDB & Seed / Synchronize Database
-connectDB().then((connected) => {
-  if (connected) {
-    seedDatabase().then(() => {
-      syncAllToMongoDB(models);
-    });
-  }
-});
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -139,38 +130,52 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
-if (!process.env.VERCEL) {
-  const server = app.listen(PORT, () => {
-    console.log(`\n=================================================`);
-    console.log(`🚀 QMS Backend Server running on port ${PORT}`);
-    console.log(`📡 URL: http://localhost:${PORT}`);
-    console.log(`🔒 Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`👥 Available Controlled Accounts:`);
-    console.log(`   1) Course Coordinator: username: coursecoordinator | password: 1234 | role: owner`);
-    console.log(`   2) QMS Coordinator:    username: qmcoordinator    | password: 1234 | role: qm`);
-    console.log(`   3) Trust Head:         username: trusthead        | password: 1234 | role: Head`);
-    console.log(`=================================================\n`);
-  });
-
-  server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-      console.log(`\n=================================================`);
-      console.log(`ℹ️  PORT ${PORT} IS ALREADY ACTIVE`);
-      console.log(`-------------------------------------------------`);
-      console.log(`The QMS Backend Server is already running and listening on port ${PORT}!`);
-      console.log(`📡 Backend API:  http://localhost:${PORT}`);
-      console.log(`🌐 Frontend App: http://localhost:5173`);
-      console.log(``);
-      console.log(`👉 You do not need to start it again. Open your browser:`);
-      console.log(`   http://localhost:5173`);
-      console.log(`=================================================\n`);
-      process.exit(0);
-    } else {
-      console.error("Unhandled server error:", err);
-      process.exit(1);
+// Start Server after Database Connection & Seeding completes
+const startServer = async () => {
+  try {
+    const connected = await connectDB();
+    if (connected) {
+      await seedDatabase();
+      await syncAllToMongoDB(models);
     }
-  });
-}
+  } catch (err) {
+    console.error("Database connection/seeding notice:", err.message);
+  }
+
+  if (!process.env.VERCEL) {
+    const server = app.listen(PORT, () => {
+      console.log(`\n=================================================`);
+      console.log(`🚀 QMS Backend Server running on port ${PORT}`);
+      console.log(`📡 URL: http://localhost:${PORT}`);
+      console.log(`🔒 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`🛡️  Authentication: MongoDB Single Source of Truth`);
+      console.log(`ℹ️  Initial Setup: Run 'npm run bootstrap' to create the first QMS Coordinator if database is uninitialized.`);
+      console.log(`=================================================\n`);
+    });
+
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.log(`\n=================================================`);
+        console.log(`ℹ️  PORT ${PORT} IS ALREADY ACTIVE`);
+        console.log(`-------------------------------------------------`);
+        console.log(`The QMS Backend Server is already running and listening on port ${PORT}!`);
+        console.log(`📡 Backend API:  http://localhost:${PORT}`);
+        console.log(`🌐 Frontend App: http://localhost:5173`);
+        console.log(``);
+        console.log(`👉 You do not need to start it again. Open your browser:`);
+        console.log(`   http://localhost:5173`);
+        console.log(`=================================================\n`);
+        process.exit(0);
+      } else {
+        console.error("Unhandled server error:", err);
+        process.exit(1);
+      }
+    });
+  }
+};
+
+startServer().catch((err) => {
+  console.error("Fatal startup error:", err);
+});
 
 export default app;

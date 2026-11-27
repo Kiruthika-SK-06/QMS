@@ -7,15 +7,18 @@ import {
   toggleUserStatus,
   deleteUser
 } from "../controllers/userController.js";
-import { authenticateToken } from "../middleware/authMiddleware.js";
+import { authenticateToken, requireRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getAllUsers);
-router.get("/:id", getUserById);
-router.post("/", authenticateToken, createUser);
-router.put("/:id", authenticateToken, updateUser);
-router.patch("/:id/status", authenticateToken, toggleUserStatus);
-router.delete("/:id", authenticateToken, deleteUser);
+// Read operations: authenticated users can access directory
+router.get("/", authenticateToken, getAllUsers);
+router.get("/:id", authenticateToken, getUserById);
+
+// Administrative operations: restricted strictly to QMS Coordinators
+router.post("/", authenticateToken, requireRole("qm", "coordinator", "admin"), createUser);
+router.put("/:id", authenticateToken, requireRole("qm", "coordinator", "admin"), updateUser);
+router.patch("/:id/status", authenticateToken, requireRole("qm", "coordinator", "admin"), toggleUserStatus);
+router.delete("/:id", authenticateToken, requireRole("qm", "coordinator", "admin"), deleteUser);
 
 export default router;

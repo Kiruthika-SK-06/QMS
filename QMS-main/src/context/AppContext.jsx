@@ -34,7 +34,7 @@ export function useApp() {
   return context;
 }
 
-// Ensure institutional identity: never expose dummy personal names
+// Preserve real user identity from MongoDB
 const sanitizeUserIdentity = (user) => {
   if (!user) return null;
   const roleNameMap = {
@@ -45,21 +45,12 @@ const sanitizeUserIdentity = (user) => {
     auditor: "Internal Auditor",
     employee: "Employee"
   };
-  const roleName = roleNameMap[user.role] || user.roleTitle || roles[user.role] || user.username || "User";
-  const initialsMap = {
-    Head: "TH",
-    head: "TH",
-    qm: "QC",
-    owner: "CC",
-    auditor: "IA",
-    employee: "EM"
-  };
-  const initials = initialsMap[user.role] || (roleName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase());
+  const roleName = user.roleTitle || roleNameMap[user.role] || roles[user.role] || user.role || "User";
+  const initials = user.initials || (user.name ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "QM");
 
-  const { employeeId, empId, ...rest } = user;
   return {
-    ...rest,
-    name: roleName,
+    ...user,
+    name: user.name || roleName,
     roleTitle: roleName,
     initials
   };
@@ -361,26 +352,14 @@ export function AppProvider({ children }) {
   // ==================== USER MANAGEMENT ACTIONS ====================
   const addUser = async (userData) => {
     try {
-      const created = await userService.createUser(userData, token);
-      setUsersList((prev) => [created, ...prev]);
+      const res = await userService.createUser(userData, token);
+      const createdUser = res?.user || res;
+      setUsersList((prev) => [createdUser, ...prev]);
       refreshData();
-      return created;
+      return res;
     } catch (err) {
-      console.error("addUser failed, fallback to local:", err);
-      const fallbackUser = {
-        ...userData,
-        id: `USR-${Math.floor(1000 + Math.random() * 9000)}`,
-        initials: userData.name
-          .split(" ")
-          .map((w) => w[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase(),
-        joinDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-        status: userData.status || "Active"
-      };
-      setUsersList((prev) => [fallbackUser, ...prev]);
-      return fallbackUser;
+      console.error("addUser failed:", err);
+      throw err;
     }
   };
 
@@ -391,10 +370,8 @@ export function AppProvider({ children }) {
       refreshData();
       return updated;
     } catch (err) {
-      console.error("updateUser failed, fallback to local:", err);
-      setUsersList((prev) =>
-        prev.map((u) => (u.id === id || u.employeeId === id ? { ...u, ...userData } : u))
-      );
+      console.error("updateUser failed:", err);
+      throw err;
     }
   };
 
@@ -405,15 +382,8 @@ export function AppProvider({ children }) {
       refreshData();
       return updated;
     } catch (err) {
-      console.error("toggleUserStatus failed, fallback to local:", err);
-      setUsersList((prev) =>
-        prev.map((u) => {
-          if (u.id === id || u.employeeId === id) {
-            return { ...u, status: u.status === "Active" ? "Inactive" : "Active" };
-          }
-          return u;
-        })
-      );
+      console.error("toggleUserStatus failed:", err);
+      throw err;
     }
   };
 
@@ -422,9 +392,10 @@ export function AppProvider({ children }) {
       await userService.deleteUser(id, token);
       setUsersList((prev) => prev.filter((u) => u.id !== id && u.employeeId !== id));
       refreshData();
+      return true;
     } catch (err) {
       console.error("deleteUser failed:", err);
-      setUsersList((prev) => prev.filter((u) => u.id !== id && u.employeeId !== id));
+      throw err;
     }
   };
 

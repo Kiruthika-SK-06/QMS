@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Save, FileText, Check, AlertCircle } from "lucide-react";
 import Modal from "../tasks/Modal";
 import { useApp } from "../../context/AppContext";
+import CustomSelect from "./CustomSelect";
 
 export default function TemplateEditModal({ template, onClose, onSave }) {
   const { processes, updateDocument, addVersion } = useApp();
@@ -111,22 +112,23 @@ export default function TemplateEditModal({ template, onClose, onSave }) {
 
           <label>
             Document Type
-            <select value={form.type} onChange={(e) => update("type", e.target.value)}>
-              <option value="Templates">Templates</option>
-              <option value="Forms">Forms</option>
-              <option value="Procedures">Procedures</option>
-            </select>
+            <CustomSelect
+              value={form.type}
+              onChange={(e) => update("type", e.target.value)}
+              options={["Templates", "Forms", "Procedures"]}
+            />
           </label>
 
           <label>
             Associated Process
-            <select value={form.process} onChange={(e) => update("process", e.target.value)}>
-              {processes.map((p) => (
-                <option key={p.id || p.name} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              value={form.process}
+              onChange={(e) => update("process", e.target.value)}
+              options={processes.map((p) => ({
+                value: p.name,
+                label: p.name
+              }))}
+            />
           </label>
 
           <label>

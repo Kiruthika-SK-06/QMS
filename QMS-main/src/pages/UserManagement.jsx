@@ -20,6 +20,7 @@ import PageIntro from "../components/common/PageIntro";
 import StatCard from "../components/common/StatCard";
 import StatusBadge from "../components/common/StatusBadge";
 import Modal from "../components/tasks/Modal";
+import CustomSelect from "../components/common/CustomSelect";
 
 // Default metadata and privileges preset by role
 const ROLE_METADATA = {
@@ -168,16 +169,12 @@ export default function UserManagement() {
           employeeId: form.employeeId.trim(),
           email: form.email.trim(),
           role: form.role,
-          status: form.status,
-          roleTitle: meta.roleTitle,
-          username: form.email.trim().split("@")[0].toLowerCase(),
-          password: "1234",
-          designation: meta.designation,
           department: meta.department,
-          process: meta.process,
-          privileges: meta.privileges
+          designation: meta.designation,
+          process: meta.process
         };
-        await addUser(payload);
+        const res = await addUser(payload);
+        alert(res?.message || `User invitation sent! An activation code has been emailed to ${form.email.trim()}.`);
       }
       setShowModal(false);
     } catch (err) {
@@ -304,41 +301,34 @@ export default function UserManagement() {
 
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           {/* Status filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: "7px 12px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              fontSize: "13px",
-              background: "#ffffff"
-            }}
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active Only</option>
-            <option value="Inactive">Inactive Only</option>
-          </select>
+          <div style={{ minWidth: "160px" }}>
+            <CustomSelect
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={[
+                { value: "All", label: "All Statuses" },
+                { value: "Active", label: "Active Only" },
+                { value: "Pending Verification", label: "Pending Verification Only" },
+                { value: "Inactive", label: "Inactive Only" }
+              ]}
+            />
+          </div>
 
           {/* Sort selector */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={{
-              padding: "7px 12px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              fontSize: "13px",
-              background: "#ffffff"
-            }}
-          >
-            <option value="name-asc">Sort: Name (A-Z)</option>
-            <option value="name-desc">Sort: Name (Z-A)</option>
-            <option value="empId">Sort: Emp ID</option>
-            <option value="role">Sort: Role</option>
-            <option value="department">Sort: Department</option>
-            <option value="status">Sort: Status</option>
-          </select>
+          <div style={{ minWidth: "170px" }}>
+            <CustomSelect
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              options={[
+                { value: "name-asc", label: "Sort: Name (A-Z)" },
+                { value: "name-desc", label: "Sort: Name (Z-A)" },
+                { value: "empId", label: "Sort: Emp ID" },
+                { value: "role", label: "Sort: Role" },
+                { value: "department", label: "Sort: Department" },
+                { value: "status", label: "Sort: Status" }
+              ]}
+            />
+          </div>
         </div>
       </div>
 
@@ -363,10 +353,10 @@ export default function UserManagement() {
                   user.role === "Head"
                     ? { bg: "#f0fdf4", border: "#bbf7d0", color: "#166534", icon: Award }
                     : user.role === "auditor"
-                    ? { bg: "#faf5ff", border: "#e9d5ff", color: "#6b21a8", icon: ShieldCheck }
-                    : user.role === "qm"
-                    ? { bg: "#eff6ff", border: "#bfdbfe", color: "#1e40af", icon: UserCheck }
-                    : { bg: "#f0fdfa", border: "#99f6e4", color: "#115e59", icon: Briefcase };
+                      ? { bg: "#faf5ff", border: "#e9d5ff", color: "#6b21a8", icon: ShieldCheck }
+                      : user.role === "qm"
+                        ? { bg: "#eff6ff", border: "#bfdbfe", color: "#1e40af", icon: UserCheck }
+                        : { bg: "#f0fdfa", border: "#99f6e4", color: "#115e59", icon: Briefcase };
 
                 const RoleIcon = roleBadgeTone.icon;
 
@@ -402,10 +392,10 @@ export default function UserManagement() {
                           (user.role === "Head"
                             ? "Trust Head"
                             : user.role === "auditor"
-                            ? "Internal Auditor"
-                            : user.role === "qm"
-                            ? "QMS Coordinator"
-                            : "Course Coordinator")}
+                              ? "Internal Auditor"
+                              : user.role === "qm"
+                                ? "QMS Coordinator"
+                                : "Course Coordinator")}
                       </span>
                     </td>
                     <td>
@@ -509,18 +499,18 @@ export default function UserManagement() {
                     viewingProfile.role === "Head"
                       ? "#f0fdf4"
                       : viewingProfile.role === "auditor"
-                      ? "#faf5ff"
-                      : viewingProfile.role === "qm"
-                      ? "#eff6ff"
-                      : "#f0fdfa",
+                        ? "#faf5ff"
+                        : viewingProfile.role === "qm"
+                          ? "#eff6ff"
+                          : "#f0fdfa",
                   color:
                     viewingProfile.role === "Head"
                       ? "#166534"
                       : viewingProfile.role === "auditor"
-                      ? "#6b21a8"
-                      : viewingProfile.role === "qm"
-                      ? "#1e40af"
-                      : "#115e59",
+                        ? "#6b21a8"
+                        : viewingProfile.role === "qm"
+                          ? "#1e40af"
+                          : "#115e59",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -554,10 +544,10 @@ export default function UserManagement() {
                     (viewingProfile.role === "Head"
                       ? "Trust Head"
                       : viewingProfile.role === "auditor"
-                      ? "Internal Auditor"
-                      : viewingProfile.role === "qm"
-                      ? "QMS Coordinator"
-                      : "Course Coordinator")}
+                        ? "Internal Auditor"
+                        : viewingProfile.role === "qm"
+                          ? "QMS Coordinator"
+                          : "Course Coordinator")}
                 </span>
               </div>
               <div>
@@ -686,16 +676,16 @@ export default function UserManagement() {
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
                   Assigned Role <span style={{ color: "#ef4444" }}>*</span>
                 </span>
-                <select
+                <CustomSelect
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff" }}
-                >
-                  <option value="owner">Course Coordinator</option>
-                  <option value="qm">QMS Coordinator</option>
-                  <option value="Head">Trust Head</option>
-                  <option value="auditor">Internal Auditor</option>
-                </select>
+                  options={[
+                    { value: "owner", label: "Course Coordinator" },
+                    { value: "qm", label: "QMS Coordinator" },
+                    { value: "Head", label: "Trust Head" },
+                    { value: "auditor", label: "Internal Auditor" }
+                  ]}
+                />
               </label>
 
               {/* 5. Active Status */}
@@ -703,14 +693,14 @@ export default function UserManagement() {
                 <span style={{ display: "block", marginBottom: "4px", fontWeight: "600", fontSize: "13px" }}>
                   Active Status <span style={{ color: "#ef4444" }}>*</span>
                 </span>
-                <select
+                <CustomSelect
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff" }}
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
+                  options={[
+                    { value: "Active", label: "Active" },
+                    { value: "Inactive", label: "Inactive" }
+                  ]}
+                />
               </label>
             </div>
 

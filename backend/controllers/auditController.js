@@ -64,11 +64,13 @@ const saveAuditsToDisk = (targetAudit = null) => {
   if (mongoose.connection.readyState === 1) {
     try {
       if (targetAudit && targetAudit.id) {
-        Audit.findOneAndUpdate({ id: targetAudit.id }, targetAudit, { upsert: true }).catch(() => {});
+        const { _id, ...cleanAudit } = targetAudit;
+        Audit.findOneAndUpdate({ id: targetAudit.id }, cleanAudit, { upsert: true }).catch(() => { });
       } else {
         for (const item of auditData) {
           if (item && item.id) {
-            Audit.findOneAndUpdate({ id: item.id }, item, { upsert: true }).catch(() => {});
+            const { _id, ...cleanItem } = item;
+            Audit.findOneAndUpdate({ id: item.id }, cleanItem, { upsert: true }).catch(() => { });
           }
         }
       }
@@ -150,7 +152,7 @@ export const getAllAudits = (req, res) => {
           userRole = decoded.role;
           userName = decoded.name;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     userRole = req.user?.role || userRole;
 

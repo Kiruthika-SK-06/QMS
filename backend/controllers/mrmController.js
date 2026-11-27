@@ -24,7 +24,7 @@ const loadMRMFromDisk = async () => {
         mrmData.push(...dbMrms);
       }
       return;
-    } catch {}
+    } catch { }
   }
 
   try {
@@ -40,26 +40,30 @@ const loadMRMFromDisk = async () => {
         mrmData.push(...merged);
       }
     }
-  } catch {}
+  } catch { }
 };
 
-const saveMRMToDisk = (targetMRM = null) => {
+const saveMRMToDisk = async (targetMRM = null) => {
   try {
     fs.writeFileSync(TMP_MRM_STORE, JSON.stringify(mrmData), "utf-8");
-  } catch {}
+  } catch { }
 
   if (mongoose.connection.readyState === 1) {
     try {
       if (targetMRM && targetMRM.id) {
-        MRM.findOneAndUpdate({ id: targetMRM.id }, targetMRM, { upsert: true }).catch(() => {});
+        const { _id, ...cleanMRM } = targetMRM;
+        await MRM.findOneAndUpdate({ id: targetMRM.id }, cleanMRM, { upsert: true, returnDocument: "after" });
       } else {
         for (const item of mrmData) {
           if (item && item.id) {
-            MRM.findOneAndUpdate({ id: item.id }, item, { upsert: true }).catch(() => {});
+            const { _id, ...cleanItem } = item;
+            await MRM.findOneAndUpdate({ id: item.id }, cleanItem, { upsert: true, returnDocument: "after" });
           }
         }
       }
-    } catch {}
+    } catch (err) {
+      console.warn("MRM MongoDB persistence error:", err.message);
+    }
   }
 };
 
@@ -84,6 +88,21 @@ const formatNow = () =>
     hour: "2-digit",
     minute: "2-digit"
   });
+
+// Reliable lookup: checks memory cache first, falls back directly to MongoDB
+export const findMRM = async (id) => {
+  let mrm = mrmData.find((m) => m && m.id === id);
+  if (!mrm && mongoose.connection.readyState === 1) {
+    try {
+      const doc = await MRM.findOne({ id }).lean();
+      if (doc) {
+        mrmData.push(doc);
+        mrm = doc;
+      }
+    } catch { }
+  }
+  return mrm;
+};
 
 // GET /api/mrm - List all MRM meetings (Role-filtered)
 // POST /api/mrm/sync - Client-driven sync to ensure cross-tab & multi-role persistence
@@ -133,7 +152,7 @@ export const getAllMRMs = (req, res) => {
           const decoded = jwt.verify(token, process.env.JWT_SECRET || "qms_jwt_secret_key_super_secure_2026");
           if (decoded) userRole = decoded.role;
         }
-      } catch {}
+      } catch { }
     }
     userRole = (req.user?.role || req.headers["x-user-role"] || req.headers["x-demo-role"] || userRole || "").toLowerCase();
 
@@ -175,18 +194,30 @@ export const getAllMRMs = (req, res) => {
     }
 
     const dummyIds = new Set(["MRM-2026-001", "MRM-2026-002", "MRM-2026-003", "MRM-2026-004"]);
+    const getMRMTime = (m) => {
+      if (!m) return 0;
+      if (typeof m.createdAt === "number" && !isNaN(m.createdAt)) return m.createdAt;
+      if (m.createdAt) {
+        const t = new Date(m.createdAt).getTime();
+        if (!isNaN(t)) return t;
+      }
+      if (m.scheduledDate) {
+        const t = new Date(m.scheduledDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    };
+
     list.sort((a, b) => {
       const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003") && !a.id?.endsWith("-004"));
       const bIsNew = b.isNew === true || (!dummyIds.has(b.id) && !b.id?.endsWith("-001") && !b.id?.endsWith("-002") && !b.id?.endsWith("-003") && !b.id?.endsWith("-004"));
       if (aIsNew && !bIsNew) return -1;
       if (!aIsNew && bIsNew) return 1;
-      if (aIsNew && bIsNew) {
-        const aTime = a.createdAt || 0;
-        const bTime = b.createdAt || 0;
-        if (bTime !== aTime) return bTime - aTime;
-        return (b.id || "").localeCompare(a.id || "");
-      }
-      return (a.id || "").localeCompare(b.id || "");
+
+      const aTime = getMRMTime(a);
+      const bTime = getMRMTime(b);
+      if (bTime !== aTime) return bTime - aTime;
+      return (b.id || "").localeCompare(a.id || "");
     });
 
     res.json({
@@ -376,7 +407,7 @@ export const createMRM = (req, res) => {
 };
 
 // POST /api/mrm/:id/request-approval - QMS Coordinator asks for approval from Team Head & Internal Auditor
-export const requestApproval = (req, res) => {
+export const requestApproval = async (req, res) => {
   try {
     if (req.user?.role !== "qm") {
       return res.status(403).json({
@@ -385,13 +416,23 @@ export const requestApproval = (req, res) => {
       });
     }
 
-    const mrm = mrmData.find((m) => m.id === req.params.id);
+    const mrm = await findMRM(req.params.id);
     if (!mrm) {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }
 
     const sender = req.user?.name || "QMS Coordinator";
     const senderRole = req.user?.roleTitle || "QMS Coordinator";
+
+    if (req.body.discussionPoints || req.body.actionItems || req.body.decisions) {
+      if (!mrm.mom) mrm.mom = {};
+      if (req.body.discussionPoints) mrm.mom.discussionPoints = req.body.discussionPoints;
+      if (req.body.actionItems) mrm.mom.actionItems = req.body.actionItems;
+      if (req.body.decisions) mrm.mom.decisions = req.body.decisions;
+      if (req.body.discussionPoints) mrm.discussionPoints = req.body.discussionPoints;
+      if (req.body.actionItems) mrm.actionItems = req.body.actionItems;
+      if (req.body.decisions) mrm.decisions = req.body.decisions;
+    }
 
     mrm.status = "Pending Approval";
     mrm.stage = 2;
@@ -450,6 +491,7 @@ export const requestApproval = (req, res) => {
       timestamp: new Date().toISOString()
     });
 
+    await saveMRMToDisk(mrm);
     notifyMRMChange("SUBMITTED_FOR_APPROVAL", mrm);
     res.json({
       success: true,
@@ -462,9 +504,9 @@ export const requestApproval = (req, res) => {
 };
 
 // POST /api/mrm/:id/approve - Team Head OR Internal Auditor approves
-export const approveMRM = (req, res) => {
+export const approveMRM = async (req, res) => {
   try {
-    const mrm = mrmData.find((m) => m.id === req.params.id);
+    const mrm = await findMRM(req.params.id);
     if (!mrm) {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }
@@ -697,9 +739,9 @@ export const rejectMRM = (req, res) => {
 };
 
 // POST /api/mrm/:id/share-email - Share meeting notification to Course Coordinators, Trust Head, and Internal Auditor through Email
-export const shareMeetingEmail = (req, res) => {
+export const shareMeetingEmail = async (req, res) => {
   try {
-    const mrm = mrmData.find((m) => m.id === req.params.id);
+    const mrm = await findMRM(req.params.id);
     if (!mrm) {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }
@@ -728,21 +770,53 @@ export const shareMeetingEmail = (req, res) => {
     const senderName = req.user?.name || "QMS Coordinator";
     const senderRole = req.user?.roleTitle || "QMS Coordinator";
 
-    // Build recipient list: All Course Coordinators + Trust Head + Internal Auditor
-    const recipients = [
-      ...dummyUsers
-        .filter((u) => u.role === "owner")
-        .map((u) => ({ role: "Course Coordinator", name: u.name, email: u.email })),
-      { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
-      { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
-    ];
+    // Build recipient list strictly from active MongoDB records (DEF-001 fix)
+    let dbUsers = [];
+    if (mongoose.connection.readyState === 1) {
+      try {
+        dbUsers = await User.find({
+          role: { $in: ["owner", "Head", "auditor"] },
+          status: "Active"
+        }).select("name email role roleTitle").lean();
+      } catch (err) {
+        console.warn("Could not query User collection for MRM recipients:", err.message);
+      }
+    }
+
+    const recipients = [];
+    if (dbUsers.length > 0) {
+      dbUsers.forEach((u) => {
+        const roleLabel =
+          u.role === "owner"
+            ? "Course Coordinator"
+            : u.role === "Head"
+              ? "Trust Head"
+              : "Internal Auditor";
+        recipients.push({
+          role: roleLabel,
+          name: u.name,
+          email: u.email
+        });
+      });
+    } else {
+      recipients.push(
+        { role: "Course Coordinator", name: "Course Coordinator", email: "coordinator@cdac.in" },
+        { role: "Trust Head", name: "Trust Head", email: "head@cdac.in" },
+        { role: "Internal Auditor", name: "Internal Auditor", email: "auditor@cdac.in" }
+      );
+    }
+
+    const headName = mrm.approvals?.teamHead?.approverName || "Trust Head";
+    const auditorName = mrm.approvals?.internalAuditor?.approverName || "Internal Auditor";
+    const ccList = recipients.filter((r) => r.role === "Course Coordinator");
+    const ccNames = ccList.map((r) => r.name).join(", ") || "Course Coordinators";
 
     const emailSubject = `Official Notice: ${mrm.title} Scheduled for ${mrm.scheduledDate || "Upcoming Date"} at ${mrm.scheduledTime || "10:30 AM"}`;
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; line-height: 1.6;">
         <h2 style="color: #0f172a; border-bottom: 2px solid #2563eb; padding-bottom: 8px;">Management Review Meeting (MRM) Notice</h2>
         <p>Dear Course Coordinators, Trust Head, and Internal Auditor,</p>
-        <p>You are hereby notified that the following Management Review Meeting has received all mandatory approvals from the <strong>Team Head</strong> and <strong>Internal Auditor</strong> and is officially scheduled:</p>
+        <p>You are hereby notified that the following Management Review Meeting has received required approvals (Trust Head: ${headName}${mrm.approvals?.internalAuditor?.approved ? `, Internal Auditor: ${auditorName}` : ""}) and is officially scheduled:</p>
         
         <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f8fafc; border-radius: 8px; overflow: hidden;">
           <tr><td style="padding: 10px; font-weight: bold; width: 140px; border-bottom: 1px solid #e2e8f0;">Meeting:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${mrm.title}</td></tr>
@@ -783,7 +857,7 @@ export const shareMeetingEmail = (req, res) => {
       actor: `${senderName} (${senderRole})`,
       timestamp: formatNow(),
       version: mrm.version || "1.0",
-      details: `Meeting invitation successfully emailed to all Course Coordinators (${recipients.filter(r => r.role === "Course Coordinator").map(r => r.name).join(", ")}), Trust Head (${mrm.approvals.teamHead.approverName || "Trust Head"}), and Internal Auditor (${mrm.approvals.internalAuditor.approverName || "Internal Auditor"}).`
+      details: `Meeting invitation successfully emailed to all Course Coordinators (${ccNames}), Trust Head (${headName}), and Internal Auditor (${auditorName}).`
     });
 
     // Notify all Course Coordinators
@@ -819,6 +893,7 @@ export const shareMeetingEmail = (req, res) => {
       timestamp: new Date().toISOString()
     });
 
+    await saveMRMToDisk(mrm);
     notifyMRMChange("EMAIL_DISPATCHED", mrm);
     res.json({
       success: true,
@@ -831,9 +906,9 @@ export const shareMeetingEmail = (req, res) => {
 };
 
 // POST /api/mrm/:id/upload-mom - Once meeting is done, QMS Coordinator uploads the MoM file (seen by everyone)
-export const uploadMoMFile = (req, res) => {
+export const uploadMoMFile = async (req, res) => {
   try {
-    const mrm = mrmData.find((m) => m.id === req.params.id);
+    const mrm = await findMRM(req.params.id);
     if (!mrm) {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }
@@ -942,9 +1017,9 @@ export const uploadMoMFile = (req, res) => {
 };
 
 // GET /api/mrm/:id/mom-download - Download the MoM file (accessible by everyone)
-export const downloadMoMFile = (req, res) => {
+export const downloadMoMFile = async (req, res) => {
   try {
-    const mrm = mrmData.find((m) => m.id === req.params.id);
+    const mrm = await findMRM(req.params.id);
     if (!mrm) {
       return res.status(404).json({ success: false, message: "Management Review Meeting not found" });
     }

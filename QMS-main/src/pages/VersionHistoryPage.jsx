@@ -407,12 +407,13 @@ export default function VersionHistoryPage() {
 
       {/* Filter Tabs and Search Bar */}
       <div className="filter-bar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center", marginBottom: "18px" }}>
-        <label className="search-field" style={{ flex: 1, minWidth: "260px" }}>
+        <label className="search-field" style={{ flex: 1, minWidth: "260px", outline: "none", border: "none", boxShadow: "none" }}>
           <Search size={17} />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search audit trail by ID, title, action, actor, or details..."
+            style={{ outline: "none", border: "none", boxShadow: "none" }}
           />
         </label>
 
@@ -447,21 +448,27 @@ export default function VersionHistoryPage() {
       {/* Audit Trail Timeline Table */}
       <section className="panel" style={{ margin: 0 }}>
         <div className="table-wrap">
-          <table>
+          <table style={{ width: "100%", tableLayout: "auto" }}>
+            <colgroup>
+              <col style={{ width: "240px" }} />
+              <col style={{ width: "280px" }} />
+              <col style={{ width: "auto" }} />
+              <col style={{ width: "170px" }} />
+              <col style={{ width: "90px" }} />
+            </colgroup>
             <thead>
               <tr>
-                <th>Audit Workflow</th>
-                <th>Milestone Stage</th>
-                <th>Action & Compliance Details</th>
-                <th>Responsible Actor</th>
-                <th>Timestamp</th>
-                <th>Link</th>
+                <th style={{ width: "240px", maxWidth: "260px", whiteSpace: "nowrap", padding: "10px 14px", outline: "none", border: "none", borderBottom: "1px solid #d4e2ed" }}>Audit Workflow</th>
+                <th style={{ width: "280px", maxWidth: "300px", whiteSpace: "nowrap", padding: "10px 14px", outline: "none", border: "none", borderBottom: "1px solid #d4e2ed" }}>Milestone Stage</th>
+                <th style={{ width: "auto", minWidth: "160px", whiteSpace: "nowrap", padding: "10px 14px", outline: "none", border: "none", borderBottom: "1px solid #d4e2ed" }}>Responsible Actor</th>
+                <th style={{ width: "170px", whiteSpace: "nowrap", padding: "10px 14px", outline: "none", border: "none", borderBottom: "1px solid #d4e2ed" }}>Timestamp</th>
+                <th style={{ width: "90px", textAlign: "center", whiteSpace: "nowrap", padding: "10px 10px", outline: "none", border: "none", borderBottom: "1px solid #d4e2ed" }}>Link</th>
               </tr>
             </thead>
             <tbody>
               {allEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: "36px", textAlign: "center", color: "var(--muted)", fontSize: "13.5px" }}>
+                  <td colSpan={5} style={{ padding: "36px", textAlign: "center", color: "var(--muted)", fontSize: "13.5px" }}>
                     No audit trail workflow records found matching the criteria.
                   </td>
                 </tr>
@@ -471,15 +478,15 @@ export default function VersionHistoryPage() {
                   const isExternal = event.auditType === "external";
                   return (
                     <tr key={event.id}>
-                      <td style={{ minWidth: "160px" }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <td style={{ width: "240px", maxWidth: "260px", whiteSpace: "normal", padding: "12px 14px", verticalAlign: "top" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                           <span
                             style={{
                               display: "inline-block",
                               width: "fit-content",
-                              fontSize: "13px",
+                              fontSize: "11px",
                               fontWeight: "700",
-                              padding: "2px 8px",
+                              padding: "2px 7px",
                               borderRadius: "4px",
                               background: isInternal ? "#f0fdf4" : isExternal ? "#eff6ff" : "#fdf4ff",
                               color: isInternal ? "#166534" : isExternal ? "#1e40af" : "#86198f",
@@ -488,54 +495,48 @@ export default function VersionHistoryPage() {
                           >
                             {isInternal ? "Internal Audit" : isExternal ? "External Audit" : "System Function"}
                           </span>
-                          <strong style={{ fontSize: "13px", color: "var(--ink)" }}>{event.auditId}</strong>
-                          <span style={{ fontSize: "11.5px", color: "var(--muted)" }}>{event.auditTitle}</span>
+                          <strong style={{ fontSize: "12.5px", color: "var(--ink)", letterSpacing: "-0.2px" }}>{event.auditId}</strong>
+                          <span style={{ fontSize: "11px", color: "var(--muted)", wordBreak: "break-word", lineHeight: 1.3 }}>{event.auditTitle}</span>
                         </div>
                       </td>
 
-                      <td style={{ minWidth: "160px" }}>
+                      <td style={{ width: "280px", maxWidth: "300px", whiteSpace: "normal", padding: "12px 14px", verticalAlign: "top" }}>
                         <span
                           style={{
-                            fontSize: "12px",
+                            fontSize: "11.5px",
                             fontWeight: "600",
                             color: isInternal ? "#15803d" : isExternal ? "#0369a1" : "#7e22ce",
                             background: isInternal ? "#f0fdf4" : isExternal ? "#f0f9ff" : "#faf5ff",
                             padding: "3px 8px",
                             borderRadius: "6px",
                             border: `1px solid ${isInternal ? "#dcfce7" : isExternal ? "#e0f2fe" : "#f3e8ff"}`,
-                            display: "inline-block"
+                            display: "inline-block",
+                            lineHeight: 1.35,
+                            whiteSpace: "normal",
+                            wordBreak: "break-word"
                           }}
                         >
                           {event.stageLabel}
                         </span>
                       </td>
 
-                      <td style={{ minWidth: "260px" }}>
-                        <strong style={{ display: "block", fontSize: "13px", color: "#0f172a", marginBottom: "2px" }}>
-                          {event.action}
-                        </strong>
-                        <p style={{ margin: 0, fontSize: "12px", color: "var(--ink-soft)", lineHeight: 1.45 }}>
-                          {event.details}
-                        </p>
-                      </td>
-
-                      <td style={{ minWidth: "160px" }}>
+                      <td style={{ width: "auto", minWidth: "160px", whiteSpace: "normal", padding: "12px 14px", verticalAlign: "top" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <User size={13} color="var(--muted)" />
-                          <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--ink)" }}>
+                          <User size={13} color="var(--muted)" style={{ flexShrink: 0 }} />
+                          <span style={{ fontSize: "12.5px", fontWeight: "600", color: "var(--ink)", wordBreak: "break-word", lineHeight: 1.3 }}>
                             {event.actor}
                           </span>
                         </div>
                       </td>
 
-                      <td style={{ minWidth: "140px", whiteSpace: "nowrap" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "var(--muted)", fontSize: "12px" }}>
-                          <Clock size={12} />
+                      <td style={{ width: "170px", whiteSpace: "nowrap", padding: "12px 14px", verticalAlign: "top" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "var(--muted)", fontSize: "11.5px" }}>
+                          <Clock size={12} style={{ flexShrink: 0 }} />
                           <span>{event.timestamp}</span>
                         </div>
                       </td>
 
-                      <td>
+                      <td style={{ width: "90px", textAlign: "center", padding: "12px 10px", whiteSpace: "nowrap", verticalAlign: "top" }}>
                         {event.link ? (
                           <NavLink
                             to={event.link}
@@ -555,7 +556,7 @@ export default function VersionHistoryPage() {
                             <ExternalLink size={12} />
                           </NavLink>
                         ) : (
-                          <span style={{ fontSize: "11.5px", color: "#6b7280", fontWeight: "500", background: "#f3f4f6", padding: "2px 6px", borderRadius: "4px" }}>
+                          <span style={{ fontSize: "11px", color: "#6b7280", fontWeight: "500", background: "#f3f4f6", padding: "2px 6px", borderRadius: "4px" }}>
                             Stored in DB
                           </span>
                         )}

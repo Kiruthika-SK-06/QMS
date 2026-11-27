@@ -6,6 +6,7 @@ import PageIntro from "../components/common/PageIntro";
 import DocumentTable from "../components/tables/DocumentTable";
 import Modal from "../components/tasks/Modal";
 import TemplateEditModal from "../components/common/TemplateEditModal";
+import CustomSelect from "../components/common/CustomSelect";
 
 export default function Documents() {
   const { documents = [], currentUser, createDocument, uploadDocumentWithFile, processes = [] } = useApp();
@@ -164,28 +165,20 @@ export default function Documents() {
 
               <label>
                 Document Type
-                <select
+                <CustomSelect
                   value={uploadForm.type}
                   onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
-                >
-                  <option value="Forms">Forms</option>
-                  <option value="Templates">Templates</option>
-                  <option value="Procedures">Procedures</option>
-                </select>
+                  options={["Forms", "Templates", "Procedures"]}
+                />
               </label>
 
               <label>
                 Associated Process
-                <select
+                <CustomSelect
                   value={uploadForm.process}
                   onChange={(e) => setUploadForm({ ...uploadForm, process: e.target.value })}
-                >
-                  {processes.map((proc) => (
-                    <option key={proc.name} value={proc.name}>
-                      {proc.name}
-                    </option>
-                  ))}
-                </select>
+                  options={processes.map((proc) => ({ value: proc.name, label: proc.name }))}
+                />
               </label>
 
               <label>

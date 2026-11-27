@@ -44,6 +44,18 @@ export default function AppRoutes() {
         path="/login"
         element={<LoginPage />}
       />
+      <Route
+        path="/activate"
+        element={<LoginPage />}
+      />
+      <Route
+        path="/verify-otp"
+        element={<LoginPage />}
+      />
+      <Route
+        path="/forgot-password"
+        element={<LoginPage />}
+      />
 
       {/* Opening the website routes authenticated users to their dashboard, otherwise to login */}
       <Route path="/" element={<Navigate to={defaultDashboard} replace />} />

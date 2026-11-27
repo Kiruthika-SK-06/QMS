@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Plus, Save } from "lucide-react";
 import Modal from "./Modal";
 import { useApp } from "../../context/AppContext";
+import CustomSelect from "../common/CustomSelect";
 
 export default function TaskModal({ task, onClose, onSave }) {
   const { documents, employees, processes } = useApp();
@@ -37,13 +38,14 @@ export default function TaskModal({ task, onClose, onSave }) {
 
         <label>
           Assigned coordinator / member
-          <select value={form.employee} onChange={(e) => update("employee", e.target.value)}>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.name}>
-                {emp.name} ({emp.process})
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            value={form.employee}
+            onChange={(e) => update("employee", e.target.value)}
+            options={employees.map((emp) => ({
+              value: emp.name,
+              label: `${emp.name} (${emp.process})`
+            }))}
+          />
         </label>
 
         <label>
@@ -58,25 +60,29 @@ export default function TaskModal({ task, onClose, onSave }) {
 
         <label>
           Process
-          <select value={form.process} onChange={(e) => update("process", e.target.value)}>
-            {processes.map((proc) => (
-              <option key={proc.id || proc.name} value={proc.name}>
-                {proc.name}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            value={form.process}
+            onChange={(e) => update("process", e.target.value)}
+            options={processes.map((proc) => ({
+              value: proc.name,
+              label: proc.name
+            }))}
+          />
         </label>
 
         <label>
           Related document <span className="optional">(optional)</span>
-          <select value={form.document} onChange={(e) => update("document", e.target.value)}>
-            <option value="">No related document</option>
-            {documents.map((doc) => (
-              <option key={doc.id} value={doc.name}>
-                {doc.name} ({doc.id})
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            value={form.document}
+            onChange={(e) => update("document", e.target.value)}
+            options={[
+              { value: "", label: "No related document" },
+              ...documents.map((doc) => ({
+                value: doc.name,
+                label: `${doc.name} (${doc.id})`
+              }))
+            ]}
+          />
         </label>
 
         <label>

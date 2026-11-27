@@ -8,6 +8,8 @@
     "start": "node server.js",
     "dev": "node --watch-path=server.js --watch-path=controllers --watch-path=data --watch-path=middleware --watch-path=routes --watch-path=utils server.js",
     "dev:backend": "node --watch-path=server.js --watch-path=controllers --watch-path=data --watch-path=middleware --watch-path=routes --watch-path=utils server.js",
+    "bootstrap": "node scripts/bootstrapAdmin.js",
+    "test:auth": "node tests/auth.test.js",
     "stop": "node ../scripts/kill-ports.js"
   },
   "dependencies": {
@@ -28,5 +30,9 @@
     "auth"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "exceljs": "^4.4.0",
+    "mongodb-memory-server": "^11.4.0"
+  }
 }

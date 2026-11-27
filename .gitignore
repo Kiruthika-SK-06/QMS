@@ -20,6 +20,9 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# Temporary backups
+backend/data_backup_*/
+
 # Editor & OS files
 .DS_Store
 Thumbs.db

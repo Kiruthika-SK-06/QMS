@@ -20,12 +20,16 @@ const externalAuditSchema = new mongoose.Schema(
     incomingScheduleEmail: { type: mongoose.Schema.Types.Mixed, default: null },
     scheduleShared: { type: mongoose.Schema.Types.Mixed, default: null },
     ncPackage: { type: mongoose.Schema.Types.Mixed, default: null },
+    ncDocument: { type: mongoose.Schema.Types.Mixed, default: null },
     ncFileUrl: { type: String, default: "" },
     ncFileName: { type: String, default: "" },
     ncFileSize: { type: String, default: "" },
     coordinatorResolution: { type: mongoose.Schema.Types.Mixed, default: null },
+    ncClosure: { type: mongoose.Schema.Types.Mixed, default: null },
     externalAuditorApproval: { type: mongoose.Schema.Types.Mixed, default: null },
+    auditorDecision: { type: mongoose.Schema.Types.Mixed, default: null },
     qmsClosure: { type: mongoose.Schema.Types.Mixed, default: null },
+    isoCertificate: { type: mongoose.Schema.Types.Mixed, default: null },
     timeline: [{ type: mongoose.Schema.Types.Mixed }]
   },
   { timestamps: true }

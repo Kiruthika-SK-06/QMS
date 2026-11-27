@@ -25,7 +25,7 @@ const mrmSchema = new mongoose.Schema(
     approvals: { type: mongoose.Schema.Types.Mixed },
     emailNotification: { type: mongoose.Schema.Types.Mixed },
     mom: { type: mongoose.Schema.Types.Mixed, default: null },
-    momFile: { type: String, default: "" },
+    momFile: { type: mongoose.Schema.Types.Mixed, default: null },
     momFileUrl: { type: String, default: "" },
     momFileName: { type: String, default: "" },
     momFileSize: { type: String, default: "" },

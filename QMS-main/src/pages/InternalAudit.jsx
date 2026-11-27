@@ -19,6 +19,7 @@ import {
 import { useApp } from "../context/AppContext";
 import Modal from "../components/tasks/Modal";
 import StatCard from "../components/common/StatCard";
+import CustomSelect from "../components/common/CustomSelect";
 
 export default function InternalAudit() {
   const {
@@ -1104,33 +1105,17 @@ export default function InternalAudit() {
                 <label style={{ display: "block", marginBottom: "2px", fontWeight: "600", fontSize: "11.5px", color: "#334155" }}>
                   Process to be Audited <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <select
+                <CustomSelect
                   required
                   value={scheduleForm.process}
                   onChange={(e) => setScheduleForm({ ...scheduleForm, process: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                    background: "#ffffff",
-                    color: "#0f172a"
-                  }}
-                >
-                  <option value="">-- Select Process to be Audited --</option>
-                  <option value="All Processes (Comprehensive QMS Audit)" style={{ fontWeight: "bold", color: "var(--navy)" }}>
-                    All Processes (Comprehensive QMS Audit)
-                  </option>
-                  <optgroup label="Registered Academic & Operations Processes">
-                    {systemProcesses.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <option value="__custom__">+ Enter Custom / Other Process...</option>
-                </select>
+                  placeholder="-- Select Process to be Audited --"
+                  options={[
+                    { value: "All Processes (Comprehensive QMS Audit)", label: "All Processes (Comprehensive QMS Audit)" },
+                    ...systemProcesses.map((p) => ({ value: p, label: p })),
+                    { value: "__custom__", label: "+ Enter Custom / Other Process..." }
+                  ]}
+                />
 
                 {scheduleForm.process === "__custom__" && (
                   <input
@@ -1171,26 +1156,17 @@ export default function InternalAudit() {
                   <label style={{ display: "block", marginBottom: "2px", fontWeight: "600", fontSize: "11.5px", color: "#334155" }}>
                     Internal Auditor <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     required
                     value={scheduleForm.auditorName}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, auditorName: e.target.value })}
-                    style={{
-                      width: "100%",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      fontSize: "12px",
-                      background: "#ffffff",
-                      color: "#0f172a"
-                    }}
-                  >
-                    <option value="">-- Select Internal Auditor --</option>
-                    <option value="Internal Auditor">Internal Auditor</option>
-                    <option value="Internal Auditor">Internal Auditor</option>
-                    <option value="Dr. Meenakshi Sundaram">Dr. Meenakshi Sundaram (Senior Auditor)</option>
-                    <option value="__custom__">+ Enter Other Auditor...</option>
-                  </select>
+                    placeholder="-- Select Internal Auditor --"
+                    options={[
+                      { value: "Internal Auditor", label: "Internal Auditor" },
+                      { value: "Dr. Meenakshi Sundaram", label: "Dr. Meenakshi Sundaram (Senior Auditor)" },
+                      { value: "__custom__", label: "+ Enter Other Auditor..." }
+                    ]}
+                  />
 
                   {scheduleForm.auditorName === "__custom__" && (
                     <input
@@ -1215,28 +1191,20 @@ export default function InternalAudit() {
                   <label style={{ display: "block", marginBottom: "2px", fontWeight: "600", fontSize: "11.5px", color: "#334155" }}>
                     Internal Auditee (Course Coord) <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     required
                     value={scheduleForm.auditeeName}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, auditeeName: e.target.value })}
-                    style={{
-                      width: "100%",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      fontSize: "12px",
-                      background: "#ffffff",
-                      color: "#0f172a"
-                    }}
-                  >
-                    <option value="">-- Select Course Coordinator --</option>
-                    <option value="Course Coordinator">Course Coordinator (Adv Computing)</option>
-                    <option value="Course Coordinator (AI)">Course Coordinator (AI)</option>
-                    <option value="Course Coordinator (Cyber Security)">Course Coordinator (Cyber Security)</option>
-                    <option value="Course Coordinator">Course Coordinator (Training)</option>
-                    <option value="Course Coordinator (IT)">Course Coordinator (IT)</option>
-                    <option value="__custom__">+ Enter Other Auditee...</option>
-                  </select>
+                    placeholder="-- Select Course Coordinator --"
+                    options={[
+                      { value: "Course Coordinator", label: "Course Coordinator (Adv Computing)" },
+                      { value: "Course Coordinator (AI)", label: "Course Coordinator (AI)" },
+                      { value: "Course Coordinator (Cyber Security)", label: "Course Coordinator (Cyber Security)" },
+                      { value: "Course Coordinator", label: "Course Coordinator (Training)" },
+                      { value: "Course Coordinator (IT)", label: "Course Coordinator (IT)" },
+                      { value: "__custom__", label: "+ Enter Other Auditee..." }
+                    ]}
+                  />
 
                   {scheduleForm.auditeeName === "__custom__" && (
                     <input

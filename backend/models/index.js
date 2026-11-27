@@ -9,3 +9,4 @@ export { Notification } from "./Notification.js";
 export { Employee } from "./Employee.js";
 export { Activity } from "./Activity.js";
 export { Otp } from "./Otp.js";
+export { AuthAudit } from "./AuthAudit.js";

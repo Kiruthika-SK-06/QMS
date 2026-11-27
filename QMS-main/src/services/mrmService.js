@@ -26,10 +26,24 @@ function syncBackground(url, options = {}) {
   }
 }
 
-// Deterministic sort: Newly scheduled MRMs ALWAYS placed first, prebuilt dummy data below
+// Deterministic sort: Newly scheduled MRMs ALWAYS placed first, latest scheduled/created at the very top
 export function sortMRMs(list) {
   if (!Array.isArray(list)) return [];
   const dummyIds = new Set(["MRM-2026-001", "MRM-2026-002", "MRM-2026-003", "MRM-2026-004"]);
+
+  const getMRMTime = (m) => {
+    if (!m) return 0;
+    if (typeof m.createdAt === "number" && !isNaN(m.createdAt)) return m.createdAt;
+    if (m.createdAt) {
+      const t = new Date(m.createdAt).getTime();
+      if (!isNaN(t)) return t;
+    }
+    if (m.scheduledDate) {
+      const t = new Date(m.scheduledDate).getTime();
+      if (!isNaN(t)) return t;
+    }
+    return 0;
+  };
 
   return [...list].sort((a, b) => {
     const aIsNew = a.isNew === true || (!dummyIds.has(a.id) && !a.id?.endsWith("-001") && !a.id?.endsWith("-002") && !a.id?.endsWith("-003") && !a.id?.endsWith("-004"));
@@ -38,14 +52,11 @@ export function sortMRMs(list) {
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
 
-    if (aIsNew && bIsNew) {
-      const aTime = a.createdAt || 0;
-      const bTime = b.createdAt || 0;
-      if (bTime !== aTime) return bTime - aTime;
-      return b.id.localeCompare(a.id);
-    }
+    const aTime = getMRMTime(a);
+    const bTime = getMRMTime(b);
+    if (bTime !== aTime) return bTime - aTime;
 
-    return a.id.localeCompare(b.id);
+    return (b.id || "").localeCompare(a.id || "");
   });
 }
 

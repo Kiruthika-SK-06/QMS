@@ -36,12 +36,39 @@ export const seedDatabase = async () => {
       const usersToInsert = await Promise.all(
         dummyUsers.map(async (u) => {
           const hashedPassword = await bcrypt.hash(u.password || "1234", 10);
-          return { ...u, password: hashedPassword };
+          return {
+            ...u,
+            password: hashedPassword,
+            status: "Active",
+            emailVerified: true
+          };
         })
       );
       await User.insertMany(usersToInsert);
       console.log(`✅ Seeded ${usersToInsert.length} controlled users with bcrypt hashed passwords into MongoDB`);
     } else {
+      // Ensure all core role accounts exist in MongoDB
+      for (const u of dummyUsers) {
+        const existing = await User.findOne({
+          $or: [{ email: u.email }, { username: u.username }]
+        });
+        if (!existing) {
+          const hashedPassword = await bcrypt.hash(u.password || "1234", 10);
+          await User.create({
+            ...u,
+            password: hashedPassword,
+            status: "Active",
+            emailVerified: true
+          });
+          console.log(`✅ Seeded missing user ${u.name} (${u.email}) into MongoDB`);
+        } else if (!existing.password) {
+          existing.password = await bcrypt.hash(u.password || "1234", 10);
+          existing.status = "Active";
+          existing.emailVerified = true;
+          await existing.save();
+        }
+      }
+
       const dbUsers = await User.find({}).lean();
       if (dbUsers.length > 0) {
         dummyUsers.length = 0;
