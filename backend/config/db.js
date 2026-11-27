@@ -42,10 +42,16 @@ export const connectDB = async (customUri = null) => {
 
   // 1. First attempt: connect to standalone host or cloud MongoDB
   try {
-    const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000
+    const connectPromise = mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 4000,
+      connectTimeoutMS: 4000
     });
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Database connection timed out after 4000ms")), 4000)
+    );
+
+    const conn = await Promise.race([connectPromise, timeoutPromise]);
 
     isConnected = true;
     activeUri = uri;
